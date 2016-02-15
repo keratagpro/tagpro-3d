@@ -1,0 +1,41 @@
+{
+  "name": "tagpro-3d",
+  "version": "0.0.1",
+  "description": "TagPro in 3D!",
+  "main": "src/main.js",
+  "private": true,
+  "scripts": {
+    "start": "npm-watch",
+    "build": "rollup -c",
+    "bump": "npm version patch",
+    "meta": "node scripts/meta.js",
+    "publish": "node scripts/publish.js"
+  },
+  "watch": {
+    "build": "src/**/*.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/keratagpro/tagpro-3d.git"
+  },
+  "author": "Kera",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/keratagpro/tagpro-3d/issues"
+  },
+  "homepage": "https://github.com/keratagpro/tagpro-3d#readme",
+  "dependencies": {
+    "lodash-es": "^4.4.0"
+  },
+  "devDependencies": {
+    "babel-preset-es2015-rollup": "^1.1.1",
+    "gh-pages": "^0.10.0",
+    "git-config": "0.0.7",
+    "lodash": "^4.4.0",
+    "npm-watch": "^0.1.1",
+    "rollup": "^0.25.4",
+    "rollup-plugin-babel": "^2.3.9",
+    "rollup-plugin-json": "^2.0.0",
+    "rollup-plugin-node-resolve": "^1.4.0"
+  }
+}

@@ -1,0 +1,71 @@
+{
+	"metadata": {
+		"version": 4.4,
+		"type": "Object",
+		"generator": "Object3D.toJSON"
+	},
+	"geometries": [
+		{
+			"uuid": "A0566222-24C3-4862-9181-EAE2609CAE3E",
+			"type": "CylinderGeometry",
+			"radiusTop": 14,
+			"radiusBottom": 16,
+			"height": 4,
+			"radialSegments": 16,
+			"heightSegments": 1,
+			"openEnded": false
+		},
+		{
+			"uuid": "FCDE12AF-7C68-4606-90DC-FF51B92103AF",
+			"type": "CylinderGeometry",
+			"radiusTop": 1,
+			"radiusBottom": 1,
+			"height": 80,
+			"radialSegments": 16,
+			"heightSegments": 1,
+			"openEnded": false
+		}],
+	"materials": [
+		{
+			"uuid": "77B0FED5-70AE-4355-8AB2-880F5272D835",
+			"type": "MeshStandardMaterial",
+			"color": 16777215,
+			"emissive": 0
+		},
+		{
+			"uuid": "01C26A60-8C68-4AE5-8748-FBA22CC708C0",
+			"type": "MeshStandardMaterial",
+			"color": 16777215,
+			"emissive": 0
+		}],
+	"object": {
+		"uuid": "1203A430-05CE-4EA7-9F42-BF61186E5C5E",
+		"type": "Group",
+		"name": "flagpole",
+		"matrix": [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1],
+		"children": [
+			{
+				"uuid": "0160F14F-4FD1-4031-8DF0-997DE6CF2B01",
+				"type": "Mesh",
+				"name": "base",
+				"matrix": [1,0,0,0,0,1,0,0,0,0,1,0,0,2,0,1],
+				"geometry": "A0566222-24C3-4862-9181-EAE2609CAE3E",
+				"material": "77B0FED5-70AE-4355-8AB2-880F5272D835"
+			},
+			{
+				"uuid": "CD24A77F-955F-4EE5-8B5F-ED57DCF91B30",
+				"type": "Mesh",
+				"name": "pole",
+				"matrix": [1,0,0,0,0,1,0,0,0,0,1,0,0,40,0,1],
+				"geometry": "FCDE12AF-7C68-4606-90DC-FF51B92103AF",
+				"material": "01C26A60-8C68-4AE5-8748-FBA22CC708C0",
+				"children": [
+					{
+						"uuid": "10481D52-7276-49C2-89AE-363B68A34731",
+						"type": "Group",
+						"name": "anchor",
+						"matrix": [1,0,0,0,0,1,0,0,0,0,1,0,0,40,0,1]
+					}]
+			}]
+	}
+}

@@ -1,6 +1,7 @@
+import * as THREE from 'three';
 import {
 	Clipper,
-	JS as ClipperUtils,
+	JS,
 	ClipperOffset,
 	PolyTree,
 	PolyFillType,
@@ -8,51 +9,49 @@ import {
 	EndType
 } from 'clipper';
 
-import * as THREE from 'three';
-
-export const simplify = Clipper.SimplifyPolygons;
-export const lighten = ClipperUtils.Lighten;
-
 const BL = 1.1; // ◣ bottom left
 const TL = 1.2; // ◤ top left
 const TR = 1.3; // ◥ top right
 const BR = 1.4; // ◢ bottom right
 
 export function createShapesFromTilemap({
-	data,
+	map,
 	tileSize = 40,
 	lightenTolerance = tileSize / 4,
 	miterLimit = tileSize / 2,
 	arcTolerance = 0.25,
 	diluteDelta = 0
 }) {
-	var paths = createClipperPaths(data, tileSize);
+	var scale = 10;
+	var paths = createClipperPaths(map, tileSize * scale);
 
-	var simple = simplify(paths, PolyFillType.pftNonZero);
-	var light = lighten(simple, lightenTolerance);
+	paths = Clipper.SimplifyPolygons(paths, PolyFillType.pftNonZero);
+	paths = JS.Lighten(paths, lightenTolerance * scale);
+
+	JS.ScaleDownPaths(paths, scale);
 
 	var co = new ClipperOffset(miterLimit, arcTolerance);
-	co.AddPaths(light, JoinType.jtMiter, EndType.etClosedPolygon);
+	co.AddPaths(paths, JoinType.jtMiter, EndType.etClosedPolygon);
 
 	var diluted = new PolyTree();
 	co.Execute(diluted, diluteDelta);
 
-	var polygons = ClipperUtils.PolyTreeToExPolygons(diluted);
+	var polygons = JS.PolyTreeToExPolygons(diluted);
 
 	var shapes = createThreeShapesFromExPolygons(polygons);
 
 	return shapes;
 }
 
-export function createThreeShapesFromExPolygons(polygons) {
+function createThreeShapesFromExPolygons(polygons) {
 	return polygons.map(({ outer, holes }) => {
 		var shape = new THREE.Shape();
 
-		outer.forEach(({ X: x, Y: y }) => shape.moveTo(x, -y));
+		outer.forEach(({ X: x, Y: y }, index) => shape[index === 0 ? 'moveTo' : 'lineTo'](x, y));
 
 		shape.holes = holes.map(hole => {
 			var holeShape = new THREE.Shape();
-			hole.forEach(({ X: x, Y: y }) => holeShape.moveTo(x, -y));
+			hole.forEach(({ X: x, Y: y }, index) => holeShape[index === 0 ? 'moveTo' : 'lineTo'](x, y));
 
 			return holeShape;
 		});
@@ -61,7 +60,7 @@ export function createThreeShapesFromExPolygons(polygons) {
 	});
 }
 
-export function createClipperPaths(map, tileSize) {
+function createClipperPaths(map, tileSize) {
 	var height = map.length;
 	var width = map[0].length;
 

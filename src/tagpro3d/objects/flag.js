@@ -1,18 +1,17 @@
 import * as THREE from 'three';
 
 import * as utils from '../utils';
-import { loadObjectFromJson } from '../utils';
-import flagpoleModel from '../models/flagpole.json';
+import flagpoleJson from './flagpole.json';
 import Cloth from '../cloth';
 
 export default class Flag extends THREE.Object3D {
-	constructor(clothMaterial = {}, options = {}) {
+	constructor(options = {}) {
 		super();
 
-		var pole = loadObjectFromJson(flagpoleModel);
+		var pole = utils.loadObjectFromJson(flagpoleJson);
 		this.add(pole);
 
-		this.anchor.add(createCloth(clothMaterial, options));
+		this.anchor.add(createCloth(options.material.cloth, options));
 	}
 
 	get anchor() {

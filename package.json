@@ -12,7 +12,12 @@
     "publish": "node scripts/publish.js"
   },
   "watch": {
-    "build": "src/**/*.js"
+    "build": {
+      "patterns": [
+        "src"
+      ],
+      "extensions": "js,json,html,css"
+    }
   },
   "repository": {
     "type": "git",
@@ -36,6 +41,8 @@
     "rollup": "^0.25.4",
     "rollup-plugin-babel": "^2.3.9",
     "rollup-plugin-json": "^2.0.0",
-    "rollup-plugin-node-resolve": "^1.4.0"
+    "rollup-plugin-node-resolve": "^1.4.0",
+    "rollup-plugin-replace": "^1.1.0",
+    "rollup-plugin-string": "^1.0.1"
   }
 }

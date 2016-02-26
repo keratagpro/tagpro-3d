@@ -12,5 +12,5 @@
 // @include       http://tangent.jukejuice.com*
 // @include       http://*.newcompte.fr*
 // @require       https://cdnjs.cloudflare.com/ajax/libs/three.js/r74/three.min.js
-// @require       https://keratagpro.github.io/tagpro-3d/clipper.min.js
+// @require       https://keratagpro.github.io/tagpro-balls-3d/clipper.min.js
 // ==/UserScript==

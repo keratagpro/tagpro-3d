@@ -1,4 +1,4 @@
-# ![3d](assets/3d-38x.png) TagPro 3D
+# ![3d](assets/3d-38x.png) TagPro 3D (ALPHA)
 
 This userscript renders your [TagPro](http://tagpro.gg) games in 3D using [THREE.js](http://threejs.org).
 

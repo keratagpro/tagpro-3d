@@ -2,6 +2,8 @@
 
 This userscript renders your [TagPro](http://tagpro.gg) games in 3D using [THREE.js](http://threejs.org).
 
+[![example1](assets/example1.png)](https://gfycat.com/ThankfulVigorousCoati)
+
 ## Usage
 
 1. Install [Tampermonkey](https://chrome.google.com/webstore/ail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo?hl=en).

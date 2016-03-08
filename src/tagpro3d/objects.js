@@ -1,7 +1,5 @@
 import * as THREE from 'three';
 
-import * as clipper from './clipper';
-
 import Ball from './objects/ball';
 import Bomb from './objects/bomb';
 import Gate from './objects/gate';
@@ -16,33 +14,6 @@ export function createBall(player) {
 		new Ball(options.objects.ball);
 
 	mesh.updateColor(player);
-
-	return mesh;
-}
-
-export function drawWalls(map) {
-	var params = this.options.objects.wall;
-	var extrude = params.extrude;
-	var tileSize = this.TILE_SIZE;
-
-	var shapes = clipper.createShapesFromTilemap({
-		map,
-		tileSize,
-		diluteDelta: extrude.bevelEnabled ? -extrude.bevelSize : 0
-	});
-
-	var geometry = new THREE.ExtrudeGeometry(shapes, extrude);
-	var material = new THREE.MeshPhongMaterial(params.material);
-
-	var mesh = new THREE.Mesh(geometry, material);
-	mesh.name = 'walls';
-	mesh.rotateX(Math.PI / 2);
-	mesh.position.set(-tileSize / 2, extrude.amount, -tileSize / 2);
-
-	this.scene.add(mesh);
-
-	var edges = new THREE.EdgesHelper(mesh, 0x000000);
-	this.scene.add(edges);
 
 	return mesh;
 }

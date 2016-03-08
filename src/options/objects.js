@@ -74,9 +74,9 @@ export const puck = {
 export const wall = {
 	material: {
 		shading: THREE.FlatShading,
-		color: 0x787878,
-		opacity: 0.95,
-		transparent: true
+		color: 0xffffff,
+		// opacity: 1.0,
+		// transparent: true
 	},
 	extrude: {
 		amount: 40,

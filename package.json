@@ -8,8 +8,9 @@
     "start": "npm-watch",
     "build": "rollup -c",
     "bump": "npm version patch",
-    "meta": "node scripts/meta.js",
-    "publish": "node scripts/publish.js"
+	"assets": "node tasks/assets.js",
+    "meta": "node tasks/meta.js",
+    "publish": "node tasks/publish.js"
   },
   "watch": {
     "build": {
@@ -37,6 +38,7 @@
     "gh-pages": "^0.10.0",
     "git-config": "0.0.7",
     "lodash": "^4.4.0",
+    "ncp": "^2.0.0",
     "npm-watch": "^0.1.1",
     "rollup": "^0.25.4",
     "rollup-plugin-babel": "^2.3.9",

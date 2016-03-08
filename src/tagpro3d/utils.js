@@ -1,8 +1,6 @@
 import $ from 'jquery';
 import * as THREE from 'three';
 
-export * from './lights';
-
 export const textureLoader = new THREE.TextureLoader();
 textureLoader.setCrossOrigin('');
 
@@ -92,6 +90,13 @@ export function createBackgroundPlaneFromChunks(chunks) {
 	});
 
 	return plane;
+}
+
+export function mapBackgroundChunksToTextures(chunks) {
+	return chunks.map(({ x, y, width, height, texture }) => ({
+		x, y, width, height,
+		texture: new THREE.CanvasTexture(texture.baseTexture.source)
+	}));
 }
 
 export function loadObjectFromJson(json) {

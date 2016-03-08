@@ -105,11 +105,11 @@ function createRenderer3D() {
 	// Walls
 	//
 
-	after(tr, 'drawBackgroundTiles', () => {
-		t3d.drawWalls(tagpro.map);
-	});
+	after(tr, 'createBackgroundTexture', (container) => {
+		var textures = t3d.mapBackgroundChunksToTextures(tr.backgroundChunks);
 
-	after(tr, 'chunkifyBackground', () => {
+		t3d.createWalls(tagpro.map, textures);
+
 		var plane = t3d.createBackgroundPlaneFromChunks(tr.backgroundChunks);
 		t3d.scene.add(plane);
 		tr.layers.background.visible = false;

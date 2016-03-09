@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          TagPro 3D
 // @description   TagPro in 3D!
-// @version       0.0.1
+// @version       0.0.2
 // @author        Kera
 // @grant         GM_addStyle
 // @namespace     https://github.com/keratagpro/tagpro-3d/
@@ -15,7 +15,7 @@
 // @require       https://keratagpro.github.io/tagpro-balls-3d/clipper.min.js
 // ==/UserScript==
 
-(function (tagpro,THREE,clipper,$) {
+(function (tagpro,THREE,$,ClipperLib) {
 	'use strict';
 
 	tagpro = 'default' in tagpro ? tagpro['default'] : tagpro;
@@ -98,204 +98,18 @@
 		}
 	}
 
-	/**
-	 * Draws some extra tiles to the background layer.
-	 */
-	function drawExtraTilesToBackground(tagpro) {
-		var tileSize = tagpro.TILE_SIZE;
-		var width = tagpro.map.length;
-		var height = tagpro.map[0].length;
-		var container = tagpro.renderer.layers.background;
+	function drawExtraFloors(tagpro) {
+		var flooredTiles = [9, 9.1, 9.2, 9.3, // gates
+		17, 18 // goal tiles
+		];
 
-		var tile;
-		for (var col = 0; col !== width; col++) {
-			var x = col * tileSize;
-			for (var row = 0; row !== height; row++) {
-				var y = row * tileSize;
-				tile = tagpro.map[col][row];
-
-				if (~ ~tile === 9) {
-					// Floor tiles beneath gates
-					tagpro.tiles.draw(container, 2, { x: x, y: y });
-				} else if (tile === 17 || tile === 18) {
-					// Goal tiles
-					tagpro.tiles.draw(container, tile, { x: x, y: y });
-				}
-			}
-		}
-	}
-
-	var styles = "#tagpro3d {\r\n\tdisplay: block;\r\n\tpointer-events: none;\r\n\tposition: absolute;\r\n\tz-index: 1;\r\n}\r\n\r\n#viewport {\r\n\tz-index: 2;\r\n}\r\n\r\n#options {\r\n\tz-index: 3;\r\n}\r\n";
-
-	var BL = 1.1; // ◣ bottom left
-	var TL = 1.2; // ◤ top left
-	var TR = 1.3; // ◥ top right
-	var BR = 1.4; // ◢ bottom right
-
-	function createShapesFromTilemap(_ref) {
-		var map = _ref.map;
-		var _ref$tileSize = _ref.tileSize;
-		var tileSize = _ref$tileSize === undefined ? 40 : _ref$tileSize;
-		var _ref$lightenTolerance = _ref.lightenTolerance;
-		var lightenTolerance = _ref$lightenTolerance === undefined ? tileSize / 4 : _ref$lightenTolerance;
-		var _ref$miterLimit = _ref.miterLimit;
-		var miterLimit = _ref$miterLimit === undefined ? tileSize / 2 : _ref$miterLimit;
-		var _ref$arcTolerance = _ref.arcTolerance;
-		var arcTolerance = _ref$arcTolerance === undefined ? 0.25 : _ref$arcTolerance;
-		var _ref$diluteDelta = _ref.diluteDelta;
-		var diluteDelta = _ref$diluteDelta === undefined ? 0 : _ref$diluteDelta;
-
-		var scale = 10;
-		var paths = createClipperPaths(map, tileSize * scale);
-
-		paths = clipper.Clipper.SimplifyPolygons(paths, clipper.PolyFillType.pftNonZero);
-		paths = clipper.JS.Lighten(paths, lightenTolerance * scale);
-
-		clipper.JS.ScaleDownPaths(paths, scale);
-
-		var co = new clipper.ClipperOffset(miterLimit, arcTolerance);
-		co.AddPaths(paths, clipper.JoinType.jtMiter, clipper.EndType.etClosedPolygon);
-
-		var diluted = new clipper.PolyTree();
-		co.Execute(diluted, diluteDelta);
-
-		var polygons = clipper.JS.PolyTreeToExPolygons(diluted);
-
-		var shapes = createThreeShapesFromExPolygons(polygons);
-
-		return shapes;
-	}
-
-	function createThreeShapesFromExPolygons(polygons) {
-		return polygons.map(function (_ref2) {
-			var outer = _ref2.outer;
-			var holes = _ref2.holes;
-
-			var shape = new THREE.Shape();
-
-			outer.forEach(function (_ref3, index) {
-				var x = _ref3.X;
-				var y = _ref3.Y;
-				return shape[index === 0 ? 'moveTo' : 'lineTo'](x, y);
-			});
-
-			shape.holes = holes.map(function (hole) {
-				var holeShape = new THREE.Shape();
-				hole.forEach(function (_ref4, index) {
-					var x = _ref4.X;
-					var y = _ref4.Y;
-					return holeShape[index === 0 ? 'moveTo' : 'lineTo'](x, y);
-				});
-
-				return holeShape;
-			});
-
-			return shape;
+		flooredTiles.forEach(function (tile) {
+			tagpro.tiles[tile].drawFloor = true;
+			tagpro.tiles[tile].redrawFloor = false;
 		});
 	}
 
-	function createClipperPaths(map, tileSize) {
-		var height = map.length;
-		var width = map[0].length;
-
-		return map.reduce(function (mem, columns, x) {
-			var left = x * tileSize;
-			columns.forEach(function (tile, y) {
-				var top = y * tileSize;
-				if (tile === 1) {
-					mem.push([{ X: left, Y: top }, { X: left + tileSize, Y: top }, { X: left + tileSize, Y: top + tileSize }, { X: left, Y: top + tileSize }]);
-				} else if (tile === BL) {
-					mem.push([{ X: left, Y: top }, { X: left + tileSize, Y: top + tileSize }, { X: left, Y: top + tileSize }]);
-				} else if (tile === TL) {
-					mem.push([{ X: left, Y: top }, { X: left + tileSize, Y: top }, { X: left, Y: top + tileSize }]);
-				} else if (tile === TR) {
-					mem.push([{ X: left, Y: top }, { X: left + tileSize, Y: top }, { X: left + tileSize, Y: top + tileSize }]);
-				} else if (tile === BR) {
-					mem.push([{ X: left, Y: top + tileSize }, { X: left + tileSize, Y: top }, { X: left + tileSize, Y: top + tileSize }]);
-				}
-			});
-			return mem;
-		}, []);
-	}
-
-	var tempQuaternion = new THREE.Quaternion();
-	var AXIS_X = new THREE.Vector3(1, 0, 0);
-	var AXIS_Y = new THREE.Vector3(0, 1, 0);
-	var AXIS_Z = new THREE.Vector3(0, 0, 1);
-
-	var Ball = function (_THREE$Mesh) {
-		babelHelpers.inherits(Ball, _THREE$Mesh);
-
-		function Ball(options) {
-			babelHelpers.classCallCheck(this, Ball);
-
-			var material = new THREE.MeshPhongMaterial();
-			var geometry = new THREE.IcosahedronGeometry(options.geometry.radius, options.geometry.detail);
-			// var geometry = new THREE.SphereGeometry(options.geometry.radius, 12, 8);
-
-			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Ball).call(this, geometry, material));
-
-			_this.options = options;
-			_this._createOutline();
-			return _this;
-		}
-
-		babelHelpers.createClass(Ball, [{
-			key: '_createOutline',
-			value: function _createOutline() {
-				var outline = this.options.outline;
-
-				if (outline && outline.enabled) {
-					var radius = this.options.geometry.radius;
-					this.outlineMaterial = new THREE.MeshBasicMaterial({ side: THREE.BackSide });
-					this.add(new THREE.Mesh(this.geometry.clone(), this.outlineMaterial));
-
-					var scale = 1 - outline.width / radius;
-					this.geometry.scale(scale, scale, scale);
-
-					this.position.y = radius;
-				}
-			}
-		}, {
-			key: 'updateColor',
-			value: function updateColor(player) {
-				var material = this.options.material;
-				this.material.setValues(player.team === 1 ? material.red : material.blue);
-
-				var outline = this.options.outline;
-				if (outline && outline.enabled) {
-					this.outlineMaterial.setValues(player.team === 1 ? outline.red : outline.blue);
-				}
-			}
-		}, {
-			key: 'updatePosition',
-			value: function updatePosition(player) {
-				this.position.x = player.sprite.x;
-				this.position.z = player.sprite.y;
-
-				tempQuaternion.setFromAxisAngle(AXIS_X, (player.ly || 0) * this.options.velocityCoefficient);
-				this.quaternion.multiplyQuaternions(tempQuaternion, this.quaternion);
-
-				tempQuaternion.setFromAxisAngle(AXIS_Z, -(player.lx || 0) * this.options.velocityCoefficient);
-				this.quaternion.multiplyQuaternions(tempQuaternion, this.quaternion);
-
-				tempQuaternion.setFromAxisAngle(AXIS_Y, -(player.a || 0) * this.options.rotationCoefficient);
-				this.quaternion.multiplyQuaternions(tempQuaternion, this.quaternion);
-			}
-		}]);
-		return Ball;
-	}(THREE.Mesh);
-
-	var metadata = { "version": 4.4, "type": "Object", "generator": "Object3D.toJSON" };
-	var geometries = [{ "uuid": "533B036E-7BD8-412A-9826-C270344C731B", "type": "SphereGeometry", "radius": 16, "widthSegments": 16, "heightSegments": 16, "phiStart": 0, "phiLength": 6.283185307179586, "thetaStart": 0, "thetaLength": 3.141592653589793 }, { "uuid": "EDC5A60E-30F9-46AD-8F00-57694EA6046F", "type": "CylinderGeometry", "radiusTop": 2, "radiusBottom": 3, "height": 3, "radialSegments": 32, "heightSegments": 1, "openEnded": false }, { "uuid": "D0B38B94-F57F-43DA-B2D5-EE90F990436E", "type": "TorusGeometry", "radius": 4.38, "tube": 0.76, "radialSegments": 8, "tubularSegments": 4, "arc": 1.5 }];
-	var materials = [{ "uuid": "1F3DD044-3AE4-4584-86A8-C8456E25A261", "type": "MeshPhongMaterial", "color": 0, "emissive": 0, "specular": 1118481, "shininess": 30 }, { "uuid": "F74765F4-EA20-4137-94DD-F083E9E5D714", "type": "MeshPhongMaterial", "color": 8421504, "emissive": 0, "specular": 1118481, "shininess": 30 }, { "uuid": "0E765FB3-278F-4EFE-BE0F-656922DD6B22", "type": "MeshPhongMaterial", "color": 16777215, "emissive": 0, "specular": 1118481, "shininess": 30 }];
-	var object = { "uuid": "DA35D27C-42A2-431C-88DE-E56516B50BBC", "type": "Mesh", "name": "bomb", "matrix": [0.7899922132492065, -0.4315394461154938, 0.43552955985069275, 0, 0.6131168603897095, 0.5560322999954224, -0.5611735582351685, 0, 0, 0.7103532552719116, 0.7038453221321106, 0, 0, 0, 0, 1], "geometry": "533B036E-7BD8-412A-9826-C270344C731B", "material": "1F3DD044-3AE4-4584-86A8-C8456E25A261", "children": [{ "uuid": "3DD112B4-0A42-4E6A-A96D-5BF76D3D877D", "type": "Mesh", "name": "head", "matrix": [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0.36041587591171265, 16.43364143371582, 2.5216023921966553, 1], "geometry": "EDC5A60E-30F9-46AD-8F00-57694EA6046F", "material": "F74765F4-EA20-4137-94DD-F083E9E5D714", "children": [{ "uuid": "36583292-82F4-43A0-A341-165C18F8536A", "type": "Mesh", "name": "fuse", "matrix": [-0.7485897541046143, -0.19866932928562164, 0.6325692534446716, 0, -0.15174666047096252, 0.9800665974617004, 0.12822814285755157, 0, -0.6454349756240845, 0, -0.7638152241706848, 0, 3.29097580909729, 1.9205838441848755, -2.8663127422332764, 1], "geometry": "D0B38B94-F57F-43DA-B2D5-EE90F990436E", "material": "0E765FB3-278F-4EFE-BE0F-656922DD6B22" }] }] };
-	var bombJson = {
-		metadata: metadata,
-		geometries: geometries,
-		materials: materials,
-		object: object
-	};
+	var styles = "#tagpro3d {\r\n\tdisplay: block;\r\n\tpointer-events: none;\r\n\tposition: absolute;\r\n\tz-index: 1;\r\n}\r\n\r\n#viewport {\r\n\tz-index: 2;\r\n}\r\n\r\n#options {\r\n\tz-index: 3;\r\n}\r\n";
 
 	function addAmbientLight(scene) {
 		var _ref = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
@@ -354,6 +168,94 @@
 			}
 		});
 	}
+
+var lights = Object.freeze({
+		addAmbientLight: addAmbientLight,
+		addCameraLight: addCameraLight,
+		addDirectionalLight: addDirectionalLight,
+		addLights: addLights
+	});
+
+	var tempQuaternion = new THREE.Quaternion();
+	var AXIS_X = new THREE.Vector3(1, 0, 0);
+	var AXIS_Y = new THREE.Vector3(0, 1, 0);
+	var AXIS_Z = new THREE.Vector3(0, 0, 1);
+
+	var Ball = function (_THREE$Mesh) {
+		babelHelpers.inherits(Ball, _THREE$Mesh);
+
+		function Ball(options) {
+			babelHelpers.classCallCheck(this, Ball);
+
+			var material = new THREE.MeshPhongMaterial();
+			var geometry = new THREE.IcosahedronGeometry(options.geometry.radius, options.geometry.detail);
+			// var geometry = new THREE.SphereGeometry(options.geometry.radius, 12, 8);
+
+			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Ball).call(this, geometry, material));
+
+			_this.options = options;
+			_this._createOutline();
+			return _this;
+		}
+
+		babelHelpers.createClass(Ball, [{
+			key: '_createOutline',
+			value: function _createOutline() {
+				var outline = this.options.outline;
+
+				if (outline && outline.enabled) {
+					var radius = this.options.geometry.radius;
+					var geometry = new THREE.IcosahedronGeometry(radius, outline.detail);
+
+					this.outlineMaterial = new THREE.MeshBasicMaterial({ side: THREE.BackSide });
+					this.add(new THREE.Mesh(geometry, this.outlineMaterial));
+
+					var scale = 1 - outline.width / radius;
+					this.geometry.scale(scale, scale, scale);
+
+					this.position.y = radius;
+				}
+			}
+		}, {
+			key: 'updateColor',
+			value: function updateColor(player) {
+				var material = this.options.material;
+				this.material.setValues(player.team === 1 ? material.red : material.blue);
+
+				var outline = this.options.outline;
+				if (outline && outline.enabled) {
+					this.outlineMaterial.setValues(player.team === 1 ? outline.red : outline.blue);
+				}
+			}
+		}, {
+			key: 'updatePosition',
+			value: function updatePosition(player) {
+				this.position.x = player.sprite.x;
+				this.position.z = player.sprite.y;
+
+				tempQuaternion.setFromAxisAngle(AXIS_X, (player.ly || 0) * this.options.velocityCoefficient);
+				this.quaternion.multiplyQuaternions(tempQuaternion, this.quaternion);
+
+				tempQuaternion.setFromAxisAngle(AXIS_Z, -(player.lx || 0) * this.options.velocityCoefficient);
+				this.quaternion.multiplyQuaternions(tempQuaternion, this.quaternion);
+
+				tempQuaternion.setFromAxisAngle(AXIS_Y, -(player.a || 0) * this.options.rotationCoefficient);
+				this.quaternion.multiplyQuaternions(tempQuaternion, this.quaternion);
+			}
+		}]);
+		return Ball;
+	}(THREE.Mesh);
+
+	var metadata = { "version": 4.4, "type": "Object", "generator": "Object3D.toJSON" };
+	var geometries = [{ "uuid": "533B036E-7BD8-412A-9826-C270344C731B", "type": "SphereGeometry", "radius": 16, "widthSegments": 16, "heightSegments": 16, "phiStart": 0, "phiLength": 6.283185307179586, "thetaStart": 0, "thetaLength": 3.141592653589793 }, { "uuid": "EDC5A60E-30F9-46AD-8F00-57694EA6046F", "type": "CylinderGeometry", "radiusTop": 2, "radiusBottom": 3, "height": 3, "radialSegments": 32, "heightSegments": 1, "openEnded": false }, { "uuid": "D0B38B94-F57F-43DA-B2D5-EE90F990436E", "type": "TorusGeometry", "radius": 4.38, "tube": 0.76, "radialSegments": 8, "tubularSegments": 4, "arc": 1.5 }];
+	var materials = [{ "uuid": "1F3DD044-3AE4-4584-86A8-C8456E25A261", "type": "MeshPhongMaterial", "color": 0, "emissive": 0, "specular": 1118481, "shininess": 30 }, { "uuid": "F74765F4-EA20-4137-94DD-F083E9E5D714", "type": "MeshPhongMaterial", "color": 8421504, "emissive": 0, "specular": 1118481, "shininess": 30 }, { "uuid": "0E765FB3-278F-4EFE-BE0F-656922DD6B22", "type": "MeshPhongMaterial", "color": 16777215, "emissive": 0, "specular": 1118481, "shininess": 30 }];
+	var object = { "uuid": "DA35D27C-42A2-431C-88DE-E56516B50BBC", "type": "Mesh", "name": "bomb", "matrix": [0.7899922132492065, -0.4315394461154938, 0.43552955985069275, 0, 0.6131168603897095, 0.5560322999954224, -0.5611735582351685, 0, 0, 0.7103532552719116, 0.7038453221321106, 0, 0, 0, 0, 1], "geometry": "533B036E-7BD8-412A-9826-C270344C731B", "material": "1F3DD044-3AE4-4584-86A8-C8456E25A261", "children": [{ "uuid": "3DD112B4-0A42-4E6A-A96D-5BF76D3D877D", "type": "Mesh", "name": "head", "matrix": [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0.36041587591171265, 16.43364143371582, 2.5216023921966553, 1], "geometry": "EDC5A60E-30F9-46AD-8F00-57694EA6046F", "material": "F74765F4-EA20-4137-94DD-F083E9E5D714", "children": [{ "uuid": "36583292-82F4-43A0-A341-165C18F8536A", "type": "Mesh", "name": "fuse", "matrix": [-0.7485897541046143, -0.19866932928562164, 0.6325692534446716, 0, -0.15174666047096252, 0.9800665974617004, 0.12822814285755157, 0, -0.6454349756240845, 0, -0.7638152241706848, 0, 3.29097580909729, 1.9205838441848755, -2.8663127422332764, 1], "geometry": "D0B38B94-F57F-43DA-B2D5-EE90F990436E", "material": "0E765FB3-278F-4EFE-BE0F-656922DD6B22" }] }] };
+	var bombJson = {
+		metadata: metadata,
+		geometries: geometries,
+		materials: materials,
+		object: object
+	};
 
 	var textureLoader = new THREE.TextureLoader();
 	textureLoader.setCrossOrigin('');
@@ -459,6 +361,20 @@
 		return plane;
 	}
 
+	function mapBackgroundChunksToTextures(chunks) {
+		return chunks.map(function (_ref3) {
+			var x = _ref3.x;
+			var y = _ref3.y;
+			var width = _ref3.width;
+			var height = _ref3.height;
+			var texture = _ref3.texture;
+			return {
+				x: x, y: y, width: width, height: height,
+				texture: new THREE.CanvasTexture(texture.baseTexture.source)
+			};
+		});
+	}
+
 	function loadObjectFromJson(json) {
 		var mesh = objectLoader.parse(json);
 		// mesh.rotateZ(Math.PI);
@@ -476,11 +392,8 @@ var utils = Object.freeze({
 		updateCameraPosition: updateCameraPosition,
 		updateCameraZoom: updateCameraZoom,
 		createBackgroundPlaneFromChunks: createBackgroundPlaneFromChunks,
-		loadObjectFromJson: loadObjectFromJson,
-		addAmbientLight: addAmbientLight,
-		addCameraLight: addCameraLight,
-		addDirectionalLight: addDirectionalLight,
-		addLights: addLights
+		mapBackgroundChunksToTextures: mapBackgroundChunksToTextures,
+		loadObjectFromJson: loadObjectFromJson
 	});
 
 	var Bomb = function (_THREE$Object3D) {
@@ -578,6 +491,8 @@ var utils = Object.freeze({
 
 			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Gate).call(this, geometry, material));
 
+			_this.rotateX(Math.PI / 2);
+
 			_this.name = 'gate';
 			_this.options = options;
 
@@ -591,32 +506,36 @@ var utils = Object.freeze({
 				var geom = new THREE.EdgesGeometry(this.geometry, 0.1);
 				var mat = new THREE.LineBasicMaterial(this.options.material.outline);
 
-				var outline = new THREE.LineSegments(geom, mat);
-				outline.matrixAutoUpdate = false;
+				this.outline = new THREE.LineSegments(geom, mat);
+				this.outline.matrixAutoUpdate = false;
 
-				this.add(outline);
+				this.add(this.outline);
 			}
 		}, {
 			key: 'off',
 			value: function off() {
+				this.outline.visible = true;
 				this.material.setValues(this.options.material.off);
 				return this;
 			}
 		}, {
 			key: 'red',
 			value: function red() {
+				this.outline.visible = false;
 				this.material.setValues(this.options.material.red);
 				return this;
 			}
 		}, {
 			key: 'green',
 			value: function green() {
+				this.outline.visible = false;
 				this.material.setValues(this.options.material.green);
 				return this;
 			}
 		}, {
 			key: 'blue',
 			value: function blue() {
+				this.outline.visible = false;
 				this.material.setValues(this.options.material.blue);
 				return this;
 			}
@@ -625,7 +544,7 @@ var utils = Object.freeze({
 	}(THREE.Mesh);
 
 	var tempQuaternion$1 = new THREE.Quaternion();
-	var AXIS_Z$1 = new THREE.Vector3(0, 0, 1);
+	var AXIS_Y$1 = new THREE.Vector3(0, 1, 0);
 
 	var Puck = function (_THREE$Mesh) {
 		babelHelpers.inherits(Puck, _THREE$Mesh);
@@ -638,6 +557,8 @@ var utils = Object.freeze({
 			// var geometry = new THREE.SphereGeometry(options.geometry.radius, 12, 8);
 
 			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Puck).call(this, geometry, material));
+
+			_this.rotateX(Math.PI / 2);
 
 			_this.options = options;
 			_this._createOutline();
@@ -677,7 +598,7 @@ var utils = Object.freeze({
 				this.position.x = player.sprite.x;
 				this.position.z = player.sprite.y;
 
-				tempQuaternion$1.setFromAxisAngle(AXIS_Z$1, -(player.a || 0) * this.options.rotationCoefficient);
+				tempQuaternion$1.setFromAxisAngle(AXIS_Y$1, -(player.a || 0) * this.options.rotationCoefficient);
 				this.quaternion.multiplyQuaternions(tempQuaternion$1, this.quaternion);
 			}
 		}]);
@@ -759,33 +680,6 @@ var utils = Object.freeze({
 		return mesh;
 	}
 
-	function drawWalls(map) {
-		var params = this.options.objects.wall;
-		var extrude = params.extrude;
-		var tileSize = this.TILE_SIZE;
-
-		var shapes = createShapesFromTilemap({
-			map: map,
-			tileSize: tileSize,
-			diluteDelta: extrude.bevelEnabled ? -extrude.bevelSize : 0
-		});
-
-		var geometry = new THREE.ExtrudeGeometry(shapes, extrude);
-		var material = new THREE.MeshPhongMaterial(params.material);
-
-		var mesh = new THREE.Mesh(geometry, material);
-		mesh.name = 'walls';
-		mesh.rotateX(Math.PI / 2);
-		mesh.position.set(-tileSize / 2, extrude.amount, -tileSize / 2);
-
-		this.scene.add(mesh);
-
-		var edges = new THREE.EdgesHelper(mesh, 0x000000);
-		this.scene.add(edges);
-
-		return mesh;
-	}
-
 	var objectMap = {
 		7: function _() {
 			var obj = arguments.length <= 0 || arguments[0] === undefined ? new Spike(this.options.objects.spike) : arguments[0];
@@ -826,8 +720,229 @@ var utils = Object.freeze({
 
 var objects = Object.freeze({
 		createBall: createBall,
-		drawWalls: drawWalls,
 		objectMap: objectMap
+	});
+
+	// Simplifying API of jsclipper.
+
+	var Clipper = ClipperLib.Clipper;
+	var Lighten = ClipperLib.JS.Lighten;
+	var PolyTree = ClipperLib.PolyTree;
+	var PolyTreeToExPolygons = ClipperLib.JS.PolyTreeToExPolygons;
+	var SimplifyPolygons = ClipperLib.Clipper.SimplifyPolygons;
+
+	var ClipType = {
+		Intersection: ClipperLib.ClipType.ctIntersection
+	};
+
+	var PolyType = {
+		Subject: ClipperLib.PolyType.ptSubject,
+		Clip: ClipperLib.PolyType.ptClip
+	};
+
+	var PolyFillType = {
+		NonZero: ClipperLib.PolyFillType.pftNonZero
+	};
+
+	function SimplifyAndLighten(paths) {
+		var lightenTolerance = arguments.length <= 1 || arguments[1] === undefined ? 10 : arguments[1];
+
+		paths = SimplifyPolygons(paths, PolyFillType.NonZero);
+		paths = Lighten(paths, lightenTolerance);
+
+		return paths;
+	}
+
+	var BL = 1.1; // ◣ bottom left
+	var TL = 1.2; // ◤ top left
+	var TR = 1.3; // ◥ top right
+	var BR = 1.4; // ◢ bottom right
+
+	function createWalls(map, backgroundTextures, tilesImage) {
+		var params = this.options.objects.wall;
+		var extrude = params.extrude;
+		var tileSize = this.TILE_SIZE;
+
+		var chunkedShapes = createChunkedShapes(map, backgroundTextures, tileSize);
+
+		var geometry;
+		chunkedShapes.forEach(function (chunk, index) {
+			var options = Object.assign({
+				UVGenerator: createUVGenerator(chunk, index + 1, 0),
+				material: index // NOTE: This doesn't work since THREE.js r74
+			}, extrude);
+
+			if (!geometry) {
+				geometry = new THREE.ExtrudeGeometry(chunk.shapes, options);
+			} else {
+				geometry.addShapeList(chunk.shapes, options);
+			}
+		});
+
+		var materials = backgroundTextures.map(function (_ref) {
+			var texture = _ref.texture;
+
+			var opts = Object.assign({}, params.material, {
+				map: texture
+			});
+
+			return new THREE.MeshPhongMaterial(opts);
+		});
+
+		var opts = Object.assign({}, params.material, {
+			map: textureLoader.load(tilesImage)
+		});
+
+		var tileMaterial = new THREE.MeshPhongMaterial(opts);
+		materials.unshift(tileMaterial);
+
+		var material = new THREE.MultiMaterial(materials);
+
+		var mesh = new THREE.Mesh(geometry, material);
+		mesh.name = 'walls';
+		mesh.rotateX(Math.PI / 2);
+		mesh.position.set(-tileSize / 2, extrude.amount, -tileSize / 2);
+
+		this.scene.add(mesh);
+
+		// var edges = new THREE.EdgesHelper(mesh, 0x000000);
+		// this.scene.add(edges);
+
+		return mesh;
+	}
+
+	function createUVGenerator(_ref2, index, sideIndex) {
+		var x = _ref2.x;
+		var y = _ref2.y;
+		var width = _ref2.width;
+		var height = _ref2.height;
+
+		return {
+			generateTopUV: function generateTopUV(geometry, indexA, indexB, indexC) {
+				var vertices = geometry.vertices;
+				var a = vertices[indexA];
+				var b = vertices[indexB];
+				var c = vertices[indexC];
+
+				// HACK: THREE.js r74 removed material index for some reason, see their issue #7332 and commit 661ce3ad22...
+				geometry.faces[geometry.faces.length - 1].materialIndex = index;
+
+				return [new THREE.Vector2((a.x - x) / width, 1 - (a.y - y) / height), new THREE.Vector2((b.x - x) / width, 1 - (b.y - y) / height), new THREE.Vector2((c.x - x) / height, 1 - (c.y - y) / height)];
+			},
+			generateSideWallUV: function generateSideWallUV(geometry, indexA, indexB, indexC, indexD) {
+				// HACK: Set sidewall materialIndex
+				var len = geometry.faces.length - 1;
+				geometry.faces[len - 1].materialIndex = sideIndex;
+				geometry.faces[len].materialIndex = sideIndex;
+
+				var w = 16 * 40;
+				var h = 11 * 40;
+
+				var left = 5.5 * 40 / w;
+				var right = 6.5 * 40 / w;
+				var top = 5.5 * 40 / h;
+				var bottom = 6.5 * 40 / h;
+
+				return [new THREE.Vector2(left, 1 - top), new THREE.Vector2(left, 1 - bottom), new THREE.Vector2(right, 1 - bottom), new THREE.Vector2(right, 1 - top)];
+			}
+		};
+	}
+
+	function createChunkedShapes(map, textures) {
+		var tileSize = arguments.length <= 2 || arguments[2] === undefined ? 40 : arguments[2];
+
+		var paths = createPathsFromTileMap(map, tileSize);
+		paths = SimplifyAndLighten(paths, tileSize / 4);
+
+		var clipper = new Clipper();
+
+		var results = textures.map(function (_ref3) {
+			var x = _ref3.x;
+			var y = _ref3.y;
+			var width = _ref3.width;
+			var height = _ref3.height;
+
+			clipper.Clear();
+
+			clipper.AddPaths(paths, PolyType.Subject, true);
+
+			var clip = [{ X: x, Y: y }, { X: x + width, Y: y }, { X: x + width, Y: y + height }, { X: x, Y: y + height }];
+
+			clipper.AddPaths([clip], PolyType.Clip, true);
+
+			var result = new PolyTree();
+			clipper.Execute(ClipType.Intersection, result);
+
+			var polygons = PolyTreeToExPolygons(result);
+
+			var shapes = createThreeShapesFromExPolygons(polygons);
+
+			return {
+				x: x,
+				y: y,
+				width: width,
+				height: height,
+				shapes: shapes
+			};
+		});
+
+		return results;
+	}
+
+	function createThreeShapesFromExPolygons(polygons) {
+		return polygons.map(function (_ref4) {
+			var outer = _ref4.outer;
+			var holes = _ref4.holes;
+
+			var shape = new THREE.Shape();
+
+			outer.forEach(function (_ref5) {
+				var x = _ref5.X;
+				var y = _ref5.Y;
+				return shape.moveTo(x, y);
+			});
+
+			shape.holes = holes.map(function (hole) {
+				var holeShape = new THREE.Shape();
+				hole.forEach(function (_ref6) {
+					var x = _ref6.X;
+					var y = _ref6.Y;
+					return holeShape.moveTo(x, y);
+				});
+
+				return holeShape;
+			});
+
+			return shape;
+		});
+	}
+
+	function createPathsFromTileMap(map, tileSize) {
+		var height = map.length;
+		var width = map[0].length;
+
+		return map.reduce(function (mem, columns, x) {
+			var left = x * tileSize;
+			columns.forEach(function (tile, y) {
+				var top = y * tileSize;
+				if (tile === 1) {
+					mem.push([{ X: left, Y: top }, { X: left + tileSize, Y: top }, { X: left + tileSize, Y: top + tileSize }, { X: left, Y: top + tileSize }]);
+				} else if (tile === BL) {
+					mem.push([{ X: left, Y: top }, { X: left + tileSize, Y: top + tileSize }, { X: left, Y: top + tileSize }]);
+				} else if (tile === TL) {
+					mem.push([{ X: left, Y: top }, { X: left + tileSize, Y: top }, { X: left, Y: top + tileSize }]);
+				} else if (tile === TR) {
+					mem.push([{ X: left, Y: top }, { X: left + tileSize, Y: top }, { X: left + tileSize, Y: top + tileSize }]);
+				} else if (tile === BR) {
+					mem.push([{ X: left, Y: top + tileSize }, { X: left + tileSize, Y: top }, { X: left + tileSize, Y: top + tileSize }]);
+				}
+			});
+			return mem;
+		}, []);
+	}
+
+var walls = Object.freeze({
+		createWalls: createWalls
 	});
 
 	var ball = {
@@ -835,7 +950,7 @@ var objects = Object.freeze({
 		rotationCoefficient: 0.015,
 		geometry: {
 			radius: 19,
-			detail: 1
+			detail: 0
 		},
 		material: {
 			blue: {
@@ -849,6 +964,7 @@ var objects = Object.freeze({
 		},
 		outline: {
 			enabled: true,
+			detail: 2,
 			width: 2,
 			blue: {
 				color: 0x0000bb
@@ -901,10 +1017,10 @@ var objects = Object.freeze({
 	var wall = {
 		material: {
 			shading: THREE.FlatShading,
-			color: 0x787878,
-			opacity: 0.95,
-			transparent: true
+			color: 0xffffff
 		},
+		// opacity: 1.0,
+		// transparent: true
 		extrude: {
 			amount: 40,
 			steps: 1,
@@ -943,9 +1059,14 @@ var objects = Object.freeze({
 	};
 
 	var button = {
-		width: 16,
-		height: 10,
-		segments: 20
+		geometry: {
+			width: 16,
+			height: 10,
+			segments: 20
+		},
+		material: {
+			color: 0xa06e32
+		}
 	};
 
 	var flag = {
@@ -1014,7 +1135,7 @@ var objects$1 = Object.freeze({
 			far: 10000,
 			distance: 1000
 		},
-		lights: [{ enabled: false, type: 'camera', color: 0xffffff, intensity: 0.8 }, { enabled: true, type: 'ambient', color: 0x666666 }, { enabled: true, type: 'directional', color: 0xffffff, intensity: 0.9, position: [500, 500, -500] }],
+		lights: [{ enabled: false, type: 'camera', color: 0xffffff, intensity: 0.8 }, { enabled: true, type: 'ambient', color: 0x666666 }, { enabled: true, type: 'directional', color: 0xffffff, intensity: 1.0, position: [-500, 500, -500] }],
 		objects: objects$1,
 		ballsArePucks: false
 	};
@@ -1023,7 +1144,7 @@ var objects$1 = Object.freeze({
 		TILE_SIZE: 40,
 		dynamicObjects: {},
 		options: options
-	}, objects, utils);
+	}, objects, utils, walls, lights);
 
 	// Extend tagpro.ready.after
 	tagpro.ready.after = readyAfter.bind(null, tagpro);
@@ -1041,13 +1162,13 @@ var objects$1 = Object.freeze({
 		// Make game canvas transparent
 		tr.options.transparent = true;
 
+		drawExtraFloors(tagpro);
+
 		// Add styles
 		addStyles(styles);
 
 		// Draw extra tiles to the 2D background layer.
-		after(tr, 'drawBackgroundTiles', function () {
-			return drawExtraTilesToBackground(tagpro);
-		});
+		// after(tr, 'drawBackgroundTiles', () => hacks.drawExtraTilesToBackground(tagpro));
 
 		t3d.camera = t3d.createCamera(t3d.options.camera);
 		t3d.scene = t3d.createScene();
@@ -1125,11 +1246,12 @@ var objects$1 = Object.freeze({
 		//
 		// Walls
 		//
-		after(tr, 'drawBackgroundTiles', function () {
-			t3d.drawWalls(tagpro.map);
-		});
 
-		after(tr, 'chunkifyBackground', function () {
+		after(tr, 'createBackgroundTexture', function (container) {
+			var textures = t3d.mapBackgroundChunksToTextures(tr.backgroundChunks);
+
+			t3d.createWalls(tagpro.map, textures, tagpro.tiles.image.src);
+
 			var plane = t3d.createBackgroundPlaneFromChunks(tr.backgroundChunks);
 			t3d.scene.add(plane);
 			tr.layers.background.visible = false;
@@ -1162,7 +1284,6 @@ var objects$1 = Object.freeze({
 				// NOTE: Some tiles are "noops", e.g. goal tiles
 				if (!mesh) return;
 
-				mesh.rotateX(Math.PI / 2);
 				mesh.position.set(x * TILE_SIZE, 0, y * TILE_SIZE);
 				t3d.scene.add(mesh);
 
@@ -1177,16 +1298,5 @@ var objects$1 = Object.freeze({
 
 	tagpro.ready(createRenderer3D);
 
-	// var time, delta;
-	// var lastTime = performance.now() * 0.001;
-
-	// tagpro.events.register({
-	// 	update: function () {
-	// 		time = performance.now() * 0.001;
-	// 		delta = time - lastTime;
-	// 		r3d.update(time, delta);
-	// 	}
-	// });
-
-}(tagpro,THREE,ClipperLib,$));
+}(tagpro,THREE,$,ClipperLib));
 //# sourceMappingURL=tagpro-3d.user.js.map

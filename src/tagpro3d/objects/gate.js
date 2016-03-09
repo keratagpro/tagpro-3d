@@ -12,6 +12,8 @@ export default class Gate extends THREE.Mesh {
 
 		super(geometry, material);
 
+		this.rotateX(Math.PI / 2);
+
 		this.name = 'gate';
 		this.options = options;
 
@@ -22,28 +24,32 @@ export default class Gate extends THREE.Mesh {
 		var geom = new THREE.EdgesGeometry(this.geometry, 0.1);
 		var mat = new THREE.LineBasicMaterial(this.options.material.outline);
 
-		var outline = new THREE.LineSegments(geom, mat);
-		outline.matrixAutoUpdate = false;
+		this.outline = new THREE.LineSegments(geom, mat);
+		this.outline.matrixAutoUpdate = false;
 
-		this.add(outline);
+		this.add(this.outline);
 	}
 
 	off() {
+		this.outline.visible = true;
 		this.material.setValues(this.options.material.off);
 		return this;
 	}
 
 	red() {
+		this.outline.visible = false;
 		this.material.setValues(this.options.material.red);
 		return this;
 	}
 
 	green() {
+		this.outline.visible = false;
 		this.material.setValues(this.options.material.green);
 		return this;
 	}
 
 	blue() {
+		this.outline.visible = false;
 		this.material.setValues(this.options.material.blue);
 		return this;
 	}

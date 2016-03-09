@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { extrudeShape } from '../geometries';
 
 const tempQuaternion = new THREE.Quaternion();
-const AXIS_Z = new THREE.Vector3(0, 0, 1);
+const AXIS_Y = new THREE.Vector3(0, 1, 0);
 
 export default class Puck extends THREE.Mesh {
 	constructor(options) {
@@ -12,6 +12,8 @@ export default class Puck extends THREE.Mesh {
 		// var geometry = new THREE.SphereGeometry(options.geometry.radius, 12, 8);
 
 		super(geometry, material);
+
+		this.rotateX(Math.PI / 2);
 
 		this.options = options;
 		this._createOutline();
@@ -46,7 +48,7 @@ export default class Puck extends THREE.Mesh {
 		this.position.x = player.sprite.x;
 		this.position.z = player.sprite.y;
 
-		tempQuaternion.setFromAxisAngle(AXIS_Z, -(player.a || 0) * this.options.rotationCoefficient);
+		tempQuaternion.setFromAxisAngle(AXIS_Y, -(player.a || 0) * this.options.rotationCoefficient);
 		this.quaternion.multiplyQuaternions(tempQuaternion, this.quaternion);
 	}
 }

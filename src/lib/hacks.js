@@ -11,6 +11,18 @@ export function readyAfter(tagpro, callback) {
 	}
 }
 
+export function drawExtraFloors(tagpro) {
+	const flooredTiles = [
+		9, 9.1, 9.2, 9.3, // gates
+		17, 18 // goal tiles
+	];
+
+	flooredTiles.forEach(tile => {
+		tagpro.tiles[tile].drawFloor = true;
+		tagpro.tiles[tile].redrawFloor = false;
+	});
+}
+
 /**
  * Draws some extra tiles to the background layer.
  */

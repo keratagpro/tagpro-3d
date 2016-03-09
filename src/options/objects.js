@@ -8,7 +8,7 @@ export const ball = {
 	rotationCoefficient: 0.015,
 	geometry: {
 		radius: 19,
-		detail: 1
+		detail: 0
 	},
 	material: {
 		blue: {
@@ -22,6 +22,7 @@ export const ball = {
 	},
 	outline: {
 		enabled: true,
+		detail: 2,
 		width: 2,
 		blue: {
 			color: 0x0000bb

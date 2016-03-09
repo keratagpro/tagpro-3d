@@ -1,26 +1,26 @@
 import * as THREE from 'three';
 
 import * as Clipper from '../lib/clipper';
+import { textureLoader } from './utils';
 
 const BL = 1.1; // ◣ bottom left
 const TL = 1.2; // ◤ top left
 const TR = 1.3; // ◥ top right
 const BR = 1.4; // ◢ bottom right
 
-export function createWalls(map, textures) {
+export function createWalls(map, backgroundTextures, tilesImage) {
 	var params = this.options.objects.wall;
 	var extrude = params.extrude;
 	var tileSize = this.TILE_SIZE;
 
-	var chunkedShapes = createChunkedShapes(map, textures, tileSize);
+	var chunkedShapes = createChunkedShapes(map, backgroundTextures, tileSize);
 
 	var geometry;
 	chunkedShapes.forEach((chunk, index) => {
 		var options = Object.assign({
-			UVGenerator: createUVGenerator(chunk, index),
+			UVGenerator: createUVGenerator(chunk, index + 1, 0),
 			material: index // NOTE: This doesn't work since THREE.js r74
 		}, extrude);
-		console.log('material', index);
 
 		if (!geometry) {
 			geometry = new THREE.ExtrudeGeometry(chunk.shapes, options);
@@ -30,15 +30,21 @@ export function createWalls(map, textures) {
 		}
 	});
 
-	var materials = textures.map(({ texture }) => {
+
+	var materials = backgroundTextures.map(({ texture }) => {
 		let opts = Object.assign({}, params.material, {
 			map: texture
 		});
 
-		// document.body.appendChild(texture.image);
-
 		return new THREE.MeshPhongMaterial(opts);
 	});
+
+	let opts = Object.assign({}, params.material, {
+		map: textureLoader.load(tilesImage)
+	});
+
+	var tileMaterial = new THREE.MeshPhongMaterial(opts);
+	materials.unshift(tileMaterial);
 
 	var material = new THREE.MultiMaterial(materials);
 
@@ -55,8 +61,8 @@ export function createWalls(map, textures) {
 	return mesh;
 }
 
-function createUVGenerator({ x, y, width, height }, index) {
-	return Object.assign({}, THREE.ExtrudeGeometry.WorldUVGenerator, {
+function createUVGenerator({ x, y, width, height }, index, sideIndex) {
+	return {
 		generateTopUV(geometry, indexA, indexB, indexC) {
 			var vertices = geometry.vertices;
 			var a = vertices[indexA];
@@ -64,15 +70,36 @@ function createUVGenerator({ x, y, width, height }, index) {
 			var c = vertices[indexC];
 
 			// HACK: THREE.js r74 removed material index for some reason, see their issue #7332 and commit 661ce3ad22...
-			geometry.faces[geometry.faces.length-1].materialIndex = index;
+			geometry.faces[geometry.faces.length - 1].materialIndex = index;
 
 			return [
 				new THREE.Vector2((a.x - x) / width, 1 - (a.y - y) / height),
 				new THREE.Vector2((b.x - x) / width, 1 - (b.y - y) / height),
 				new THREE.Vector2((c.x - x) / height, 1 - (c.y - y) / height),
 			];
+		},
+		generateSideWallUV(geometry, indexA, indexB, indexC, indexD) {
+			// HACK: Set sidewall materialIndex
+			var len = geometry.faces.length - 1;
+			geometry.faces[len - 1].materialIndex = sideIndex;
+			geometry.faces[len].materialIndex = sideIndex;
+
+			var w = 16 * 40;
+			var h = 11 * 40;
+
+			var left = (5.5 * 40) / w;
+			var right = (6.5 * 40) / w;
+			var top = (5.5 * 40) / h;
+			var bottom = (6.5 * 40) / h;
+
+			return [
+				new THREE.Vector2(left, 1 - top),
+				new THREE.Vector2(left, 1 - bottom),
+				new THREE.Vector2(right, 1 - bottom),
+				new THREE.Vector2(right, 1 - top)
+			];
 		}
-	});
+	};
 }
 
 function createChunkedShapes(map, textures, tileSize = 40) {

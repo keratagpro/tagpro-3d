@@ -98,31 +98,15 @@
 		}
 	}
 
-	/**
-	 * Draws some extra tiles to the background layer.
-	 */
-	function drawExtraTilesToBackground(tagpro) {
-		var tileSize = tagpro.TILE_SIZE;
-		var width = tagpro.map.length;
-		var height = tagpro.map[0].length;
-		var container = tagpro.renderer.layers.background;
+	function drawExtraFloors(tagpro) {
+		var flooredTiles = [9, 9.1, 9.2, 9.3, // gates
+		17, 18 // goal tiles
+		];
 
-		var tile;
-		for (var col = 0; col !== width; col++) {
-			var x = col * tileSize;
-			for (var row = 0; row !== height; row++) {
-				var y = row * tileSize;
-				tile = tagpro.map[col][row];
-
-				if (~ ~tile === 9) {
-					// Floor tiles beneath gates
-					tagpro.tiles.draw(container, 2, { x: x, y: y });
-				} else if (tile === 17 || tile === 18) {
-					// Goal tiles
-					tagpro.tiles.draw(container, tile, { x: x, y: y });
-				}
-			}
-		}
+		flooredTiles.forEach(function (tile) {
+			tagpro.tiles[tile].drawFloor = true;
+			tagpro.tiles[tile].redrawFloor = false;
+		});
 	}
 
 	var styles = "#tagpro3d {\r\n\tdisplay: block;\r\n\tpointer-events: none;\r\n\tposition: absolute;\r\n\tz-index: 1;\r\n}\r\n\r\n#viewport {\r\n\tz-index: 2;\r\n}\r\n\r\n#options {\r\n\tz-index: 3;\r\n}\r\n";
@@ -221,8 +205,10 @@ var lights = Object.freeze({
 
 				if (outline && outline.enabled) {
 					var radius = this.options.geometry.radius;
+					var geometry = new THREE.IcosahedronGeometry(radius, outline.detail);
+
 					this.outlineMaterial = new THREE.MeshBasicMaterial({ side: THREE.BackSide });
-					this.add(new THREE.Mesh(this.geometry.clone(), this.outlineMaterial));
+					this.add(new THREE.Mesh(geometry, this.outlineMaterial));
 
 					var scale = 1 - outline.width / radius;
 					this.geometry.scale(scale, scale, scale);
@@ -505,6 +491,8 @@ var utils = Object.freeze({
 
 			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Gate).call(this, geometry, material));
 
+			_this.rotateX(Math.PI / 2);
+
 			_this.name = 'gate';
 			_this.options = options;
 
@@ -518,32 +506,36 @@ var utils = Object.freeze({
 				var geom = new THREE.EdgesGeometry(this.geometry, 0.1);
 				var mat = new THREE.LineBasicMaterial(this.options.material.outline);
 
-				var outline = new THREE.LineSegments(geom, mat);
-				outline.matrixAutoUpdate = false;
+				this.outline = new THREE.LineSegments(geom, mat);
+				this.outline.matrixAutoUpdate = false;
 
-				this.add(outline);
+				this.add(this.outline);
 			}
 		}, {
 			key: 'off',
 			value: function off() {
+				this.outline.visible = true;
 				this.material.setValues(this.options.material.off);
 				return this;
 			}
 		}, {
 			key: 'red',
 			value: function red() {
+				this.outline.visible = false;
 				this.material.setValues(this.options.material.red);
 				return this;
 			}
 		}, {
 			key: 'green',
 			value: function green() {
+				this.outline.visible = false;
 				this.material.setValues(this.options.material.green);
 				return this;
 			}
 		}, {
 			key: 'blue',
 			value: function blue() {
+				this.outline.visible = false;
 				this.material.setValues(this.options.material.blue);
 				return this;
 			}
@@ -552,7 +544,7 @@ var utils = Object.freeze({
 	}(THREE.Mesh);
 
 	var tempQuaternion$1 = new THREE.Quaternion();
-	var AXIS_Z$1 = new THREE.Vector3(0, 0, 1);
+	var AXIS_Y$1 = new THREE.Vector3(0, 1, 0);
 
 	var Puck = function (_THREE$Mesh) {
 		babelHelpers.inherits(Puck, _THREE$Mesh);
@@ -565,6 +557,8 @@ var utils = Object.freeze({
 			// var geometry = new THREE.SphereGeometry(options.geometry.radius, 12, 8);
 
 			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Puck).call(this, geometry, material));
+
+			_this.rotateX(Math.PI / 2);
 
 			_this.options = options;
 			_this._createOutline();
@@ -604,7 +598,7 @@ var utils = Object.freeze({
 				this.position.x = player.sprite.x;
 				this.position.z = player.sprite.y;
 
-				tempQuaternion$1.setFromAxisAngle(AXIS_Z$1, -(player.a || 0) * this.options.rotationCoefficient);
+				tempQuaternion$1.setFromAxisAngle(AXIS_Y$1, -(player.a || 0) * this.options.rotationCoefficient);
 				this.quaternion.multiplyQuaternions(tempQuaternion$1, this.quaternion);
 			}
 		}]);
@@ -764,20 +758,19 @@ var objects = Object.freeze({
 	var TR = 1.3; // ◥ top right
 	var BR = 1.4; // ◢ bottom right
 
-	function createWalls(map, textures) {
+	function createWalls(map, backgroundTextures, tilesImage) {
 		var params = this.options.objects.wall;
 		var extrude = params.extrude;
 		var tileSize = this.TILE_SIZE;
 
-		var chunkedShapes = createChunkedShapes(map, textures, tileSize);
+		var chunkedShapes = createChunkedShapes(map, backgroundTextures, tileSize);
 
 		var geometry;
 		chunkedShapes.forEach(function (chunk, index) {
 			var options = Object.assign({
-				UVGenerator: createUVGenerator(chunk, index),
+				UVGenerator: createUVGenerator(chunk, index + 1, 0),
 				material: index // NOTE: This doesn't work since THREE.js r74
 			}, extrude);
-			console.log('material', index);
 
 			if (!geometry) {
 				geometry = new THREE.ExtrudeGeometry(chunk.shapes, options);
@@ -786,17 +779,22 @@ var objects = Object.freeze({
 			}
 		});
 
-		var materials = textures.map(function (_ref) {
+		var materials = backgroundTextures.map(function (_ref) {
 			var texture = _ref.texture;
 
 			var opts = Object.assign({}, params.material, {
 				map: texture
 			});
 
-			// document.body.appendChild(texture.image);
-
 			return new THREE.MeshPhongMaterial(opts);
 		});
+
+		var opts = Object.assign({}, params.material, {
+			map: textureLoader.load(tilesImage)
+		});
+
+		var tileMaterial = new THREE.MeshPhongMaterial(opts);
+		materials.unshift(tileMaterial);
 
 		var material = new THREE.MultiMaterial(materials);
 
@@ -813,13 +811,13 @@ var objects = Object.freeze({
 		return mesh;
 	}
 
-	function createUVGenerator(_ref2, index) {
+	function createUVGenerator(_ref2, index, sideIndex) {
 		var x = _ref2.x;
 		var y = _ref2.y;
 		var width = _ref2.width;
 		var height = _ref2.height;
 
-		return Object.assign({}, THREE.ExtrudeGeometry.WorldUVGenerator, {
+		return {
 			generateTopUV: function generateTopUV(geometry, indexA, indexB, indexC) {
 				var vertices = geometry.vertices;
 				var a = vertices[indexA];
@@ -830,8 +828,24 @@ var objects = Object.freeze({
 				geometry.faces[geometry.faces.length - 1].materialIndex = index;
 
 				return [new THREE.Vector2((a.x - x) / width, 1 - (a.y - y) / height), new THREE.Vector2((b.x - x) / width, 1 - (b.y - y) / height), new THREE.Vector2((c.x - x) / height, 1 - (c.y - y) / height)];
+			},
+			generateSideWallUV: function generateSideWallUV(geometry, indexA, indexB, indexC, indexD) {
+				// HACK: Set sidewall materialIndex
+				var len = geometry.faces.length - 1;
+				geometry.faces[len - 1].materialIndex = sideIndex;
+				geometry.faces[len].materialIndex = sideIndex;
+
+				var w = 16 * 40;
+				var h = 11 * 40;
+
+				var left = 5.5 * 40 / w;
+				var right = 6.5 * 40 / w;
+				var top = 5.5 * 40 / h;
+				var bottom = 6.5 * 40 / h;
+
+				return [new THREE.Vector2(left, 1 - top), new THREE.Vector2(left, 1 - bottom), new THREE.Vector2(right, 1 - bottom), new THREE.Vector2(right, 1 - top)];
 			}
-		});
+		};
 	}
 
 	function createChunkedShapes(map, textures) {
@@ -936,7 +950,7 @@ var walls = Object.freeze({
 		rotationCoefficient: 0.015,
 		geometry: {
 			radius: 19,
-			detail: 1
+			detail: 0
 		},
 		material: {
 			blue: {
@@ -950,6 +964,7 @@ var walls = Object.freeze({
 		},
 		outline: {
 			enabled: true,
+			detail: 2,
 			width: 2,
 			blue: {
 				color: 0x0000bb
@@ -1147,13 +1162,13 @@ var objects$1 = Object.freeze({
 		// Make game canvas transparent
 		tr.options.transparent = true;
 
+		drawExtraFloors(tagpro);
+
 		// Add styles
 		addStyles(styles);
 
 		// Draw extra tiles to the 2D background layer.
-		after(tr, 'drawBackgroundTiles', function () {
-			return drawExtraTilesToBackground(tagpro);
-		});
+		// after(tr, 'drawBackgroundTiles', () => hacks.drawExtraTilesToBackground(tagpro));
 
 		t3d.camera = t3d.createCamera(t3d.options.camera);
 		t3d.scene = t3d.createScene();
@@ -1235,7 +1250,7 @@ var objects$1 = Object.freeze({
 		after(tr, 'createBackgroundTexture', function (container) {
 			var textures = t3d.mapBackgroundChunksToTextures(tr.backgroundChunks);
 
-			t3d.createWalls(tagpro.map, textures);
+			t3d.createWalls(tagpro.map, textures, tagpro.tiles.image.src);
 
 			var plane = t3d.createBackgroundPlaneFromChunks(tr.backgroundChunks);
 			t3d.scene.add(plane);
@@ -1269,7 +1284,6 @@ var objects$1 = Object.freeze({
 				// NOTE: Some tiles are "noops", e.g. goal tiles
 				if (!mesh) return;
 
-				mesh.rotateX(Math.PI / 2);
 				mesh.position.set(x * TILE_SIZE, 0, y * TILE_SIZE);
 				t3d.scene.add(mesh);
 

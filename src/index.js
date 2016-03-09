@@ -22,11 +22,13 @@ function createRenderer3D() {
 	// Make game canvas transparent
 	tr.options.transparent = true;
 
+	hacks.drawExtraFloors(tagpro);
+
 	// Add styles
 	addStyles(styles);
 
 	// Draw extra tiles to the 2D background layer.
-	after(tr, 'drawBackgroundTiles', () => hacks.drawExtraTilesToBackground(tagpro));
+	// after(tr, 'drawBackgroundTiles', () => hacks.drawExtraTilesToBackground(tagpro));
 
 	t3d.camera = t3d.createCamera(t3d.options.camera);
 	t3d.scene = t3d.createScene();
@@ -108,7 +110,7 @@ function createRenderer3D() {
 	after(tr, 'createBackgroundTexture', (container) => {
 		var textures = t3d.mapBackgroundChunksToTextures(tr.backgroundChunks);
 
-		t3d.createWalls(tagpro.map, textures);
+		t3d.createWalls(tagpro.map, textures, tagpro.tiles.image.src);
 
 		var plane = t3d.createBackgroundPlaneFromChunks(tr.backgroundChunks);
 		t3d.scene.add(plane);
@@ -143,7 +145,6 @@ function createRenderer3D() {
 			if (!mesh)
 				return;
 
-			mesh.rotateX(Math.PI / 2);
 			mesh.position.set(x * TILE_SIZE, 0, y * TILE_SIZE);
 			t3d.scene.add(mesh);
 

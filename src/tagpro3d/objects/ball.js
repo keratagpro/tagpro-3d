@@ -22,8 +22,10 @@ export default class Ball extends THREE.Mesh {
 
 		if (outline && outline.enabled) {
 			var radius = this.options.geometry.radius;
+			var geometry = new THREE.IcosahedronGeometry(radius, outline.detail);
+
 			this.outlineMaterial = new THREE.MeshBasicMaterial({ side: THREE.BackSide });
-			this.add(new THREE.Mesh(this.geometry.clone(), this.outlineMaterial));
+			this.add(new THREE.Mesh(geometry, this.outlineMaterial));
 
 			var scale = 1 - (outline.width / radius);
 			this.geometry.scale(scale, scale, scale);

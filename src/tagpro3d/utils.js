@@ -1,5 +1,7 @@
 import $ from 'jquery';
 import * as THREE from 'three';
+import { TILE_SIZE, tiles } from 'tagpro';
+import RgbQuant from 'rgbquant';
 
 export const textureLoader = new THREE.TextureLoader();
 textureLoader.setCrossOrigin('');
@@ -20,7 +22,6 @@ export function createRenderer(params) {
 export function createCamera({ fov = 75, aspect = 1280/800, near, far, distance }) {
 	var camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
 	camera.position.y = distance;
-	console.log(camera.position);
 	camera.up.set(0, 0, -1);
 	camera.lookAt(new THREE.Vector3(0, 0, 0));
 	return camera;
@@ -103,4 +104,38 @@ export function loadObjectFromJson(json) {
 	var mesh = objectLoader.parse(json);
 	// mesh.rotateZ(Math.PI);
 	return mesh;
+}
+
+const quantizer = new RgbQuant({
+	colors: 4
+});
+
+export function findDominantColorForTile(tile, tileSize = TILE_SIZE) {
+	var canvas = document.createElement('canvas');
+	var context = canvas.getContext('2d');
+
+	canvas.width = tileSize;
+	canvas.height = tileSize;
+
+	context.drawImage(tiles.image,
+		tile.x * tileSize, tile.y * tileSize, tileSize, tileSize,
+		0, 0, tileSize, tileSize);
+
+	quantizer.sample(canvas);
+
+	var palette = quantizer.palette(true, true);
+
+	if (!palette) {
+		return null;
+	}
+
+	palette = palette.find(([r, g, b]) => {
+		return (
+			!(r < 30 && g < 30 && b < 30) &&
+			!(r > 240 && g > 240 && b > 240)
+		);
+	});
+
+	var [r, g, b] = palette;
+	return new THREE.Color(r / 256, g / 256, b / 256);
 }

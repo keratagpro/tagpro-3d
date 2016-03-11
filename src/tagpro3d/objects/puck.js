@@ -1,47 +1,66 @@
 import * as THREE from 'three';
+import { TILE_SIZE, tiles } from 'tagpro';
 
 import { extrudeShape } from '../geometries';
+import { textureLoader, findDominantColorForTile } from '../utils';
+import { tileMap } from '../objects';
+
+const TILES_WIDTH = 16 * TILE_SIZE;
+const TILES_HEIGHT = 11 * TILE_SIZE;
+const BALL_WIDTH = 38;
 
 const tempQuaternion = new THREE.Quaternion();
 const AXIS_Y = new THREE.Vector3(0, 1, 0);
 
 export default class Puck extends THREE.Mesh {
 	constructor(options) {
-		var material = new THREE.MeshPhongMaterial();
-		var geometry = createPuckGeometry(options.geometry, options.extrude);
-		// var geometry = new THREE.SphereGeometry(options.geometry.radius, 12, 8);
+		var material = new THREE.MeshPhongMaterial(options.materials.default);
+		var geometry = new THREE.CircleGeometry(options.geometry.radius, options.geometry.segments);
 
 		super(geometry, material);
 
-		this.rotateX(Math.PI / 2);
-
 		this.options = options;
-		this._createOutline();
+		this.addCylinder(options);
+
+		this.rotateX(Math.PI / 2);
+		this.position.y = options.geometry.height;
 	}
 
-	_createOutline() {
-		var outline = this.options.outline;
+	addCylinder(options) {
+		var radius = options.geometry.radius;
+		var height = options.geometry.height;
+		var segments = options.geometry.segments;
 
-		if (outline && outline.enabled) {
-			var radius = this.options.geometry.radius;
-			this.outlineMaterial = new THREE.MeshBasicMaterial({ side: THREE.BackSide });
-			this.add(new THREE.Mesh(this.geometry.clone(), this.outlineMaterial));
+		var material = new THREE.MeshPhongMaterial(options.materials.default);
+		var geometry = new THREE.CylinderGeometry(radius, radius, height, segments, 1, true);
+		geometry.rotateX(Math.PI / 2);
+		geometry.translate(0, 0, height / 2);
 
-			var scale = 1 - (outline.width / radius);
-			this.geometry.scale(scale, scale, scale);
+		var cylinder = new THREE.Mesh(geometry, material);
 
-			this.position.z = radius;
-		}
+		this.add(cylinder);
+		this.cylinder = cylinder;
 	}
 
 	updateColor(player) {
-		var material = this.options.material;
-		this.material.setValues(player.team === 1 ? material.red : material.blue);
+		var tileName = player.team === 1 ? 'redball' : 'blueball';
+		var tile = tiles[tileName];
 
-		var outline = this.options.outline;
-		if (outline && outline.enabled) {
-			this.outlineMaterial.setValues(player.team === 1 ? outline.red : outline.blue);
+		if (!tile.texture) {
+			createBallTexture(tile);
 		}
+
+		this.material.map = tile.texture;
+
+		var materials = this.options.materials;
+		var material = player.team === 1 ? materials.red : materials.blue;
+		this.cylinder.material.setValues(material);
+
+		if (!tile.dominantColor) {
+			tile.dominantColor = findDominantColorForTile(tile);
+		}
+
+		this.cylinder.material.color = tile.dominantColor;
 	}
 
 	updatePosition(player) {
@@ -53,24 +72,22 @@ export default class Puck extends THREE.Mesh {
 	}
 }
 
-function createPuckGeometry({ radius, holeRadius }, extrude) {
-	var shape = createPuckShape(radius, holeRadius);
-	var geometry = extrudeShape(shape, extrude, radius * 2);
+function createBallTexture(tile) {
+	var texture = new THREE.Texture(tiles.image);
+	texture.needsUpdate = true;
 
-	return geometry;
-}
+	var left = (tile.x * TILE_SIZE) / TILES_WIDTH;
+	var top = (tile.y * TILE_SIZE) / TILES_HEIGHT;
 
-function createPuckShape(radius, holeRadius) {
-	var shape = new THREE.Shape();
-	shape.moveTo(radius, 0);
-	shape.absarc(0, 0, radius, 0, 2 * Math.PI, false);
+	texture.offset.set(
+		left + (1 / TILES_WIDTH),
+		1 - (top + (BALL_WIDTH + 1) / TILES_HEIGHT)
+	);
 
-	if (holeRadius > 0) {
-		var hole = new THREE.Shape();
-		hole.moveTo(holeRadius, 0);
-		hole.absarc(0, 0, holeRadius, 0, 2 * Math.PI, true);
-		shape.holes.push(hole);
-	}
+	var w = BALL_WIDTH / TILES_WIDTH;
+	var h = BALL_WIDTH / TILES_HEIGHT;
 
-	return shape;
+	texture.repeat.set(w, h);
+
+	tile.texture = texture;
 }

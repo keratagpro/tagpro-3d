@@ -2,7 +2,7 @@
 
 This userscript renders your [TagPro](http://tagpro.gg) games in 3D using [THREE.js](http://threejs.org).
 
-[![example1](assets/example1.png)](https://gfycat.com/ThankfulVigorousCoati)
+[![example1](assets/example2.png)](http://gfycat.com/EarlyNextAtlasmoth)
 
 ## Usage
 

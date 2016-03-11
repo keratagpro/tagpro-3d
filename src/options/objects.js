@@ -4,13 +4,14 @@ import * as THREE from 'three';
 import { textureLoader as loader } from '../tagpro3d/utils';
 
 export const ball = {
+	enabled: true,
 	velocityCoefficient: 0.1,
 	rotationCoefficient: 0.015,
 	geometry: {
 		radius: 19,
-		detail: 0
+		detail: 1
 	},
-	material: {
+	materials: {
 		blue: {
 			shading: THREE.FlatShading,
 			color: 0x0000ff
@@ -23,7 +24,7 @@ export const ball = {
 	outline: {
 		enabled: true,
 		detail: 2,
-		width: 2,
+		width: 1,
 		blue: {
 			color: 0x0000bb
 		},
@@ -34,40 +35,26 @@ export const ball = {
 };
 
 export const puck = {
+	enabled: true,
 	rotationCoefficient: 0.01,
 	geometry: {
 		radius: 19,
-		holeRadius: 10
+		height: 10,
+		segments: 32
 	},
-	extrude: {
-		curveSegments: 12,
-		amount: 10,
-		steps: 1,
-		bevelEnabled: true,
-		bevelSegments: 1,
-		bevelSize: 5,
-		bevelThickness: 6,
-	},
-	material: {
-		blue: {
+	materials: {
+		default: {
+			transparent: true,
+			alphaTest: 0.1,
+			opacity: 0.9,
 			shading: THREE.FlatShading,
+			side: THREE.DoubleSide
+		},
+		blue: {
 			color: 0x0000ff,
-			opacity: 0.9
 		},
 		red: {
-			shading: THREE.FlatShading,
 			color: 0xff0000,
-			opacity: 0.9
-		}
-	},
-	outline: {
-		enabled: false,
-		width: 2,
-		blue: {
-			color: 0x0000ff
-		},
-		red: {
-			color: 0xbb0000
 		}
 	}
 };

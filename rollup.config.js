@@ -16,7 +16,6 @@ export default {
 	entry: 'src/index.js',
 	format: 'iife',
 	dest: 'dist/tagpro-3d.user.js',
-	sourceMap: true,
 	plugins: [
 		json(),
 		str({
@@ -24,7 +23,7 @@ export default {
 		}),
 		babel(),
 		nodeResolve({
-			skip: ['clipper', 'jquery', 'tagpro', 'three']
+			skip: ['clipper', 'jquery', 'rgbquant', 'tagpro', 'three']
 		}),
 		replace({
 			TEXTURES_URL: 'https://keratagpro.github.io/tagpro-balls-3d/textures'
@@ -35,6 +34,6 @@ export default {
 		clipper: 'ClipperLib',
 		three: 'THREE',
 		tagpro: 'tagpro',
-		pixi: 'PIXI',
+		rgbquant: 'RgbQuant'
 	}
 };

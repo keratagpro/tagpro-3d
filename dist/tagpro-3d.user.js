@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          TagPro 3D
 // @description   TagPro in 3D!
-// @version       0.0.2
+// @version       0.0.3
 // @author        Kera
 // @grant         GM_addStyle
 // @namespace     https://github.com/keratagpro/tagpro-3d/
@@ -12,14 +12,16 @@
 // @include       http://tangent.jukejuice.com*
 // @include       http://*.newcompte.fr*
 // @require       https://cdnjs.cloudflare.com/ajax/libs/three.js/r74/three.min.js
-// @require       https://keratagpro.github.io/tagpro-balls-3d/clipper.min.js
+// @require       https://keratagpro.github.io/tagpro-3d/clipper.min.js
+// @require       https://keratagpro.github.io/tagpro-3d/rgbquant.js
 // ==/UserScript==
 
-(function (tagpro,THREE,$,ClipperLib) {
+(function (tagpro,THREE,$,RgbQuant,ClipperLib) {
 	'use strict';
 
-	tagpro = 'default' in tagpro ? tagpro['default'] : tagpro;
+	var tagpro__default = 'default' in tagpro ? tagpro['default'] : tagpro;
 	$ = 'default' in $ ? $['default'] : $;
+	RgbQuant = 'default' in RgbQuant ? RgbQuant['default'] : RgbQuant;
 
 	var babelHelpers = {};
 
@@ -71,6 +73,44 @@
 	  return call && (typeof call === "object" || typeof call === "function") ? call : self;
 	};
 
+	babelHelpers.slicedToArray = function () {
+	  function sliceIterator(arr, i) {
+	    var _arr = [];
+	    var _n = true;
+	    var _d = false;
+	    var _e = undefined;
+
+	    try {
+	      for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+	        _arr.push(_s.value);
+
+	        if (i && _arr.length === i) break;
+	      }
+	    } catch (err) {
+	      _d = true;
+	      _e = err;
+	    } finally {
+	      try {
+	        if (!_n && _i["return"]) _i["return"]();
+	      } finally {
+	        if (_d) throw _e;
+	      }
+	    }
+
+	    return _arr;
+	  }
+
+	  return function (arr, i) {
+	    if (Array.isArray(arr)) {
+	      return arr;
+	    } else if (Symbol.iterator in Object(arr)) {
+	      return sliceIterator(arr, i);
+	    } else {
+	      throw new TypeError("Invalid attempt to destructure non-iterable instance");
+	    }
+	  };
+	}();
+
 	babelHelpers;
 
 	function after(obj, methodName, callback) {
@@ -98,14 +138,17 @@
 		}
 	}
 
-	function drawExtraFloors(tagpro) {
+	/**
+	 * Draws some extra tiles to the background layer.
+	 */
+	function changeSomeTilesToFloorTiles(tiles) {
 		var flooredTiles = [9, 9.1, 9.2, 9.3, // gates
 		17, 18 // goal tiles
 		];
 
 		flooredTiles.forEach(function (tile) {
-			tagpro.tiles[tile].drawFloor = true;
-			tagpro.tiles[tile].redrawFloor = false;
+			tiles[tile].drawFloor = true;
+			tiles[tile].redrawFloor = false;
 		});
 	}
 
@@ -176,87 +219,6 @@ var lights = Object.freeze({
 		addLights: addLights
 	});
 
-	var tempQuaternion = new THREE.Quaternion();
-	var AXIS_X = new THREE.Vector3(1, 0, 0);
-	var AXIS_Y = new THREE.Vector3(0, 1, 0);
-	var AXIS_Z = new THREE.Vector3(0, 0, 1);
-
-	var Ball = function (_THREE$Mesh) {
-		babelHelpers.inherits(Ball, _THREE$Mesh);
-
-		function Ball(options) {
-			babelHelpers.classCallCheck(this, Ball);
-
-			var material = new THREE.MeshPhongMaterial();
-			var geometry = new THREE.IcosahedronGeometry(options.geometry.radius, options.geometry.detail);
-			// var geometry = new THREE.SphereGeometry(options.geometry.radius, 12, 8);
-
-			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Ball).call(this, geometry, material));
-
-			_this.options = options;
-			_this._createOutline();
-			return _this;
-		}
-
-		babelHelpers.createClass(Ball, [{
-			key: '_createOutline',
-			value: function _createOutline() {
-				var outline = this.options.outline;
-
-				if (outline && outline.enabled) {
-					var radius = this.options.geometry.radius;
-					var geometry = new THREE.IcosahedronGeometry(radius, outline.detail);
-
-					this.outlineMaterial = new THREE.MeshBasicMaterial({ side: THREE.BackSide });
-					this.add(new THREE.Mesh(geometry, this.outlineMaterial));
-
-					var scale = 1 - outline.width / radius;
-					this.geometry.scale(scale, scale, scale);
-
-					this.position.y = radius;
-				}
-			}
-		}, {
-			key: 'updateColor',
-			value: function updateColor(player) {
-				var material = this.options.material;
-				this.material.setValues(player.team === 1 ? material.red : material.blue);
-
-				var outline = this.options.outline;
-				if (outline && outline.enabled) {
-					this.outlineMaterial.setValues(player.team === 1 ? outline.red : outline.blue);
-				}
-			}
-		}, {
-			key: 'updatePosition',
-			value: function updatePosition(player) {
-				this.position.x = player.sprite.x;
-				this.position.z = player.sprite.y;
-
-				tempQuaternion.setFromAxisAngle(AXIS_X, (player.ly || 0) * this.options.velocityCoefficient);
-				this.quaternion.multiplyQuaternions(tempQuaternion, this.quaternion);
-
-				tempQuaternion.setFromAxisAngle(AXIS_Z, -(player.lx || 0) * this.options.velocityCoefficient);
-				this.quaternion.multiplyQuaternions(tempQuaternion, this.quaternion);
-
-				tempQuaternion.setFromAxisAngle(AXIS_Y, -(player.a || 0) * this.options.rotationCoefficient);
-				this.quaternion.multiplyQuaternions(tempQuaternion, this.quaternion);
-			}
-		}]);
-		return Ball;
-	}(THREE.Mesh);
-
-	var metadata = { "version": 4.4, "type": "Object", "generator": "Object3D.toJSON" };
-	var geometries = [{ "uuid": "533B036E-7BD8-412A-9826-C270344C731B", "type": "SphereGeometry", "radius": 16, "widthSegments": 16, "heightSegments": 16, "phiStart": 0, "phiLength": 6.283185307179586, "thetaStart": 0, "thetaLength": 3.141592653589793 }, { "uuid": "EDC5A60E-30F9-46AD-8F00-57694EA6046F", "type": "CylinderGeometry", "radiusTop": 2, "radiusBottom": 3, "height": 3, "radialSegments": 32, "heightSegments": 1, "openEnded": false }, { "uuid": "D0B38B94-F57F-43DA-B2D5-EE90F990436E", "type": "TorusGeometry", "radius": 4.38, "tube": 0.76, "radialSegments": 8, "tubularSegments": 4, "arc": 1.5 }];
-	var materials = [{ "uuid": "1F3DD044-3AE4-4584-86A8-C8456E25A261", "type": "MeshPhongMaterial", "color": 0, "emissive": 0, "specular": 1118481, "shininess": 30 }, { "uuid": "F74765F4-EA20-4137-94DD-F083E9E5D714", "type": "MeshPhongMaterial", "color": 8421504, "emissive": 0, "specular": 1118481, "shininess": 30 }, { "uuid": "0E765FB3-278F-4EFE-BE0F-656922DD6B22", "type": "MeshPhongMaterial", "color": 16777215, "emissive": 0, "specular": 1118481, "shininess": 30 }];
-	var object = { "uuid": "DA35D27C-42A2-431C-88DE-E56516B50BBC", "type": "Mesh", "name": "bomb", "matrix": [0.7899922132492065, -0.4315394461154938, 0.43552955985069275, 0, 0.6131168603897095, 0.5560322999954224, -0.5611735582351685, 0, 0, 0.7103532552719116, 0.7038453221321106, 0, 0, 0, 0, 1], "geometry": "533B036E-7BD8-412A-9826-C270344C731B", "material": "1F3DD044-3AE4-4584-86A8-C8456E25A261", "children": [{ "uuid": "3DD112B4-0A42-4E6A-A96D-5BF76D3D877D", "type": "Mesh", "name": "head", "matrix": [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0.36041587591171265, 16.43364143371582, 2.5216023921966553, 1], "geometry": "EDC5A60E-30F9-46AD-8F00-57694EA6046F", "material": "F74765F4-EA20-4137-94DD-F083E9E5D714", "children": [{ "uuid": "36583292-82F4-43A0-A341-165C18F8536A", "type": "Mesh", "name": "fuse", "matrix": [-0.7485897541046143, -0.19866932928562164, 0.6325692534446716, 0, -0.15174666047096252, 0.9800665974617004, 0.12822814285755157, 0, -0.6454349756240845, 0, -0.7638152241706848, 0, 3.29097580909729, 1.9205838441848755, -2.8663127422332764, 1], "geometry": "D0B38B94-F57F-43DA-B2D5-EE90F990436E", "material": "0E765FB3-278F-4EFE-BE0F-656922DD6B22" }] }] };
-	var bombJson = {
-		metadata: metadata,
-		geometries: geometries,
-		materials: materials,
-		object: object
-	};
-
 	var textureLoader = new THREE.TextureLoader();
 	textureLoader.setCrossOrigin('');
 
@@ -284,7 +246,6 @@ var lights = Object.freeze({
 
 		var camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
 		camera.position.y = distance;
-		console.log(camera.position);
 		camera.up.set(0, 0, -1);
 		camera.lookAt(new THREE.Vector3(0, 0, 0));
 		return camera;
@@ -381,6 +342,50 @@ var lights = Object.freeze({
 		return mesh;
 	}
 
+	var quantizer = new RgbQuant({
+		colors: 4
+	});
+
+	function findDominantColorForTile(tile) {
+		var tileSize = arguments.length <= 1 || arguments[1] === undefined ? tagpro.TILE_SIZE : arguments[1];
+
+		var canvas = document.createElement('canvas');
+		var context = canvas.getContext('2d');
+
+		canvas.width = tileSize;
+		canvas.height = tileSize;
+
+		context.drawImage(tagpro.tiles.image, tile.x * tileSize, tile.y * tileSize, tileSize, tileSize, 0, 0, tileSize, tileSize);
+
+		quantizer.sample(canvas);
+
+		var palette = quantizer.palette(true, true);
+
+		if (!palette) {
+			return null;
+		}
+
+		palette = palette.find(function (_ref4) {
+			var _ref5 = babelHelpers.slicedToArray(_ref4, 3);
+
+			var r = _ref5[0];
+			var g = _ref5[1];
+			var b = _ref5[2];
+
+			return !(r < 30 && g < 30 && b < 30) && !(r > 240 && g > 240 && b > 240);
+		});
+
+		var _palette = palette;
+
+		var _palette2 = babelHelpers.slicedToArray(_palette, 3);
+
+		var r = _palette2[0];
+		var g = _palette2[1];
+		var b = _palette2[2];
+
+		return new THREE.Color(r / 256, g / 256, b / 256);
+	}
+
 var utils = Object.freeze({
 		textureLoader: textureLoader,
 		objectLoader: objectLoader,
@@ -393,8 +398,102 @@ var utils = Object.freeze({
 		updateCameraZoom: updateCameraZoom,
 		createBackgroundPlaneFromChunks: createBackgroundPlaneFromChunks,
 		mapBackgroundChunksToTextures: mapBackgroundChunksToTextures,
-		loadObjectFromJson: loadObjectFromJson
+		loadObjectFromJson: loadObjectFromJson,
+		findDominantColorForTile: findDominantColorForTile
 	});
+
+	var tempQuaternion = new THREE.Quaternion();
+	var AXIS_X = new THREE.Vector3(1, 0, 0);
+	var AXIS_Y = new THREE.Vector3(0, 1, 0);
+	var AXIS_Z = new THREE.Vector3(0, 0, 1);
+
+	var ballTileColors = {};
+
+	var Ball = function (_THREE$Mesh) {
+		babelHelpers.inherits(Ball, _THREE$Mesh);
+
+		function Ball(options) {
+			babelHelpers.classCallCheck(this, Ball);
+
+			var material = new THREE.MeshPhongMaterial();
+			var geometry = new THREE.IcosahedronGeometry(options.geometry.radius, options.geometry.detail);
+			// var geometry = new THREE.SphereGeometry(options.geometry.radius, 12, 8);
+
+			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Ball).call(this, geometry, material));
+
+			_this.options = options;
+			_this._createOutline();
+
+			_this.position.y = options.geometry.radius;
+			return _this;
+		}
+
+		babelHelpers.createClass(Ball, [{
+			key: '_createOutline',
+			value: function _createOutline() {
+				var outline = this.options.outline;
+
+				if (outline && outline.enabled) {
+					var radius = this.options.geometry.radius;
+					var geometry = new THREE.IcosahedronGeometry(radius, outline.detail);
+
+					this.outlineMaterial = new THREE.MeshBasicMaterial({ side: THREE.BackSide });
+					this.add(new THREE.Mesh(geometry, this.outlineMaterial));
+
+					var scale = 1 - outline.width / radius;
+					this.geometry.scale(scale, scale, scale);
+				}
+			}
+		}, {
+			key: 'updateColor',
+			value: function updateColor(player) {
+				var tileName = player.team === 1 ? 'redball' : 'blueball';
+
+				var materials = this.options.materials;
+				this.material.setValues(player.team === 1 ? materials.red : materials.blue);
+
+				if (!ballTileColors[tileName]) {
+					var tile = tagpro.tiles[tileName];
+					ballTileColors[tileName] = findDominantColorForTile(tile);
+				}
+
+				this.material.color = ballTileColors[tileName];
+
+				var outline = this.options.outline;
+				if (outline && outline.enabled) {
+					this.outlineMaterial.setValues(player.team === 1 ? outline.red : outline.blue);
+					this.outlineMaterial.color = ballTileColors[tileName];
+				}
+			}
+		}, {
+			key: 'updatePosition',
+			value: function updatePosition(player) {
+				this.position.x = player.sprite.x;
+				this.position.z = player.sprite.y;
+
+				tempQuaternion.setFromAxisAngle(AXIS_X, (player.ly || 0) * this.options.velocityCoefficient);
+				this.quaternion.multiplyQuaternions(tempQuaternion, this.quaternion);
+
+				tempQuaternion.setFromAxisAngle(AXIS_Z, -(player.lx || 0) * this.options.velocityCoefficient);
+				this.quaternion.multiplyQuaternions(tempQuaternion, this.quaternion);
+
+				tempQuaternion.setFromAxisAngle(AXIS_Y, -(player.a || 0) * this.options.rotationCoefficient);
+				this.quaternion.multiplyQuaternions(tempQuaternion, this.quaternion);
+			}
+		}]);
+		return Ball;
+	}(THREE.Mesh);
+
+	var metadata = { "version": 4.4, "type": "Object", "generator": "Object3D.toJSON" };
+	var geometries = [{ "uuid": "533B036E-7BD8-412A-9826-C270344C731B", "type": "SphereGeometry", "radius": 16, "widthSegments": 16, "heightSegments": 16, "phiStart": 0, "phiLength": 6.283185307179586, "thetaStart": 0, "thetaLength": 3.141592653589793 }, { "uuid": "EDC5A60E-30F9-46AD-8F00-57694EA6046F", "type": "CylinderGeometry", "radiusTop": 2, "radiusBottom": 3, "height": 3, "radialSegments": 32, "heightSegments": 1, "openEnded": false }, { "uuid": "D0B38B94-F57F-43DA-B2D5-EE90F990436E", "type": "TorusGeometry", "radius": 4.38, "tube": 0.76, "radialSegments": 8, "tubularSegments": 4, "arc": 1.5 }];
+	var materials = [{ "uuid": "1F3DD044-3AE4-4584-86A8-C8456E25A261", "type": "MeshPhongMaterial", "color": 0, "emissive": 0, "specular": 1118481, "shininess": 30 }, { "uuid": "F74765F4-EA20-4137-94DD-F083E9E5D714", "type": "MeshPhongMaterial", "color": 8421504, "emissive": 0, "specular": 1118481, "shininess": 30 }, { "uuid": "0E765FB3-278F-4EFE-BE0F-656922DD6B22", "type": "MeshPhongMaterial", "color": 16777215, "emissive": 0, "specular": 1118481, "shininess": 30 }];
+	var object = { "uuid": "DA35D27C-42A2-431C-88DE-E56516B50BBC", "type": "Mesh", "name": "bomb", "matrix": [0.7899922132492065, -0.4315394461154938, 0.43552955985069275, 0, 0.6131168603897095, 0.5560322999954224, -0.5611735582351685, 0, 0, 0.7103532552719116, 0.7038453221321106, 0, 0, 0, 0, 1], "geometry": "533B036E-7BD8-412A-9826-C270344C731B", "material": "1F3DD044-3AE4-4584-86A8-C8456E25A261", "children": [{ "uuid": "3DD112B4-0A42-4E6A-A96D-5BF76D3D877D", "type": "Mesh", "name": "head", "matrix": [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0.36041587591171265, 16.43364143371582, 2.5216023921966553, 1], "geometry": "EDC5A60E-30F9-46AD-8F00-57694EA6046F", "material": "F74765F4-EA20-4137-94DD-F083E9E5D714", "children": [{ "uuid": "36583292-82F4-43A0-A341-165C18F8536A", "type": "Mesh", "name": "fuse", "matrix": [-0.7485897541046143, -0.19866932928562164, 0.6325692534446716, 0, -0.15174666047096252, 0.9800665974617004, 0.12822814285755157, 0, -0.6454349756240845, 0, -0.7638152241706848, 0, 3.29097580909729, 1.9205838441848755, -2.8663127422332764, 1], "geometry": "D0B38B94-F57F-43DA-B2D5-EE90F990436E", "material": "0E765FB3-278F-4EFE-BE0F-656922DD6B22" }] }] };
+	var bombJson = {
+		metadata: metadata,
+		geometries: geometries,
+		materials: materials,
+		object: object
+	};
 
 	var Bomb = function (_THREE$Object3D) {
 		babelHelpers.inherits(Bomb, _THREE$Object3D);
@@ -543,6 +642,10 @@ var utils = Object.freeze({
 		return Gate;
 	}(THREE.Mesh);
 
+	var TILES_WIDTH = 16 * tagpro.TILE_SIZE;
+	var TILES_HEIGHT = 11 * tagpro.TILE_SIZE;
+	var BALL_WIDTH = 38;
+
 	var tempQuaternion$1 = new THREE.Quaternion();
 	var AXIS_Y$1 = new THREE.Vector3(0, 1, 0);
 
@@ -552,45 +655,57 @@ var utils = Object.freeze({
 		function Puck(options) {
 			babelHelpers.classCallCheck(this, Puck);
 
-			var material = new THREE.MeshPhongMaterial();
-			var geometry = createPuckGeometry(options.geometry, options.extrude);
-			// var geometry = new THREE.SphereGeometry(options.geometry.radius, 12, 8);
+			var material = new THREE.MeshPhongMaterial(options.materials.default);
+			var geometry = new THREE.CircleGeometry(options.geometry.radius, options.geometry.segments);
 
 			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Puck).call(this, geometry, material));
 
-			_this.rotateX(Math.PI / 2);
-
 			_this.options = options;
-			_this._createOutline();
+			_this.addCylinder(options);
+
+			_this.rotateX(Math.PI / 2);
+			_this.position.y = options.geometry.height;
 			return _this;
 		}
 
 		babelHelpers.createClass(Puck, [{
-			key: '_createOutline',
-			value: function _createOutline() {
-				var outline = this.options.outline;
+			key: 'addCylinder',
+			value: function addCylinder(options) {
+				var radius = options.geometry.radius;
+				var height = options.geometry.height;
+				var segments = options.geometry.segments;
 
-				if (outline && outline.enabled) {
-					var radius = this.options.geometry.radius;
-					this.outlineMaterial = new THREE.MeshBasicMaterial({ side: THREE.BackSide });
-					this.add(new THREE.Mesh(this.geometry.clone(), this.outlineMaterial));
+				var material = new THREE.MeshPhongMaterial(options.materials.default);
+				var geometry = new THREE.CylinderGeometry(radius, radius, height, segments, 1, true);
+				geometry.rotateX(Math.PI / 2);
+				geometry.translate(0, 0, height / 2);
 
-					var scale = 1 - outline.width / radius;
-					this.geometry.scale(scale, scale, scale);
+				var cylinder = new THREE.Mesh(geometry, material);
 
-					this.position.z = radius;
-				}
+				this.add(cylinder);
+				this.cylinder = cylinder;
 			}
 		}, {
 			key: 'updateColor',
 			value: function updateColor(player) {
-				var material = this.options.material;
-				this.material.setValues(player.team === 1 ? material.red : material.blue);
+				var tileName = player.team === 1 ? 'redball' : 'blueball';
+				var tile = tagpro.tiles[tileName];
 
-				var outline = this.options.outline;
-				if (outline && outline.enabled) {
-					this.outlineMaterial.setValues(player.team === 1 ? outline.red : outline.blue);
+				if (!tile.texture) {
+					createBallTexture(tile);
 				}
+
+				this.material.map = tile.texture;
+
+				var materials = this.options.materials;
+				var material = player.team === 1 ? materials.red : materials.blue;
+				this.cylinder.material.setValues(material);
+
+				if (!tile.dominantColor) {
+					tile.dominantColor = findDominantColorForTile(tile);
+				}
+
+				this.cylinder.material.color = tile.dominantColor;
 			}
 		}, {
 			key: 'updatePosition',
@@ -605,29 +720,21 @@ var utils = Object.freeze({
 		return Puck;
 	}(THREE.Mesh);
 
-	function createPuckGeometry(_ref, extrude) {
-		var radius = _ref.radius;
-		var holeRadius = _ref.holeRadius;
+	function createBallTexture(tile) {
+		var texture = new THREE.Texture(tagpro.tiles.image);
+		texture.needsUpdate = true;
 
-		var shape = createPuckShape(radius, holeRadius);
-		var geometry = extrudeShape(shape, extrude, radius * 2);
+		var left = tile.x * tagpro.TILE_SIZE / TILES_WIDTH;
+		var top = tile.y * tagpro.TILE_SIZE / TILES_HEIGHT;
 
-		return geometry;
-	}
+		texture.offset.set(left + 1 / TILES_WIDTH, 1 - (top + (BALL_WIDTH + 1) / TILES_HEIGHT));
 
-	function createPuckShape(radius, holeRadius) {
-		var shape = new THREE.Shape();
-		shape.moveTo(radius, 0);
-		shape.absarc(0, 0, radius, 0, 2 * Math.PI, false);
+		var w = BALL_WIDTH / TILES_WIDTH;
+		var h = BALL_WIDTH / TILES_HEIGHT;
 
-		if (holeRadius > 0) {
-			var hole = new THREE.Shape();
-			hole.moveTo(holeRadius, 0);
-			hole.absarc(0, 0, holeRadius, 0, 2 * Math.PI, true);
-			shape.holes.push(hole);
-		}
+		texture.repeat.set(w, h);
 
-		return shape;
+		tile.texture = texture;
 	}
 
 	var material;
@@ -838,12 +945,34 @@ var objects = Object.freeze({
 				var w = 16 * 40;
 				var h = 11 * 40;
 
-				var left = 5.5 * 40 / w;
-				var right = 6.5 * 40 / w;
-				var top = 5.5 * 40 / h;
-				var bottom = 6.5 * 40 / h;
+				var a = geometry.vertices[indexA];
+				var b = geometry.vertices[indexB];
 
-				return [new THREE.Vector2(left, 1 - top), new THREE.Vector2(left, 1 - bottom), new THREE.Vector2(right, 1 - bottom), new THREE.Vector2(right, 1 - top)];
+				var left, right, top, bottom;
+
+				// if (Math.abs(a.y - b.y) < 0.01) {
+				// top, bottom
+				left = 5 * 40 / w;
+				right = 5.5 * 40 / w;
+				top = 4 * 40 / h;
+				bottom = 5 * 40 / h;
+
+				return [new THREE.Vector2(right, 1 - top), new THREE.Vector2(left, 1 - top), new THREE.Vector2(left, 1 - bottom), new THREE.Vector2(right, 1 - bottom)];
+				// }
+				// else {
+				// 	// left, right, diagonals
+				// 	left = (15 * 40) / w;
+				// 	right = (16 * 40) / w;
+				// 	top = (0 * 40) / h;
+				// 	bottom = (1 * 40) / h;
+
+				// 	return [
+				// 		new THREE.Vector2(right, 1 - top),
+				// 		new THREE.Vector2(left, 1 - top),
+				// 		new THREE.Vector2(left, 1 - bottom),
+				// 		new THREE.Vector2(right, 1 - bottom),
+				// 	];
+				// }
 			}
 		};
 	}
@@ -946,13 +1075,14 @@ var walls = Object.freeze({
 	});
 
 	var ball = {
+		enabled: true,
 		velocityCoefficient: 0.1,
 		rotationCoefficient: 0.015,
 		geometry: {
 			radius: 19,
-			detail: 0
+			detail: 1
 		},
-		material: {
+		materials: {
 			blue: {
 				shading: THREE.FlatShading,
 				color: 0x0000ff
@@ -965,7 +1095,7 @@ var walls = Object.freeze({
 		outline: {
 			enabled: true,
 			detail: 2,
-			width: 2,
+			width: 1,
 			blue: {
 				color: 0x0000bb
 			},
@@ -976,40 +1106,26 @@ var walls = Object.freeze({
 	};
 
 	var puck = {
+		enabled: true,
 		rotationCoefficient: 0.01,
 		geometry: {
 			radius: 19,
-			holeRadius: 10
+			height: 10,
+			segments: 32
 		},
-		extrude: {
-			curveSegments: 12,
-			amount: 10,
-			steps: 1,
-			bevelEnabled: true,
-			bevelSegments: 1,
-			bevelSize: 5,
-			bevelThickness: 6
-		},
-		material: {
-			blue: {
+		materials: {
+			default: {
+				transparent: true,
+				alphaTest: 0.1,
+				opacity: 0.9,
 				shading: THREE.FlatShading,
-				color: 0x0000ff,
-				opacity: 0.9
+				side: THREE.DoubleSide
 			},
-			red: {
-				shading: THREE.FlatShading,
-				color: 0xff0000,
-				opacity: 0.9
-			}
-		},
-		outline: {
-			enabled: false,
-			width: 2,
 			blue: {
 				color: 0x0000ff
 			},
 			red: {
-				color: 0xbb0000
+				color: 0xff0000
 			}
 		}
 	};
@@ -1147,22 +1263,22 @@ var objects$1 = Object.freeze({
 	}, objects, utils, walls, lights);
 
 	// Extend tagpro.ready.after
-	tagpro.ready.after = readyAfter.bind(null, tagpro);
+	tagpro__default.ready.after = readyAfter.bind(null, tagpro__default);
 
 	// HACK: for debugging
 	window.t3d = t3d;
 
 	function createRenderer3D() {
-		var TILE_SIZE = tagpro.TILE_SIZE;
+		var TILE_SIZE = tagpro__default.TILE_SIZE;
 
-		tagpro.tagpro3d = t3d;
+		tagpro__default.tagpro3d = t3d;
 
-		var tr = tagpro.renderer;
+		var tr = tagpro__default.renderer;
 
 		// Make game canvas transparent
 		tr.options.transparent = true;
 
-		drawExtraFloors(tagpro);
+		changeSomeTilesToFloorTiles(tagpro__default.tiles);
 
 		// Add styles
 		addStyles(styles);
@@ -1206,8 +1322,8 @@ var objects$1 = Object.freeze({
 
 		var zoom;
 		after(tr, 'updateCameraZoom', function () {
-			if (zoom !== tagpro.zoom) {
-				zoom = tagpro.zoom;
+			if (zoom !== tagpro__default.zoom) {
+				zoom = tagpro__default.zoom;
 				t3d.updateCameraZoom(t3d.camera, zoom);
 			}
 		});
@@ -1250,7 +1366,7 @@ var objects$1 = Object.freeze({
 		after(tr, 'createBackgroundTexture', function (container) {
 			var textures = t3d.mapBackgroundChunksToTextures(tr.backgroundChunks);
 
-			t3d.createWalls(tagpro.map, textures, tagpro.tiles.image.src);
+			t3d.createWalls(tagpro__default.map, textures, tagpro__default.tiles.image.src);
 
 			var plane = t3d.createBackgroundPlaneFromChunks(tr.backgroundChunks);
 			t3d.scene.add(plane);
@@ -1263,7 +1379,7 @@ var objects$1 = Object.freeze({
 
 		var originalDrawDynamicTile = tr.drawDynamicTile;
 		tr.drawDynamicTile = function (x, y) {
-			var tile = tagpro.map[x][y];
+			var tile = tagpro__default.map[x][y];
 
 			var createOrUpdateObject = t3d.objectMap[tile];
 
@@ -1296,7 +1412,6 @@ var objects$1 = Object.freeze({
 		console.log('TagPro 3D Initialized.');
 	}
 
-	tagpro.ready(createRenderer3D);
+	tagpro__default.ready(createRenderer3D);
 
-}(tagpro,THREE,$,ClipperLib));
-//# sourceMappingURL=tagpro-3d.user.js.map
+}(tagpro,THREE,$,RgbQuant,ClipperLib));

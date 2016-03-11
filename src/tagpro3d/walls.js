@@ -87,17 +87,39 @@ function createUVGenerator({ x, y, width, height }, index, sideIndex) {
 			var w = 16 * 40;
 			var h = 11 * 40;
 
-			var left = (5.5 * 40) / w;
-			var right = (6.5 * 40) / w;
-			var top = (5.5 * 40) / h;
-			var bottom = (6.5 * 40) / h;
+			var a = geometry.vertices[indexA];
+			var b = geometry.vertices[indexB];
 
-			return [
-				new THREE.Vector2(left, 1 - top),
-				new THREE.Vector2(left, 1 - bottom),
-				new THREE.Vector2(right, 1 - bottom),
-				new THREE.Vector2(right, 1 - top)
-			];
+			var left, right, top, bottom;
+
+			// if (Math.abs(a.y - b.y) < 0.01) {
+				// top, bottom
+				left = (5 * 40) / w;
+				right = (5.5 * 40) / w;
+				top = (4 * 40) / h;
+				bottom = (5 * 40) / h;
+
+				return [
+					new THREE.Vector2(right, 1 - top),
+					new THREE.Vector2(left, 1 - top),
+					new THREE.Vector2(left, 1 - bottom),
+					new THREE.Vector2(right, 1 - bottom),
+				];
+			// }
+			// else {
+			// 	// left, right, diagonals
+			// 	left = (15 * 40) / w;
+			// 	right = (16 * 40) / w;
+			// 	top = (0 * 40) / h;
+			// 	bottom = (1 * 40) / h;
+
+			// 	return [
+			// 		new THREE.Vector2(right, 1 - top),
+			// 		new THREE.Vector2(left, 1 - top),
+			// 		new THREE.Vector2(left, 1 - bottom),
+			// 		new THREE.Vector2(right, 1 - bottom),
+			// 	];
+			// }
 		}
 	};
 }

@@ -22,7 +22,7 @@ function createRenderer3D() {
 	// Make game canvas transparent
 	tr.options.transparent = true;
 
-	hacks.drawExtraFloors(tagpro);
+	hacks.changeSomeTilesToFloorTiles(tagpro.tiles);
 
 	// Add styles
 	addStyles(styles);

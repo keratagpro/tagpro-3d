@@ -1,9 +1,13 @@
 import * as THREE from 'three';
+import { tiles } from 'tagpro';
+import { findDominantColorForTile } from '../utils';
 
 const tempQuaternion = new THREE.Quaternion();
 const AXIS_X = new THREE.Vector3(1, 0, 0);
 const AXIS_Y = new THREE.Vector3(0, 1, 0);
 const AXIS_Z = new THREE.Vector3(0, 0, 1);
+
+var ballTileColors = {};
 
 export default class Ball extends THREE.Mesh {
 	constructor(options) {
@@ -15,6 +19,8 @@ export default class Ball extends THREE.Mesh {
 
 		this.options = options;
 		this._createOutline();
+
+		this.position.y = options.geometry.radius;
 	}
 
 	_createOutline() {
@@ -29,18 +35,26 @@ export default class Ball extends THREE.Mesh {
 
 			var scale = 1 - (outline.width / radius);
 			this.geometry.scale(scale, scale, scale);
-
-			this.position.y = radius;
 		}
 	}
 
 	updateColor(player) {
-		var material = this.options.material;
-		this.material.setValues(player.team === 1 ? material.red : material.blue);
+		var tileName = player.team === 1 ? 'redball' : 'blueball';
+
+		var materials = this.options.materials;
+		this.material.setValues(player.team === 1 ? materials.red : materials.blue);
+
+		if (!ballTileColors[tileName]) {
+			var tile = tiles[tileName];
+			ballTileColors[tileName] = findDominantColorForTile(tile);
+		}
+
+		this.material.color = ballTileColors[tileName];
 
 		var outline = this.options.outline;
 		if (outline && outline.enabled) {
 			this.outlineMaterial.setValues(player.team === 1 ? outline.red : outline.blue);
+			this.outlineMaterial.color = ballTileColors[tileName];
 		}
 	}
 

@@ -106,10 +106,6 @@ export function loadObjectFromJson(json) {
 	return mesh;
 }
 
-const quantizer = new RgbQuant({
-	colors: 4
-});
-
 export function findDominantColorForTile(tile, tileSize = TILE_SIZE) {
 	var canvas = document.createElement('canvas');
 	var context = canvas.getContext('2d');
@@ -120,6 +116,10 @@ export function findDominantColorForTile(tile, tileSize = TILE_SIZE) {
 	context.drawImage(tiles.image,
 		tile.x * tileSize, tile.y * tileSize, tileSize, tileSize,
 		0, 0, tileSize, tileSize);
+
+	var quantizer = new RgbQuant({
+		colors: 4
+	});
 
 	quantizer.sample(canvas);
 

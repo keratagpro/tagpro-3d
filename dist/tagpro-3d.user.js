@@ -342,10 +342,6 @@ var lights = Object.freeze({
 		return mesh;
 	}
 
-	var quantizer = new RgbQuant({
-		colors: 4
-	});
-
 	function findDominantColorForTile(tile) {
 		var tileSize = arguments.length <= 1 || arguments[1] === undefined ? tagpro.TILE_SIZE : arguments[1];
 
@@ -356,6 +352,10 @@ var lights = Object.freeze({
 		canvas.height = tileSize;
 
 		context.drawImage(tagpro.tiles.image, tile.x * tileSize, tile.y * tileSize, tileSize, tileSize, 0, 0, tileSize, tileSize);
+
+		var quantizer = new RgbQuant({
+			colors: 4
+		});
 
 		quantizer.sample(canvas);
 

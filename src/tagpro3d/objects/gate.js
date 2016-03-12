@@ -10,7 +10,7 @@ var _geometry;
 var gateColors = {};
 
 export default class Gate extends THREE.Mesh {
-	constructor(tile, {
+	constructor(tileId, {
 		geometry,
 		materials,
 		outlineMaterials,
@@ -29,7 +29,7 @@ export default class Gate extends THREE.Mesh {
 
 		this.addOutline(outlineMaterials.default);
 
-		this.updateByTile(tile);
+		this.updateByTileId(tileId);
 	}
 
 	addOutline(materialParams) {
@@ -44,11 +44,11 @@ export default class Gate extends THREE.Mesh {
 		this._outlineMaterial = outline.material;
 	}
 
-	updateByTile(tile) {
-		if (tile == objects.GATE_OFF) this.off();
-		else if (tile == objects.GATE_GREEN) this.green();
-		else if (tile == objects.GATE_RED) this.red();
-		else if (tile == objects.GATE_BLUE) this.blue();
+	updateByTileId(tileId) {
+		if (tileId == objects.GATE_OFF) this.off();
+		else if (tileId == objects.GATE_GREEN) this.green();
+		else if (tileId == objects.GATE_RED) this.red();
+		else if (tileId == objects.GATE_BLUE) this.blue();
 	}
 
 	updateMaterials(tileId, material, outlineMaterial) {

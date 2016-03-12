@@ -6,7 +6,7 @@ import { loadObjectFromJson } from '../utils';
 import * as objects from '../constants';
 
 export default class Bomb extends THREE.Object3D {
-	constructor(tile, {
+	constructor(tileId, {
 		materials
 	} = bomb) {
 		super();
@@ -16,12 +16,12 @@ export default class Bomb extends THREE.Object3D {
 		this.add(loadObjectFromJson(bombJson));
 		this.getObjectByName('bomb').material.setValues(materials.body);
 
-		this.updateByTile(tile);
+		this.updateByTileId(tileId);
 	}
 
-	updateByTile(tile) {
-		if (tile == objects.BOMB) this.show();
-		else if (tile == objects.BOMB_OFF) this.hide();
+	updateByTileId(tileId) {
+		if (tileId == objects.BOMB) this.show();
+		else if (tileId == objects.BOMB_OFF) this.hide();
 	}
 
 	show() {

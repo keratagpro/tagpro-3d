@@ -8,7 +8,7 @@ import { findDominantColorForTile } from '../utils';
 var _material, _geometry;
 
 export default class Spike extends THREE.Mesh {
-	constructor(tile, {
+	constructor(tileId, {
 		geometry,
 		material
 	} = spike) {

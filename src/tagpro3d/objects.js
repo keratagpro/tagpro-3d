@@ -5,6 +5,7 @@ import Bomb from './objects/bomb';
 import Gate from './objects/gate';
 import Puck from './objects/puck';
 import Spike from './objects/spike';
+import Tile from './objects/tile';
 
 import * as constants from './constants';
 
@@ -21,11 +22,17 @@ export function createBall(player) {
 }
 
 export const objectMap = {
-	[constants.SPIKE]: Spike,
-	[constants.GATE_OFF]: Gate,
-	[constants.GATE_GREEN]: Gate,
-	[constants.GATE_RED]: Gate,
-	[constants.GATE_BLUE]: Gate,
 	[constants.BOMB]: Bomb,
 	[constants.BOMB_OFF]: Bomb,
+	[constants.BUTTON]: Tile,
+	[constants.GATE_BLUE]: Gate,
+	[constants.GATE_GREEN]: Gate,
+	[constants.GATE_OFF]: Gate,
+	[constants.GATE_RED]: Gate,
+	[constants.SPIKE]: Spike,
+	[constants.POWERUP_BOMB]: Tile,
+	[constants.POWERUP_GRIP]: Tile,
+	[constants.POWERUP_NONE]: Tile,
+	[constants.POWERUP_SPEED]: Tile,
+	[constants.POWERUP_TAGPRO]: Tile,
 };

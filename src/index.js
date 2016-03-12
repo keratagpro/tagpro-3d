@@ -123,7 +123,7 @@ function createRenderer3D() {
 
 	var originalDrawDynamicTile = tr.drawDynamicTile;
 	tr.drawDynamicTile = function (x, y) {
-		var tile = tagpro.map[x][y];
+		var tileId = tagpro.map[x][y];
 
 		if (!t3d.dynamicObjects[x]) {
 			t3d.dynamicObjects[x] = {};
@@ -132,14 +132,14 @@ function createRenderer3D() {
 		var mesh = t3d.dynamicObjects[x][y];
 
 		if (!mesh) {
-			var TileObject = t3d.objectMap[tile];
+			var TileObject = t3d.objectMap[tileId];
 
 			if (!TileObject) {
 				originalDrawDynamicTile(x, y);
 				return;
 			}
 
-			mesh = new TileObject(tile);
+			mesh = new TileObject(tileId);
 
 			mesh.position.x = x * TILE_SIZE;
 			mesh.position.z = y * TILE_SIZE;
@@ -148,7 +148,7 @@ function createRenderer3D() {
 			t3d.dynamicObjects[x][y] = mesh;
 		}
 		else {
-			mesh.updateByTile(tile);
+			mesh.updateByTileId(tileId);
 		}
 	};
 

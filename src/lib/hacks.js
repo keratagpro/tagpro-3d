@@ -1,3 +1,5 @@
+import * as constants from '../tagpro3d/constants';
+
 /**
  * Delays callbacks when resourcesLoaded == true, so it's possible to run stuff
  * between tagpro.ready and tagpro.ready.after.
@@ -16,8 +18,12 @@ export function readyAfter(tagpro, callback) {
  */
 export function changeSomeTilesToFloorTiles(tiles) {
 	const flooredTiles = [
-		9, 9.1, 9.2, 9.3, // gates
-		17, 18 // goal tiles
+		constants.GATE_OFF,
+		constants.GATE_GREEN,
+		constants.GATE_RED,
+		constants.GATE_BLUE,
+		constants.ENDZONE_RED,
+		constants.ENDZONE_BLUE,
 	];
 
 	flooredTiles.forEach(tile => {

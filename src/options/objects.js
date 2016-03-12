@@ -38,7 +38,8 @@ export const puck = {
 	enabled: true,
 	rotationCoefficient: 0.01,
 	geometry: {
-		radius: 19,
+		radiusTop: 17,
+		radiusBottom: 19,
 		height: 10,
 		segments: 32
 	},
@@ -82,13 +83,13 @@ export const spike = {
 		segments: 6,
 	},
 	material: {
-		color: 0x666666,
+		// color: 0x666666,
 		opacity: 1
 	}
 };
 
 export const bomb = {
-	material: {
+	materials: {
 		body: {
 			color: 0x000000
 		},
@@ -128,27 +129,26 @@ export const gate = {
 	geometry: {
 		width: 40,
 	},
-	material: {
-		outline: {
-			color: 0x333333,
+	materials: {
+		default: {
+			transparent: true,
+			opacity: 0.7
 		},
 		off: {
-			transparent: true,
-			color: 0x000000,
-			opacity: 0.0,
-		},
-		blue: {
-			color: 0x0000ff,
-			opacity: 0.7,
+			opacity: 0.2
 		},
 		green: {
-			color: 0x00ff00,
-			opacity: 0.7,
+			opacity: 0.7
 		},
 		red: {
-			color: 0xff0000,
-			opacity: 0.7,
+			opacity: 0.7
+		},
+		blue: {
+			opacity: 0.7
 		}
+	},
+	outlineMaterials: {
+		default: { },
 	},
 	extrude: {
 		amount: 40,

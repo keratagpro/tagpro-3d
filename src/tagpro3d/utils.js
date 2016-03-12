@@ -53,8 +53,8 @@ export function updateCameraFOV(camera, gameCanvas) {
 }
 
 export function updateCameraPosition(camera, x, y) {
-	camera.position.x = x - 19;
-	camera.position.z = y - 19;
+	camera.position.x = x - 20;
+	camera.position.z = y - 20;
 }
 
 export function updateCameraZoom(camera, zoom) {
@@ -129,13 +129,10 @@ export function findDominantColorForTile(tile, tileSize = TILE_SIZE) {
 		return null;
 	}
 
-	palette = palette.find(([r, g, b]) => {
-		return (
-			!(r < 30 && g < 30 && b < 30) &&
-			!(r > 240 && g > 240 && b > 240)
-		);
-	});
+	palette = palette.map(([r, g, b]) => new THREE.Color(r / 256, g / 256, b / 256));
 
-	var [r, g, b] = palette;
-	return new THREE.Color(r / 256, g / 256, b / 256);
+	// Try to find a non-grayscale color.
+	var color = palette.find(col => col.getHSL().s > 0.5);
+
+	return color || palette[0];
 }

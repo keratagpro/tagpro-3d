@@ -3,7 +3,6 @@ import { TILE_SIZE, tiles } from 'tagpro';
 
 import { extrudeShape } from '../geometries';
 import { textureLoader, findDominantColorForTile } from '../utils';
-import { tileMap } from '../objects';
 
 const TILES_WIDTH = 16 * TILE_SIZE;
 const TILES_HEIGHT = 11 * TILE_SIZE;
@@ -15,7 +14,7 @@ const AXIS_Y = new THREE.Vector3(0, 1, 0);
 export default class Puck extends THREE.Mesh {
 	constructor(options) {
 		var material = new THREE.MeshPhongMaterial(options.materials.default);
-		var geometry = new THREE.CircleGeometry(options.geometry.radius, options.geometry.segments);
+		var geometry = new THREE.CircleGeometry(options.geometry.radiusTop, options.geometry.segments);
 
 		super(geometry, material);
 
@@ -27,14 +26,12 @@ export default class Puck extends THREE.Mesh {
 	}
 
 	addCylinder(options) {
-		var radius = options.geometry.radius;
-		var height = options.geometry.height;
-		var segments = options.geometry.segments;
+		var geom = options.geometry;
 
 		var material = new THREE.MeshPhongMaterial(options.materials.default);
-		var geometry = new THREE.CylinderGeometry(radius, radius, height, segments, 1, true);
-		geometry.rotateX(Math.PI / 2);
-		geometry.translate(0, 0, height / 2);
+		var geometry = new THREE.CylinderGeometry(geom.radiusTop, geom.radiusBottom, geom.height, geom.segments, 1, true);
+		geometry.rotateX(-Math.PI / 2);
+		geometry.translate(0, 0, geom.height / 2);
 
 		var cylinder = new THREE.Mesh(geometry, material);
 

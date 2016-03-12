@@ -49,6 +49,21 @@
 	  };
 	}();
 
+	babelHelpers.defineProperty = function (obj, key, value) {
+	  if (key in obj) {
+	    Object.defineProperty(obj, key, {
+	      value: value,
+	      enumerable: true,
+	      configurable: true,
+	      writable: true
+	    });
+	  } else {
+	    obj[key] = value;
+	  }
+
+	  return obj;
+	};
+
 	babelHelpers.inherits = function (subClass, superClass) {
 	  if (typeof superClass !== "function" && superClass !== null) {
 	    throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
@@ -277,8 +292,8 @@ var lights = Object.freeze({
 	}
 
 	function updateCameraPosition(camera, x, y) {
-		camera.position.x = x - 19;
-		camera.position.z = y - 19;
+		camera.position.x = x - 20;
+		camera.position.z = y - 20;
 	}
 
 	function updateCameraZoom(camera, zoom) {
@@ -365,25 +380,21 @@ var lights = Object.freeze({
 			return null;
 		}
 
-		palette = palette.find(function (_ref4) {
+		palette = palette.map(function (_ref4) {
 			var _ref5 = babelHelpers.slicedToArray(_ref4, 3);
 
 			var r = _ref5[0];
 			var g = _ref5[1];
 			var b = _ref5[2];
-
-			return !(r < 30 && g < 30 && b < 30) && !(r > 240 && g > 240 && b > 240);
+			return new THREE.Color(r / 256, g / 256, b / 256);
 		});
 
-		var _palette = palette;
+		// Try to find a non-grayscale color.
+		var color = palette.find(function (col) {
+			return col.getHSL().s > 0.5;
+		});
 
-		var _palette2 = babelHelpers.slicedToArray(_palette, 3);
-
-		var r = _palette2[0];
-		var g = _palette2[1];
-		var b = _palette2[2];
-
-		return new THREE.Color(r / 256, g / 256, b / 256);
+		return color || palette[0];
 	}
 
 var utils = Object.freeze({
@@ -495,46 +506,227 @@ var utils = Object.freeze({
 		object: object
 	};
 
+	var ball = {
+		enabled: true,
+		velocityCoefficient: 0.1,
+		rotationCoefficient: 0.015,
+		geometry: {
+			radius: 19,
+			detail: 1
+		},
+		materials: {
+			blue: {
+				shading: THREE.FlatShading,
+				color: 0x0000ff
+			},
+			red: {
+				shading: THREE.FlatShading,
+				color: 0xff0000
+			}
+		},
+		outline: {
+			enabled: true,
+			detail: 2,
+			width: 1,
+			blue: {
+				color: 0x0000bb
+			},
+			red: {
+				color: 0xbb0000
+			}
+		}
+	};
+
+	var puck = {
+		enabled: true,
+		rotationCoefficient: 0.01,
+		geometry: {
+			radiusTop: 17,
+			radiusBottom: 19,
+			height: 10,
+			segments: 32
+		},
+		materials: {
+			default: {
+				transparent: true,
+				alphaTest: 0.1,
+				opacity: 0.9,
+				shading: THREE.FlatShading,
+				side: THREE.DoubleSide
+			},
+			blue: {
+				color: 0x0000ff
+			},
+			red: {
+				color: 0xff0000
+			}
+		}
+	};
+
+	var wall = {
+		material: {
+			shading: THREE.FlatShading,
+			color: 0xffffff
+		},
+		// opacity: 1.0,
+		// transparent: true
+		extrude: {
+			amount: 40,
+			steps: 1,
+			bevelEnabled: false,
+			bevelSegments: 1,
+			bevelSize: 5,
+			bevelThickness: 10
+		}
+	};
+
+	var spike = {
+		geometry: {
+			width: 32,
+			segments: 6
+		},
+		material: {
+			// color: 0x666666,
+			opacity: 1
+		}
+	};
+
+	var bomb = {
+		materials: {
+			body: {
+				color: 0x000000
+			},
+			show: {
+				transparent: false,
+				opacity: 1.0
+			},
+			hide: {
+				transparent: true,
+				opacity: 0.2
+			}
+		}
+	};
+
+	var button = {
+		geometry: {
+			width: 16,
+			height: 10,
+			segments: 20
+		},
+		material: {
+			color: 0xa06e32
+		}
+	};
+
+	var flag = {
+		animate: false,
+		width: 40,
+		height: 20,
+		waveDepth: 4,
+		widthSegments: 10,
+		heightSegments: 5,
+		restDistance: 4
+	};
+
+	var gate = {
+		geometry: {
+			width: 40
+		},
+		materials: {
+			default: {
+				transparent: true,
+				opacity: 0.7
+			},
+			off: {
+				opacity: 0.2
+			},
+			green: {
+				opacity: 0.7
+			},
+			red: {
+				opacity: 0.7
+			},
+			blue: {
+				opacity: 0.7
+			}
+		},
+		outlineMaterials: {
+			default: {}
+		},
+		extrude: {
+			amount: 40,
+			bevelEnabled: true,
+			bevelSegments: 1,
+			bevelSize: 6,
+			bevelThickness: 10
+		}
+	};
+
+var objects$1 = Object.freeze({
+		ball: ball,
+		puck: puck,
+		wall: wall,
+		spike: spike,
+		bomb: bomb,
+		button: button,
+		flag: flag,
+		gate: gate
+	});
+
+	// https://www.reddit.com/r/TagPro/wiki/api#wiki_tiles
+
+	var SPIKE = 7;
+	var GATE_OFF = 9;
+	var GATE_GREEN = 9.1;
+	var GATE_RED = 9.2;
+	var GATE_BLUE = 9.3;
+	var BOMB = 10;
+	var BOMB_OFF = 10.1;
+
 	var Bomb = function (_THREE$Object3D) {
 		babelHelpers.inherits(Bomb, _THREE$Object3D);
 
-		function Bomb() {
-			var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+		function Bomb(tile) {
+			var _ref = arguments.length <= 1 || arguments[1] === undefined ? bomb : arguments[1];
+
+			var materials = _ref.materials;
 			babelHelpers.classCallCheck(this, Bomb);
 
 			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Bomb).call(this));
 
-			var mesh = loadObjectFromJson(bombJson);
-			_this.add(mesh);
-			_this.getObjectByName('bomb').material.setValues(options.material.body);
+			_this.materials = materials;
 
-			_this.options = options;
+			_this.add(loadObjectFromJson(bombJson));
+			_this.getObjectByName('bomb').material.setValues(materials.body);
+
+			_this.updateByTile(tile);
 			return _this;
 		}
 
 		babelHelpers.createClass(Bomb, [{
+			key: 'updateByTile',
+			value: function updateByTile(tile) {
+				if (tile == BOMB) this.show();else if (tile == BOMB_OFF) this.hide();
+			}
+		}, {
 			key: 'show',
 			value: function show() {
-				var values = this.options.material.show;
+				var params = this.materials.show;
 
 				this.traverse(function (o) {
 					if (!o.material) return;
-					o.material.setValues(values);
+					o.material.setValues(params);
 				});
-
-				return this;
 			}
 		}, {
 			key: 'hide',
 			value: function hide() {
-				var values = this.options.material.hide;
+				var params = this.materials.hide;
 
 				this.traverse(function (o) {
 					if (!o.material) return;
-					o.material.setValues(values);
+					o.material.setValues(params);
 				});
-
-				return this;
 			}
 		}]);
 		return Bomb;
@@ -575,68 +767,86 @@ var utils = Object.freeze({
 		return geometry;
 	}
 
-	var geometry;
+	var _geometry;
+	var gateColors = {};
 
 	var Gate = function (_THREE$Mesh) {
 		babelHelpers.inherits(Gate, _THREE$Mesh);
 
-		function Gate() {
-			var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+		function Gate(tile) {
+			var _ref = arguments.length <= 1 || arguments[1] === undefined ? gate : arguments[1];
+
+			var geometry = _ref.geometry;
+			var materials = _ref.materials;
+			var outlineMaterials = _ref.outlineMaterials;
+			var extrude = _ref.extrude;
 			babelHelpers.classCallCheck(this, Gate);
 
+			if (!_geometry) _geometry = createRectangleGeometry(geometry.width, extrude);
+			var material = new THREE.MeshPhongMaterial(materials.default);
 
-			if (!geometry) geometry = createRectangleGeometry(options.geometry.width, options.extrude);
-			var material = new THREE.MeshPhongMaterial(options.material.off);
+			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Gate).call(this, _geometry, material));
 
-			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Gate).call(this, geometry, material));
+			_this.name = 'gate';
 
 			_this.rotateX(Math.PI / 2);
 
-			_this.name = 'gate';
-			_this.options = options;
+			_this.materials = materials;
+			_this.outlineMaterials = outlineMaterials;
 
-			_this._addOutline();
+			_this.addOutline(outlineMaterials.default);
+
+			_this.updateByTile(tile);
 			return _this;
 		}
 
 		babelHelpers.createClass(Gate, [{
-			key: '_addOutline',
-			value: function _addOutline() {
-				var geom = new THREE.EdgesGeometry(this.geometry, 0.1);
-				var mat = new THREE.LineBasicMaterial(this.options.material.outline);
+			key: 'addOutline',
+			value: function addOutline(materialParams) {
+				var outline = new THREE.LineSegments(new THREE.EdgesGeometry(this.geometry, 0.1), new THREE.LineBasicMaterial(materialParams));
 
-				this.outline = new THREE.LineSegments(geom, mat);
-				this.outline.matrixAutoUpdate = false;
+				outline.matrixAutoUpdate = false;
 
-				this.add(this.outline);
+				this.add(outline);
+				this._outlineMaterial = outline.material;
+			}
+		}, {
+			key: 'updateByTile',
+			value: function updateByTile(tile) {
+				if (tile == GATE_OFF) this.off();else if (tile == GATE_GREEN) this.green();else if (tile == GATE_RED) this.red();else if (tile == GATE_BLUE) this.blue();
+			}
+		}, {
+			key: 'updateMaterials',
+			value: function updateMaterials(tileId, material, outlineMaterial) {
+				if (!gateColors[tileId]) {
+					gateColors[tileId] = findDominantColorForTile(tagpro.tiles[tileId]);
+				}
+
+				this._outlineMaterial.color = gateColors[tileId];
+				this._outlineMaterial.setValues(outlineMaterial);
+
+				this.material.color = gateColors[tileId];
+				this.material.setValues(material);
 			}
 		}, {
 			key: 'off',
 			value: function off() {
-				this.outline.visible = true;
-				this.material.setValues(this.options.material.off);
-				return this;
-			}
-		}, {
-			key: 'red',
-			value: function red() {
-				this.outline.visible = false;
-				this.material.setValues(this.options.material.red);
-				return this;
+				this.updateMaterials(GATE_OFF, this.materials.off, this.outlineMaterials.off);
 			}
 		}, {
 			key: 'green',
 			value: function green() {
-				this.outline.visible = false;
-				this.material.setValues(this.options.material.green);
-				return this;
+				this.updateMaterials(GATE_GREEN, this.materials.green, this.outlineMaterials.green);
+			}
+		}, {
+			key: 'red',
+			value: function red() {
+				this.updateMaterials(GATE_RED, this.materials.red, this.outlineMaterials.red);
 			}
 		}, {
 			key: 'blue',
 			value: function blue() {
-				this.outline.visible = false;
-				this.material.setValues(this.options.material.blue);
-				return this;
+				this.updateMaterials(GATE_BLUE, this.materials.blue, this.outlineMaterials.blue);
 			}
 		}]);
 		return Gate;
@@ -656,7 +866,7 @@ var utils = Object.freeze({
 			babelHelpers.classCallCheck(this, Puck);
 
 			var material = new THREE.MeshPhongMaterial(options.materials.default);
-			var geometry = new THREE.CircleGeometry(options.geometry.radius, options.geometry.segments);
+			var geometry = new THREE.CircleGeometry(options.geometry.radiusTop, options.geometry.segments);
 
 			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Puck).call(this, geometry, material));
 
@@ -671,14 +881,12 @@ var utils = Object.freeze({
 		babelHelpers.createClass(Puck, [{
 			key: 'addCylinder',
 			value: function addCylinder(options) {
-				var radius = options.geometry.radius;
-				var height = options.geometry.height;
-				var segments = options.geometry.segments;
+				var geom = options.geometry;
 
 				var material = new THREE.MeshPhongMaterial(options.materials.default);
-				var geometry = new THREE.CylinderGeometry(radius, radius, height, segments, 1, true);
-				geometry.rotateX(Math.PI / 2);
-				geometry.translate(0, 0, height / 2);
+				var geometry = new THREE.CylinderGeometry(geom.radiusTop, geom.radiusBottom, geom.height, geom.segments, 1, true);
+				geometry.rotateX(-Math.PI / 2);
+				geometry.translate(0, 0, geom.height / 2);
 
 				var cylinder = new THREE.Mesh(geometry, material);
 
@@ -737,34 +945,47 @@ var utils = Object.freeze({
 		tile.texture = texture;
 	}
 
-	var material;
-	var geometry$1;
+	var _material;
+	var _geometry$1;
 	var Spike = function (_THREE$Mesh) {
 		babelHelpers.inherits(Spike, _THREE$Mesh);
 
-		function Spike() {
-			var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+		function Spike(tile) {
+			var _ref = arguments.length <= 1 || arguments[1] === undefined ? spike : arguments[1];
+
+			var geometry = _ref.geometry;
+			var material = _ref.material;
 			babelHelpers.classCallCheck(this, Spike);
 
-			if (!geometry$1) geometry$1 = createSpikeGeometry(options.geometry);
-			if (!material) material = new THREE.MeshPhongMaterial(options.material);
+			if (!_geometry$1) {
+				_geometry$1 = createSpikeGeometry(geometry);
+			}
 
-			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Spike).call(this, geometry$1, material));
+			if (!_material) {
+				_material = new THREE.MeshPhongMaterial(material);
+				_material.color = findDominantColorForTile(tagpro.tiles[SPIKE]);
+			}
+
+			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Spike).call(this, _geometry$1, _material));
 
 			_this.name = 'spike';
 			return _this;
 		}
 
+		babelHelpers.createClass(Spike, [{
+			key: 'updateByTile',
+			value: function updateByTile() {}
+		}]);
 		return Spike;
 	}(THREE.Mesh);
 
 	function createSpikeGeometry() {
-		var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+		var _ref2 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
-		var _ref$width = _ref.width;
-		var width = _ref$width === undefined ? 32 : _ref$width;
-		var _ref$segments = _ref.segments;
-		var segments = _ref$segments === undefined ? 6 : _ref$segments;
+		var _ref2$width = _ref2.width;
+		var width = _ref2$width === undefined ? 32 : _ref2$width;
+		var _ref2$segments = _ref2.segments;
+		var segments = _ref2$segments === undefined ? 6 : _ref2$segments;
 
 		var geom = new THREE.SphereGeometry(width / 4, segments * 10);
 
@@ -777,6 +998,8 @@ var utils = Object.freeze({
 		return geom;
 	}
 
+	var _objectMap;
+
 	function createBall(player) {
 		var options = this.options;
 
@@ -787,43 +1010,7 @@ var utils = Object.freeze({
 		return mesh;
 	}
 
-	var objectMap = {
-		7: function _() {
-			var obj = arguments.length <= 0 || arguments[0] === undefined ? new Spike(this.options.objects.spike) : arguments[0];
-
-			return obj;
-		},
-		9: function _() {
-			var obj = arguments.length <= 0 || arguments[0] === undefined ? new Gate(this.options.objects.gate) : arguments[0];
-
-			return obj.off();
-		},
-		9.1: function _() {
-			var obj = arguments.length <= 0 || arguments[0] === undefined ? new Gate(this.options.objects.gate) : arguments[0];
-
-			return obj.green();
-		},
-		9.2: function _() {
-			var obj = arguments.length <= 0 || arguments[0] === undefined ? new Gate(this.options.objects.gate) : arguments[0];
-
-			return obj.red();
-		},
-		9.3: function _() {
-			var obj = arguments.length <= 0 || arguments[0] === undefined ? new Gate(this.options.objects.gate) : arguments[0];
-
-			return obj.blue();
-		},
-		10: function _() {
-			var obj = arguments.length <= 0 || arguments[0] === undefined ? new Bomb(this.options.objects.bomb) : arguments[0];
-
-			return obj.show();
-		},
-		10.1: function _() {
-			var obj = arguments.length <= 0 || arguments[0] === undefined ? new Bomb(this.options.objects.bomb) : arguments[0];
-
-			return obj.hide();
-		}
-	};
+	var objectMap = (_objectMap = {}, babelHelpers.defineProperty(_objectMap, SPIKE, Spike), babelHelpers.defineProperty(_objectMap, GATE_OFF, Gate), babelHelpers.defineProperty(_objectMap, GATE_GREEN, Gate), babelHelpers.defineProperty(_objectMap, GATE_RED, Gate), babelHelpers.defineProperty(_objectMap, GATE_BLUE, Gate), babelHelpers.defineProperty(_objectMap, BOMB, Bomb), babelHelpers.defineProperty(_objectMap, BOMB_OFF, Bomb), _objectMap);
 
 var objects = Object.freeze({
 		createBall: createBall,
@@ -1074,173 +1261,6 @@ var walls = Object.freeze({
 		createWalls: createWalls
 	});
 
-	var ball = {
-		enabled: true,
-		velocityCoefficient: 0.1,
-		rotationCoefficient: 0.015,
-		geometry: {
-			radius: 19,
-			detail: 1
-		},
-		materials: {
-			blue: {
-				shading: THREE.FlatShading,
-				color: 0x0000ff
-			},
-			red: {
-				shading: THREE.FlatShading,
-				color: 0xff0000
-			}
-		},
-		outline: {
-			enabled: true,
-			detail: 2,
-			width: 1,
-			blue: {
-				color: 0x0000bb
-			},
-			red: {
-				color: 0xbb0000
-			}
-		}
-	};
-
-	var puck = {
-		enabled: true,
-		rotationCoefficient: 0.01,
-		geometry: {
-			radius: 19,
-			height: 10,
-			segments: 32
-		},
-		materials: {
-			default: {
-				transparent: true,
-				alphaTest: 0.1,
-				opacity: 0.9,
-				shading: THREE.FlatShading,
-				side: THREE.DoubleSide
-			},
-			blue: {
-				color: 0x0000ff
-			},
-			red: {
-				color: 0xff0000
-			}
-		}
-	};
-
-	var wall = {
-		material: {
-			shading: THREE.FlatShading,
-			color: 0xffffff
-		},
-		// opacity: 1.0,
-		// transparent: true
-		extrude: {
-			amount: 40,
-			steps: 1,
-			bevelEnabled: false,
-			bevelSegments: 1,
-			bevelSize: 5,
-			bevelThickness: 10
-		}
-	};
-
-	var spike = {
-		geometry: {
-			width: 32,
-			segments: 6
-		},
-		material: {
-			color: 0x666666,
-			opacity: 1
-		}
-	};
-
-	var bomb = {
-		material: {
-			body: {
-				color: 0x000000
-			},
-			show: {
-				transparent: false,
-				opacity: 1.0
-			},
-			hide: {
-				transparent: true,
-				opacity: 0.2
-			}
-		}
-	};
-
-	var button = {
-		geometry: {
-			width: 16,
-			height: 10,
-			segments: 20
-		},
-		material: {
-			color: 0xa06e32
-		}
-	};
-
-	var flag = {
-		animate: false,
-		width: 40,
-		height: 20,
-		waveDepth: 4,
-		widthSegments: 10,
-		heightSegments: 5,
-		restDistance: 4
-	};
-
-	var gate = {
-		geometry: {
-			width: 40
-		},
-		material: {
-			outline: {
-				color: 0x333333
-			},
-			off: {
-				transparent: true,
-				color: 0x000000,
-				opacity: 0.0
-			},
-			blue: {
-				color: 0x0000ff,
-				opacity: 0.7
-			},
-			green: {
-				color: 0x00ff00,
-				opacity: 0.7
-			},
-			red: {
-				color: 0xff0000,
-				opacity: 0.7
-			}
-		},
-		extrude: {
-			amount: 40,
-			bevelEnabled: true,
-			bevelSegments: 1,
-			bevelSize: 6,
-			bevelThickness: 10
-		}
-	};
-
-var objects$1 = Object.freeze({
-		ball: ball,
-		puck: puck,
-		wall: wall,
-		spike: spike,
-		bomb: bomb,
-		button: button,
-		flag: flag,
-		gate: gate
-	});
-
 	var options = {
 		renderer: {
 			antialias: true,
@@ -1381,13 +1401,6 @@ var objects$1 = Object.freeze({
 		tr.drawDynamicTile = function (x, y) {
 			var tile = tagpro__default.map[x][y];
 
-			var createOrUpdateObject = t3d.objectMap[tile];
-
-			if (!createOrUpdateObject) {
-				originalDrawDynamicTile(x, y);
-				return;
-			}
-
 			if (!t3d.dynamicObjects[x]) {
 				t3d.dynamicObjects[x] = {};
 			}
@@ -1395,17 +1408,22 @@ var objects$1 = Object.freeze({
 			var mesh = t3d.dynamicObjects[x][y];
 
 			if (!mesh) {
-				mesh = createOrUpdateObject.call(t3d);
+				var TileObject = t3d.objectMap[tile];
 
-				// NOTE: Some tiles are "noops", e.g. goal tiles
-				if (!mesh) return;
+				if (!TileObject) {
+					originalDrawDynamicTile(x, y);
+					return;
+				}
 
-				mesh.position.set(x * TILE_SIZE, 0, y * TILE_SIZE);
+				mesh = new TileObject(tile);
+
+				mesh.position.x = x * TILE_SIZE;
+				mesh.position.z = y * TILE_SIZE;
+
 				t3d.scene.add(mesh);
-
 				t3d.dynamicObjects[x][y] = mesh;
 			} else {
-				createOrUpdateObject.call(t3d, mesh);
+				mesh.updateByTile(tile);
 			}
 		};
 

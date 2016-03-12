@@ -125,13 +125,6 @@ function createRenderer3D() {
 	tr.drawDynamicTile = function (x, y) {
 		var tile = tagpro.map[x][y];
 
-		var createOrUpdateObject = t3d.objectMap[tile];
-
-		if (!createOrUpdateObject) {
-			originalDrawDynamicTile(x, y);
-			return;
-		}
-
 		if (!t3d.dynamicObjects[x]) {
 			t3d.dynamicObjects[x] = {};
 		}
@@ -139,19 +132,23 @@ function createRenderer3D() {
 		var mesh = t3d.dynamicObjects[x][y];
 
 		if (!mesh) {
-			mesh = createOrUpdateObject.call(t3d);
+			var TileObject = t3d.objectMap[tile];
 
-			// NOTE: Some tiles are "noops", e.g. goal tiles
-			if (!mesh)
+			if (!TileObject) {
+				originalDrawDynamicTile(x, y);
 				return;
+			}
 
-			mesh.position.set(x * TILE_SIZE, 0, y * TILE_SIZE);
+			mesh = new TileObject(tile);
+
+			mesh.position.x = x * TILE_SIZE;
+			mesh.position.z = y * TILE_SIZE;
+
 			t3d.scene.add(mesh);
-
 			t3d.dynamicObjects[x][y] = mesh;
 		}
 		else {
-			createOrUpdateObject.call(t3d, mesh);
+			mesh.updateByTile(tile);
 		}
 	};
 

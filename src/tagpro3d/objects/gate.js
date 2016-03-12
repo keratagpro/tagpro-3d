@@ -1,56 +1,81 @@
 import * as THREE from 'three';
+import { tiles } from 'tagpro';
 
 import * as geometries from '../geometries';
+import * as objects from '../constants';
+import { gate } from '../../options/objects';
+import { findDominantColorForTile } from '../utils';
 
-var geometry;
+var _geometry;
+var gateColors = {};
 
 export default class Gate extends THREE.Mesh {
-	constructor(options = {}) {
+	constructor(tile, {
+		geometry,
+		materials,
+		outlineMaterials,
+		extrude
+	} = gate) {
+		if (!_geometry) _geometry = geometries.createRectangleGeometry(geometry.width, extrude);
+		var material = new THREE.MeshPhongMaterial(materials.default);
 
-		if (!geometry) geometry = geometries.createRectangleGeometry(options.geometry.width, options.extrude);
-		var material = new THREE.MeshPhongMaterial(options.material.off);
-
-		super(geometry, material);
+		super(_geometry, material);
+		this.name = 'gate';
 
 		this.rotateX(Math.PI / 2);
 
-		this.name = 'gate';
-		this.options = options;
+		this.materials = materials;
+		this.outlineMaterials = outlineMaterials;
 
-		this._addOutline();
+		this.addOutline(outlineMaterials.default);
+
+		this.updateByTile(tile);
 	}
 
-	_addOutline() {
-		var geom = new THREE.EdgesGeometry(this.geometry, 0.1);
-		var mat = new THREE.LineBasicMaterial(this.options.material.outline);
+	addOutline(materialParams) {
+		var outline = new THREE.LineSegments(
+			new THREE.EdgesGeometry(this.geometry, 0.1),
+			new THREE.LineBasicMaterial(materialParams)
+		);
 
-		this.outline = new THREE.LineSegments(geom, mat);
-		this.outline.matrixAutoUpdate = false;
+		outline.matrixAutoUpdate = false;
 
-		this.add(this.outline);
+		this.add(outline);
+		this._outlineMaterial = outline.material;
+	}
+
+	updateByTile(tile) {
+		if (tile == objects.GATE_OFF) this.off();
+		else if (tile == objects.GATE_GREEN) this.green();
+		else if (tile == objects.GATE_RED) this.red();
+		else if (tile == objects.GATE_BLUE) this.blue();
+	}
+
+	updateMaterials(tileId, material, outlineMaterial) {
+		if (!gateColors[tileId]) {
+			gateColors[tileId] = findDominantColorForTile(tiles[tileId]);
+		}
+
+		this._outlineMaterial.color = gateColors[tileId];
+		this._outlineMaterial.setValues(outlineMaterial);
+
+		this.material.color = gateColors[tileId];
+		this.material.setValues(material);
 	}
 
 	off() {
-		this.outline.visible = true;
-		this.material.setValues(this.options.material.off);
-		return this;
-	}
-
-	red() {
-		this.outline.visible = false;
-		this.material.setValues(this.options.material.red);
-		return this;
+		this.updateMaterials(objects.GATE_OFF, this.materials.off, this.outlineMaterials.off);
 	}
 
 	green() {
-		this.outline.visible = false;
-		this.material.setValues(this.options.material.green);
-		return this;
+		this.updateMaterials(objects.GATE_GREEN, this.materials.green, this.outlineMaterials.green);
+	}
+
+	red() {
+		this.updateMaterials(objects.GATE_RED, this.materials.red, this.outlineMaterials.red);
 	}
 
 	blue() {
-		this.outline.visible = false;
-		this.material.setValues(this.options.material.blue);
-		return this;
+		this.updateMaterials(objects.GATE_BLUE, this.materials.blue, this.outlineMaterials.blue);
 	}
 }

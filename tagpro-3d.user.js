@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          TagPro 3D
 // @description   TagPro in 3D!
-// @version       0.0.3
+// @version       0.0.4
 // @author        Kera
 // @grant         GM_addStyle
 // @namespace     https://github.com/keratagpro/tagpro-3d/
@@ -48,6 +48,46 @@
 	    return Constructor;
 	  };
 	}();
+
+	babelHelpers.defineProperty = function (obj, key, value) {
+	  if (key in obj) {
+	    Object.defineProperty(obj, key, {
+	      value: value,
+	      enumerable: true,
+	      configurable: true,
+	      writable: true
+	    });
+	  } else {
+	    obj[key] = value;
+	  }
+
+	  return obj;
+	};
+
+	babelHelpers.get = function get(object, property, receiver) {
+	  if (object === null) object = Function.prototype;
+	  var desc = Object.getOwnPropertyDescriptor(object, property);
+
+	  if (desc === undefined) {
+	    var parent = Object.getPrototypeOf(object);
+
+	    if (parent === null) {
+	      return undefined;
+	    } else {
+	      return get(parent, property, receiver);
+	    }
+	  } else if ("value" in desc) {
+	    return desc.value;
+	  } else {
+	    var getter = desc.get;
+
+	    if (getter === undefined) {
+	      return undefined;
+	    }
+
+	    return getter.call(receiver);
+	  }
+	};
 
 	babelHelpers.inherits = function (subClass, superClass) {
 	  if (typeof superClass !== "function" && superClass !== null) {
@@ -126,6 +166,47 @@
 		GM_addStyle(styles);
 	}
 
+	// https://www.reddit.com/r/TagPro/wiki/api#wiki_tiles
+
+	var BOMB = 10;
+	var BOMB_OFF = 10.1;
+
+	var BUTTON = 8;
+
+	var ENDZONE_RED = 17;
+	var ENDZONE_BLUE = 18;
+
+	var FLAG_BLUE = 4;
+	var FLAG_BLUE_TAKEN = 4.1;
+
+	var FLAG_RED = 3;
+	var FLAG_RED_TAKEN = 3.1;
+
+	var FLAG_YELLOW = 16;
+	var FLAG_YELLOW_TAKEN = 16.1;
+
+	var GATE_OFF = 9;
+	var GATE_GREEN = 9.1;
+	var GATE_RED = 9.2;
+	var GATE_BLUE = 9.3;
+
+	var PORTAL_OFF = 13;
+
+	var POWERUP_NONE = 6;
+	var POWERUP_GRIP = 6.1;
+	var POWERUP_BOMB = 6.2;
+	var POWERUP_TAGPRO = 6.3;
+	var POWERUP_SPEED = 6.4;
+
+	var SPEEDPAD = 5;
+	var SPEEDPAD_OFF = 5.1;
+	var SPEEDPAD_RED = 14;
+	var SPEEDPAD_RED_OFF = 14.1;
+	var SPEEDPAD_BLUE = 15;
+	var SPEEDPAD_BLUE_OFF = 15.1;
+
+	var SPIKE = 7;
+
 	/**
 	 * Delays callbacks when resourcesLoaded == true, so it's possible to run stuff
 	 * between tagpro.ready and tagpro.ready.after.
@@ -142,9 +223,7 @@
 	 * Draws some extra tiles to the background layer.
 	 */
 	function changeSomeTilesToFloorTiles(tiles) {
-		var flooredTiles = [9, 9.1, 9.2, 9.3, // gates
-		17, 18 // goal tiles
-		];
+		var flooredTiles = [GATE_OFF, GATE_GREEN, GATE_RED, GATE_BLUE, ENDZONE_RED, ENDZONE_BLUE];
 
 		flooredTiles.forEach(function (tile) {
 			tiles[tile].drawFloor = true;
@@ -152,7 +231,7 @@
 		});
 	}
 
-	var styles = "#tagpro3d {\r\n\tdisplay: block;\r\n\tpointer-events: none;\r\n\tposition: absolute;\r\n\tz-index: 1;\r\n}\r\n\r\n#viewport {\r\n\tz-index: 2;\r\n}\r\n\r\n#options {\r\n\tz-index: 3;\r\n}\r\n";
+	var styles = "#tagpro3d {\r\n\tdisplay: block;\r\n\tpointer-events: none;\r\n\tposition: absolute;\r\n\tz-index: -1;\r\n}\r\n";
 
 	function addAmbientLight(scene) {
 		var _ref = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
@@ -219,6 +298,65 @@ var lights = Object.freeze({
 		addLights: addLights
 	});
 
+	var SpriteTexture = function (_THREE$Texture) {
+		babelHelpers.inherits(SpriteTexture, _THREE$Texture);
+
+		function SpriteTexture(image, columns, rows) {
+			babelHelpers.classCallCheck(this, SpriteTexture);
+
+			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(SpriteTexture).call(this, image));
+
+			_this.repeat.set(1 / columns, 1 / rows);
+
+			_this._columns = columns;
+			_this._rows = rows;
+			return _this;
+		}
+
+		babelHelpers.createClass(SpriteTexture, [{
+			key: 'copy',
+			value: function copy(source) {
+				babelHelpers.get(Object.getPrototypeOf(SpriteTexture.prototype), 'copy', this).call(this, source);
+
+				this._columns = source._columns;
+				this._rows = source._rows;
+
+				return this;
+			}
+		}, {
+			key: 'setXY',
+			value: function setXY(x, y) {
+				if (x === this._x && y === this._y) return;
+
+				this._x = x;
+				this._y = y;
+
+				this.offset.set(x / this._columns, 1 - (y + 1) / this._rows);
+
+				this.needsUpdate = true;
+			}
+		}, {
+			key: 'setTile',
+			value: function setTile(_ref) {
+				var x = _ref.x;
+				var y = _ref.y;
+
+				this.setXY(x, y);
+			}
+		}, {
+			key: 'columns',
+			get: function get() {
+				return this._columns;
+			}
+		}, {
+			key: 'rows',
+			get: function get() {
+				return this._rows;
+			}
+		}]);
+		return SpriteTexture;
+	}(THREE.Texture);
+
 	var textureLoader = new THREE.TextureLoader();
 	textureLoader.setCrossOrigin('');
 
@@ -277,8 +415,8 @@ var lights = Object.freeze({
 	}
 
 	function updateCameraPosition(camera, x, y) {
-		camera.position.x = x - 19;
-		camera.position.z = y - 19;
+		camera.position.x = x - 20;
+		camera.position.z = y - 20;
 	}
 
 	function updateCameraZoom(camera, zoom) {
@@ -342,10 +480,6 @@ var lights = Object.freeze({
 		return mesh;
 	}
 
-	var quantizer = new RgbQuant({
-		colors: 4
-	});
-
 	function findDominantColorForTile(tile) {
 		var tileSize = arguments.length <= 1 || arguments[1] === undefined ? tagpro.TILE_SIZE : arguments[1];
 
@@ -357,6 +491,10 @@ var lights = Object.freeze({
 
 		context.drawImage(tagpro.tiles.image, tile.x * tileSize, tile.y * tileSize, tileSize, tileSize, 0, 0, tileSize, tileSize);
 
+		var quantizer = new RgbQuant({
+			colors: 4
+		});
+
 		quantizer.sample(canvas);
 
 		var palette = quantizer.palette(true, true);
@@ -365,25 +503,62 @@ var lights = Object.freeze({
 			return null;
 		}
 
-		palette = palette.find(function (_ref4) {
+		palette = palette.map(function (_ref4) {
 			var _ref5 = babelHelpers.slicedToArray(_ref4, 3);
 
 			var r = _ref5[0];
 			var g = _ref5[1];
 			var b = _ref5[2];
-
-			return !(r < 30 && g < 30 && b < 30) && !(r > 240 && g > 240 && b > 240);
+			return new THREE.Color(r / 256, g / 256, b / 256);
 		});
 
-		var _palette = palette;
+		// Try to find a non-grayscale color.
+		var color = palette.find(function (col) {
+			return col.getHSL().s > 0.5;
+		});
 
-		var _palette2 = babelHelpers.slicedToArray(_palette, 3);
+		return color || palette[0];
+	}
 
-		var r = _palette2[0];
-		var g = _palette2[1];
-		var b = _palette2[2];
+	function getTilesTexture() {
+		return new SpriteTexture(resizeImageToPowerOfTwo(tagpro.tiles.image), tagpro.tiles.image.width / tagpro.TILE_SIZE, tagpro.tiles.image.height / tagpro.TILE_SIZE);
+	}
 
-		return new THREE.Color(r / 256, g / 256, b / 256);
+	function getTextureByTileId(tileId) {
+		var tileSize = arguments.length <= 1 || arguments[1] === undefined ? tagpro.TILE_SIZE : arguments[1];
+
+		var assetName = overridableAssetMap[tileId];
+		var img = $(overrideableAssets[assetName])[0];
+
+		return new SpriteTexture(resizeImageToPowerOfTwo(img), img.width / tileSize, img.height / tileSize);
+	}
+
+	var resizedImageCache = {};
+
+	function resizeImageToPowerOfTwo(image) {
+		if (!resizedImageCache[image.src]) {
+			var w = closestPowerOfTwo(image.width);
+			var h = closestPowerOfTwo(image.height);
+			var img = resizeImage(image, w, h);
+			resizedImageCache[image.src] = img;
+		}
+
+		return resizedImageCache[image.src];
+	}
+
+	function resizeImage(image, width, height) {
+		var canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+
+		var context = canvas.getContext('2d');
+		context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+		return canvas;
+	}
+
+	function closestPowerOfTwo(num) {
+		return Math.pow(2, Math.ceil(Math.log(num) / Math.log(2)));
 	}
 
 var utils = Object.freeze({
@@ -399,8 +574,248 @@ var utils = Object.freeze({
 		createBackgroundPlaneFromChunks: createBackgroundPlaneFromChunks,
 		mapBackgroundChunksToTextures: mapBackgroundChunksToTextures,
 		loadObjectFromJson: loadObjectFromJson,
-		findDominantColorForTile: findDominantColorForTile
+		findDominantColorForTile: findDominantColorForTile,
+		getTilesTexture: getTilesTexture,
+		getTextureByTileId: getTextureByTileId,
+		resizeImageToPowerOfTwo: resizeImageToPowerOfTwo,
+		resizeImage: resizeImage,
+		closestPowerOfTwo: closestPowerOfTwo
 	});
+
+	var ball = {
+		enabled: true,
+		velocityCoefficient: 0.1,
+		rotationCoefficient: 0.015,
+		geometry: {
+			detail: 1,
+			radius: 17
+		},
+		materials: {
+			default: {
+				shading: THREE.FlatShading
+			}
+		},
+		// blue: { },
+		// red: { }
+		outline: {
+			enabled: true,
+			detail: 2,
+			radius: 19
+		}
+	};
+
+	var puck = {
+		enabled: true,
+		rotationCoefficient: 0.01,
+		geometry: {
+			radiusTop: 17,
+			radiusBottom: 19,
+			height: 10,
+			segments: 32
+		},
+		materials: {
+			default: {
+				transparent: true,
+				alphaTest: 0.1,
+				opacity: 0.9,
+				shading: THREE.FlatShading,
+				side: THREE.DoubleSide
+			},
+			blue: {
+				color: 0x0000ff
+			},
+			red: {
+				color: 0xff0000
+			}
+		}
+	};
+
+	var wall = {
+		material: {
+			shading: THREE.FlatShading,
+			color: 0xffffff
+		},
+		// opacity: 1.0,
+		// transparent: true
+		extrude: {
+			amount: 40,
+			steps: 1,
+			bevelEnabled: false,
+			bevelSegments: 1,
+			bevelSize: 5,
+			bevelThickness: 10
+		}
+	};
+
+	var spike = {
+		geometry: {
+			width: 32,
+			segments: 6
+		},
+		material: {
+			// color: 0x666666,
+			opacity: 1
+		}
+	};
+
+	var bomb = {
+		materials: {
+			body: {
+				color: 0x000000
+			},
+			show: {
+				transparent: false,
+				opacity: 1.0
+			},
+			hide: {
+				transparent: true,
+				opacity: 0.2
+			}
+		}
+	};
+
+	var button = {
+		geometry: {
+			width: 16,
+			height: 10,
+			segments: 20
+		},
+		material: {
+			color: 0xa06e32
+		}
+	};
+
+	var flag = {
+		animate: false,
+		width: 40,
+		height: 20,
+		waveDepth: 4,
+		widthSegments: 10,
+		heightSegments: 5,
+		restDistance: 4
+	};
+
+	var gate = {
+		geometry: {
+			width: 40,
+			height: 40
+		},
+		materials: {
+			default: {
+				transparent: true,
+				opacity: 0.7
+			},
+			off: {
+				opacity: 0.3
+			},
+			green: {
+				opacity: 0.7
+			},
+			red: {
+				opacity: 0.7
+			},
+			blue: {
+				opacity: 0.7
+			}
+		},
+		outlineMaterials: {
+			default: {},
+			off: {},
+			green: {},
+			red: {},
+			blue: {}
+		}
+	};
+
+	var tile = {
+		material: {
+			transparent: true
+		}
+	};
+
+	var animatedTile = {
+		material: {
+			transparent: true
+		}
+	};
+
+var objects$1 = Object.freeze({
+		ball: ball,
+		puck: puck,
+		wall: wall,
+		spike: spike,
+		bomb: bomb,
+		button: button,
+		flag: flag,
+		gate: gate,
+		tile: tile,
+		animatedTile: animatedTile
+	});
+
+	var _geometry;
+
+	var AnimatedTile = function (_THREE$Mesh) {
+		babelHelpers.inherits(AnimatedTile, _THREE$Mesh);
+
+		function AnimatedTile(tileId) {
+			var params = arguments.length <= 1 || arguments[1] === undefined ? animatedTile : arguments[1];
+			babelHelpers.classCallCheck(this, AnimatedTile);
+
+			if (!_geometry) {
+				_geometry = new THREE.PlaneGeometry(tagpro.TILE_SIZE, tagpro.TILE_SIZE, 1, 1);
+				_geometry.rotateX(-Math.PI / 2);
+			}
+
+			var texture = getTextureByTileId(tileId);
+
+			var material = new THREE.MeshPhongMaterial(Object.assign({ map: texture }, params.material));
+
+			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(AnimatedTile).call(this, _geometry, material));
+
+			_this._startTime = performance.now();
+			_this._frameDuration = 1000 / (6 + Math.random() / 10);
+
+			_this.texture = texture;
+			_this.updateByTileId(tileId);
+			return _this;
+		}
+
+		babelHelpers.createClass(AnimatedTile, [{
+			key: 'updateByTileId',
+			value: function updateByTileId(tileId) {
+				if (tileId == SPEEDPAD_OFF || tileId == SPEEDPAD_BLUE_OFF || tileId == SPEEDPAD_RED_OFF || tileId == PORTAL_OFF) this.pause();else this.play();
+			}
+		}, {
+			key: 'play',
+			value: function play() {
+				this.setRange(0, this.texture.columns - 2);
+			}
+		}, {
+			key: 'pause',
+			value: function pause() {
+				this.setRange(this.texture.columns - 1, this.texture.columns - 1);
+			}
+		}, {
+			key: 'setRange',
+			value: function setRange(from, to) {
+				this._from = from;
+				this._to = to;
+			}
+		}, {
+			key: 'update',
+			value: function update(timestamp) {
+				if (this._from === this._to) {
+					this.texture.setXY(this._from, 0);
+				} else {
+					var range = this._to - this._from;
+					var delta = timestamp - this._startTime;
+					var index = Math.round(delta / this._frameDuration % range);
+					this.texture.setXY(index + this._from, 0);
+				}
+			}
+		}]);
+		return AnimatedTile;
+	}(THREE.Mesh);
 
 	var tempQuaternion = new THREE.Quaternion();
 	var AXIS_X = new THREE.Vector3(1, 0, 0);
@@ -412,57 +827,48 @@ var utils = Object.freeze({
 	var Ball = function (_THREE$Mesh) {
 		babelHelpers.inherits(Ball, _THREE$Mesh);
 
-		function Ball(options) {
+		function Ball() {
+			var params = arguments.length <= 0 || arguments[0] === undefined ? ball : arguments[0];
 			babelHelpers.classCallCheck(this, Ball);
 
-			var material = new THREE.MeshPhongMaterial();
-			var geometry = new THREE.IcosahedronGeometry(options.geometry.radius, options.geometry.detail);
-			// var geometry = new THREE.SphereGeometry(options.geometry.radius, 12, 8);
+			var _geometry = new THREE.IcosahedronGeometry(params.geometry.radius, params.geometry.detail);
+			var _material = new THREE.MeshPhongMaterial(params.materials.default);
 
-			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Ball).call(this, geometry, material));
+			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Ball).call(this, _geometry, _material));
 
-			_this.options = options;
-			_this._createOutline();
+			_this.position.y = params.geometry.radius;
+			_this._createOutline(params.outline);
 
-			_this.position.y = options.geometry.radius;
+			_this.params = params;
 			return _this;
 		}
 
 		babelHelpers.createClass(Ball, [{
 			key: '_createOutline',
-			value: function _createOutline() {
-				var outline = this.options.outline;
+			value: function _createOutline(opts) {
+				if (!opts.enabled) return;
 
-				if (outline && outline.enabled) {
-					var radius = this.options.geometry.radius;
-					var geometry = new THREE.IcosahedronGeometry(radius, outline.detail);
+				var outline = new THREE.Mesh(new THREE.IcosahedronGeometry(opts.radius, opts.detail), new THREE.MeshBasicMaterial({ side: THREE.BackSide }));
 
-					this.outlineMaterial = new THREE.MeshBasicMaterial({ side: THREE.BackSide });
-					this.add(new THREE.Mesh(geometry, this.outlineMaterial));
-
-					var scale = 1 - outline.width / radius;
-					this.geometry.scale(scale, scale, scale);
-				}
+				this.add(outline);
+				this._outline = outline;
 			}
 		}, {
 			key: 'updateColor',
 			value: function updateColor(player) {
 				var tileName = player.team === 1 ? 'redball' : 'blueball';
 
-				var materials = this.options.materials;
-				this.material.setValues(player.team === 1 ? materials.red : materials.blue);
-
 				if (!ballTileColors[tileName]) {
-					var tile = tagpro.tiles[tileName];
-					ballTileColors[tileName] = findDominantColorForTile(tile);
+					ballTileColors[tileName] = findDominantColorForTile(tagpro.tiles[tileName]);
 				}
 
 				this.material.color = ballTileColors[tileName];
 
-				var outline = this.options.outline;
-				if (outline && outline.enabled) {
-					this.outlineMaterial.setValues(player.team === 1 ? outline.red : outline.blue);
-					this.outlineMaterial.color = ballTileColors[tileName];
+				var materials = this.params.materials;
+				this.material.setValues(player.team === 1 ? materials.red : materials.blue);
+
+				if (this.params.outline.enabled) {
+					this._outline.material.color = this.material.color;
 				}
 			}
 		}, {
@@ -471,13 +877,13 @@ var utils = Object.freeze({
 				this.position.x = player.sprite.x;
 				this.position.z = player.sprite.y;
 
-				tempQuaternion.setFromAxisAngle(AXIS_X, (player.ly || 0) * this.options.velocityCoefficient);
+				tempQuaternion.setFromAxisAngle(AXIS_X, (player.ly || 0) * this.params.velocityCoefficient);
 				this.quaternion.multiplyQuaternions(tempQuaternion, this.quaternion);
 
-				tempQuaternion.setFromAxisAngle(AXIS_Z, -(player.lx || 0) * this.options.velocityCoefficient);
+				tempQuaternion.setFromAxisAngle(AXIS_Z, -(player.lx || 0) * this.params.velocityCoefficient);
 				this.quaternion.multiplyQuaternions(tempQuaternion, this.quaternion);
 
-				tempQuaternion.setFromAxisAngle(AXIS_Y, -(player.a || 0) * this.options.rotationCoefficient);
+				tempQuaternion.setFromAxisAngle(AXIS_Y, -(player.a || 0) * this.params.rotationCoefficient);
 				this.quaternion.multiplyQuaternions(tempQuaternion, this.quaternion);
 			}
 		}]);
@@ -498,145 +904,140 @@ var utils = Object.freeze({
 	var Bomb = function (_THREE$Object3D) {
 		babelHelpers.inherits(Bomb, _THREE$Object3D);
 
-		function Bomb() {
-			var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+		function Bomb(tileId) {
+			var _ref = arguments.length <= 1 || arguments[1] === undefined ? bomb : arguments[1];
+
+			var materials = _ref.materials;
 			babelHelpers.classCallCheck(this, Bomb);
 
 			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Bomb).call(this));
 
-			var mesh = loadObjectFromJson(bombJson);
-			_this.add(mesh);
-			_this.getObjectByName('bomb').material.setValues(options.material.body);
+			_this.materials = materials;
 
-			_this.options = options;
+			_this.add(loadObjectFromJson(bombJson));
+
+			var bombMaterial = _this.getObjectByName('bomb').material;
+			bombMaterial.setValues(materials.body);
+			bombMaterial.color = findDominantColorForTile(tagpro.tiles[tileId]);
+
+			_this.updateByTileId(tileId);
 			return _this;
 		}
 
 		babelHelpers.createClass(Bomb, [{
+			key: 'updateByTileId',
+			value: function updateByTileId(tileId) {
+				if (tileId == BOMB) this.show();else if (tileId == BOMB_OFF) this.hide();
+			}
+		}, {
 			key: 'show',
 			value: function show() {
-				var values = this.options.material.show;
+				var params = this.materials.show;
 
 				this.traverse(function (o) {
 					if (!o.material) return;
-					o.material.setValues(values);
+					o.material.setValues(params);
 				});
-
-				return this;
 			}
 		}, {
 			key: 'hide',
 			value: function hide() {
-				var values = this.options.material.hide;
+				var params = this.materials.hide;
 
 				this.traverse(function (o) {
 					if (!o.material) return;
-					o.material.setValues(values);
+					o.material.setValues(params);
 				});
-
-				return this;
 			}
 		}]);
 		return Bomb;
 	}(THREE.Object3D);
 
-	function createRectangleShape(width) {
-		var half = width / 2;
-
-		var shape = new THREE.Shape();
-		shape.moveTo(-half, -half);
-		shape.lineTo(half, -half);
-		shape.lineTo(half, half);
-		shape.lineTo(-half, half);
-
-		return shape;
-	}
-
-	function createRectangleGeometry(width) {
-		var extrude = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-
-		var shape = createRectangleShape(width);
-
-		var geometry = extrudeShape(shape, extrude, width);
-
-		return geometry;
-	}
-
-	function extrudeShape(shape, extrude, width) {
-		var radius = width / 2;
-		var geometry = shape.extrude(extrude);
-		geometry.translate(0, 0, -extrude.amount);
-
-		if (extrude.bevelEnabled) {
-			var xy = 1 / ((radius + extrude.bevelSize) / radius);
-			geometry.scale(xy, xy, 1);
-		}
-
-		return geometry;
-	}
-
-	var geometry;
+	var _geometry$1;
+	var gateColors = {};
 
 	var Gate = function (_THREE$Mesh) {
 		babelHelpers.inherits(Gate, _THREE$Mesh);
 
-		function Gate() {
-			var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+		function Gate(tileId) {
+			var _ref = arguments.length <= 1 || arguments[1] === undefined ? gate : arguments[1];
+
+			var geometry = _ref.geometry;
+			var materials = _ref.materials;
+			var outlineMaterials = _ref.outlineMaterials;
+			var extrude = _ref.extrude;
 			babelHelpers.classCallCheck(this, Gate);
 
+			if (!_geometry$1) {
+				_geometry$1 = new THREE.BoxGeometry(geometry.width, geometry.height, geometry.width, 1, 1, 1);
+				_geometry$1.translate(0, geometry.height / 2, 0);
+			}
 
-			if (!geometry) geometry = createRectangleGeometry(options.geometry.width, options.extrude);
-			var material = new THREE.MeshPhongMaterial(options.material.off);
+			var texture = getTilesTexture();
+			texture.setTile(tagpro.tiles[tileId]);
 
-			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Gate).call(this, geometry, material));
+			var material = new THREE.MeshPhongMaterial(Object.assign({ map: texture }, materials.default));
 
-			_this.rotateX(Math.PI / 2);
+			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Gate).call(this, _geometry$1, material));
 
 			_this.name = 'gate';
-			_this.options = options;
 
-			_this._addOutline();
+			_this.materials = materials;
+			_this.outlineMaterials = outlineMaterials;
+
+			_this.addOutline(outlineMaterials.default);
+
+			_this.updateByTileId(tileId);
 			return _this;
 		}
 
 		babelHelpers.createClass(Gate, [{
-			key: '_addOutline',
-			value: function _addOutline() {
-				var geom = new THREE.EdgesGeometry(this.geometry, 0.1);
-				var mat = new THREE.LineBasicMaterial(this.options.material.outline);
+			key: 'addOutline',
+			value: function addOutline(materialParams) {
+				var outline = new THREE.LineSegments(new THREE.EdgesGeometry(this.geometry, 0.1), new THREE.LineBasicMaterial(materialParams));
 
-				this.outline = new THREE.LineSegments(geom, mat);
-				this.outline.matrixAutoUpdate = false;
+				outline.matrixAutoUpdate = false;
 
-				this.add(this.outline);
+				this.add(outline);
+				this._outlineMaterial = outline.material;
+			}
+		}, {
+			key: 'updateByTileId',
+			value: function updateByTileId(tileId) {
+				if (tileId == GATE_OFF) this.off();else if (tileId == GATE_GREEN) this.green();else if (tileId == GATE_RED) this.red();else if (tileId == GATE_BLUE) this.blue();
+			}
+		}, {
+			key: 'updateMaterials',
+			value: function updateMaterials(tileId, material, outlineMaterial) {
+				if (!gateColors[tileId]) {
+					gateColors[tileId] = findDominantColorForTile(tagpro.tiles[tileId]);
+				}
+
+				this._outlineMaterial.color = gateColors[tileId];
+				this._outlineMaterial.setValues(outlineMaterial);
+
+				this.material.map.setTile(tagpro.tiles[tileId]);
+				this.material.setValues(material);
 			}
 		}, {
 			key: 'off',
 			value: function off() {
-				this.outline.visible = true;
-				this.material.setValues(this.options.material.off);
-				return this;
-			}
-		}, {
-			key: 'red',
-			value: function red() {
-				this.outline.visible = false;
-				this.material.setValues(this.options.material.red);
-				return this;
+				this.updateMaterials(GATE_OFF, this.materials.off, this.outlineMaterials.off);
 			}
 		}, {
 			key: 'green',
 			value: function green() {
-				this.outline.visible = false;
-				this.material.setValues(this.options.material.green);
-				return this;
+				this.updateMaterials(GATE_GREEN, this.materials.green, this.outlineMaterials.green);
+			}
+		}, {
+			key: 'red',
+			value: function red() {
+				this.updateMaterials(GATE_RED, this.materials.red, this.outlineMaterials.red);
 			}
 		}, {
 			key: 'blue',
 			value: function blue() {
-				this.outline.visible = false;
-				this.material.setValues(this.options.material.blue);
-				return this;
+				this.updateMaterials(GATE_BLUE, this.materials.blue, this.outlineMaterials.blue);
 			}
 		}]);
 		return Gate;
@@ -656,7 +1057,7 @@ var utils = Object.freeze({
 			babelHelpers.classCallCheck(this, Puck);
 
 			var material = new THREE.MeshPhongMaterial(options.materials.default);
-			var geometry = new THREE.CircleGeometry(options.geometry.radius, options.geometry.segments);
+			var geometry = new THREE.CircleGeometry(options.geometry.radiusTop, options.geometry.segments);
 
 			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Puck).call(this, geometry, material));
 
@@ -671,14 +1072,12 @@ var utils = Object.freeze({
 		babelHelpers.createClass(Puck, [{
 			key: 'addCylinder',
 			value: function addCylinder(options) {
-				var radius = options.geometry.radius;
-				var height = options.geometry.height;
-				var segments = options.geometry.segments;
+				var geom = options.geometry;
 
 				var material = new THREE.MeshPhongMaterial(options.materials.default);
-				var geometry = new THREE.CylinderGeometry(radius, radius, height, segments, 1, true);
-				geometry.rotateX(Math.PI / 2);
-				geometry.translate(0, 0, height / 2);
+				var geometry = new THREE.CylinderGeometry(geom.radiusTop, geom.radiusBottom, geom.height, geom.segments, 1, true);
+				geometry.rotateX(-Math.PI / 2);
+				geometry.translate(0, 0, geom.height / 2);
 
 				var cylinder = new THREE.Mesh(geometry, material);
 
@@ -737,34 +1136,47 @@ var utils = Object.freeze({
 		tile.texture = texture;
 	}
 
-	var material;
-	var geometry$1;
+	var _material;
+	var _geometry$2;
 	var Spike = function (_THREE$Mesh) {
 		babelHelpers.inherits(Spike, _THREE$Mesh);
 
-		function Spike() {
-			var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+		function Spike(tileId) {
+			var _ref = arguments.length <= 1 || arguments[1] === undefined ? spike : arguments[1];
+
+			var geometry = _ref.geometry;
+			var material = _ref.material;
 			babelHelpers.classCallCheck(this, Spike);
 
-			if (!geometry$1) geometry$1 = createSpikeGeometry(options.geometry);
-			if (!material) material = new THREE.MeshPhongMaterial(options.material);
+			if (!_geometry$2) {
+				_geometry$2 = createSpikeGeometry(geometry);
+			}
 
-			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Spike).call(this, geometry$1, material));
+			if (!_material) {
+				_material = new THREE.MeshPhongMaterial(material);
+				_material.color = findDominantColorForTile(tagpro.tiles[SPIKE]);
+			}
+
+			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Spike).call(this, _geometry$2, _material));
 
 			_this.name = 'spike';
 			return _this;
 		}
 
+		babelHelpers.createClass(Spike, [{
+			key: 'updateByTile',
+			value: function updateByTile() {}
+		}]);
 		return Spike;
 	}(THREE.Mesh);
 
 	function createSpikeGeometry() {
-		var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+		var _ref2 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
-		var _ref$width = _ref.width;
-		var width = _ref$width === undefined ? 32 : _ref$width;
-		var _ref$segments = _ref.segments;
-		var segments = _ref$segments === undefined ? 6 : _ref$segments;
+		var _ref2$width = _ref2.width;
+		var width = _ref2$width === undefined ? 32 : _ref2$width;
+		var _ref2$segments = _ref2.segments;
+		var segments = _ref2$segments === undefined ? 6 : _ref2$segments;
 
 		var geom = new THREE.SphereGeometry(width / 4, segments * 10);
 
@@ -777,6 +1189,42 @@ var utils = Object.freeze({
 		return geom;
 	}
 
+	var _geometry$3;
+
+	var Tile = function (_THREE$Mesh) {
+		babelHelpers.inherits(Tile, _THREE$Mesh);
+
+		function Tile(tileId) {
+			var params = arguments.length <= 1 || arguments[1] === undefined ? tile : arguments[1];
+			babelHelpers.classCallCheck(this, Tile);
+
+			if (!_geometry$3) {
+				_geometry$3 = new THREE.PlaneGeometry(tagpro.TILE_SIZE, tagpro.TILE_SIZE, 1, 1);
+				_geometry$3.rotateX(-Math.PI / 2);
+			}
+
+			var texture = getTilesTexture();
+			texture.setTile(tagpro.tiles[tileId]);
+
+			var material = new THREE.MeshPhongMaterial(Object.assign({ map: texture }, params.material));
+
+			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Tile).call(this, _geometry$3, material));
+
+			_this.updateByTileId(tileId);
+			return _this;
+		}
+
+		babelHelpers.createClass(Tile, [{
+			key: 'updateByTileId',
+			value: function updateByTileId(tileId) {
+				this.material.map.setTile(tagpro.tiles[tileId]);
+			}
+		}]);
+		return Tile;
+	}(THREE.Mesh);
+
+	var _objectMap;
+	var _overridableAssetMap;
 	function createBall(player) {
 		var options = this.options;
 
@@ -787,47 +1235,14 @@ var utils = Object.freeze({
 		return mesh;
 	}
 
-	var objectMap = {
-		7: function _() {
-			var obj = arguments.length <= 0 || arguments[0] === undefined ? new Spike(this.options.objects.spike) : arguments[0];
+	var objectMap = (_objectMap = {}, babelHelpers.defineProperty(_objectMap, BOMB, Bomb), babelHelpers.defineProperty(_objectMap, BOMB_OFF, Bomb), babelHelpers.defineProperty(_objectMap, BUTTON, Tile), babelHelpers.defineProperty(_objectMap, FLAG_RED, Tile), babelHelpers.defineProperty(_objectMap, FLAG_RED_TAKEN, Tile), babelHelpers.defineProperty(_objectMap, FLAG_BLUE, Tile), babelHelpers.defineProperty(_objectMap, FLAG_BLUE_TAKEN, Tile), babelHelpers.defineProperty(_objectMap, FLAG_YELLOW, Tile), babelHelpers.defineProperty(_objectMap, FLAG_YELLOW_TAKEN, Tile), babelHelpers.defineProperty(_objectMap, GATE_BLUE, Gate), babelHelpers.defineProperty(_objectMap, GATE_GREEN, Gate), babelHelpers.defineProperty(_objectMap, GATE_OFF, Gate), babelHelpers.defineProperty(_objectMap, GATE_RED, Gate), babelHelpers.defineProperty(_objectMap, SPIKE, Spike), babelHelpers.defineProperty(_objectMap, POWERUP_BOMB, Tile), babelHelpers.defineProperty(_objectMap, POWERUP_GRIP, Tile), babelHelpers.defineProperty(_objectMap, POWERUP_NONE, Tile), babelHelpers.defineProperty(_objectMap, POWERUP_SPEED, Tile), babelHelpers.defineProperty(_objectMap, POWERUP_TAGPRO, Tile), babelHelpers.defineProperty(_objectMap, SPEEDPAD, AnimatedTile), babelHelpers.defineProperty(_objectMap, SPEEDPAD_OFF, AnimatedTile), babelHelpers.defineProperty(_objectMap, SPEEDPAD_RED, AnimatedTile), babelHelpers.defineProperty(_objectMap, SPEEDPAD_RED_OFF, AnimatedTile), babelHelpers.defineProperty(_objectMap, SPEEDPAD_BLUE, AnimatedTile), babelHelpers.defineProperty(_objectMap, SPEEDPAD_BLUE_OFF, AnimatedTile), _objectMap);
 
-			return obj;
-		},
-		9: function _() {
-			var obj = arguments.length <= 0 || arguments[0] === undefined ? new Gate(this.options.objects.gate) : arguments[0];
-
-			return obj.off();
-		},
-		9.1: function _() {
-			var obj = arguments.length <= 0 || arguments[0] === undefined ? new Gate(this.options.objects.gate) : arguments[0];
-
-			return obj.green();
-		},
-		9.2: function _() {
-			var obj = arguments.length <= 0 || arguments[0] === undefined ? new Gate(this.options.objects.gate) : arguments[0];
-
-			return obj.red();
-		},
-		9.3: function _() {
-			var obj = arguments.length <= 0 || arguments[0] === undefined ? new Gate(this.options.objects.gate) : arguments[0];
-
-			return obj.blue();
-		},
-		10: function _() {
-			var obj = arguments.length <= 0 || arguments[0] === undefined ? new Bomb(this.options.objects.bomb) : arguments[0];
-
-			return obj.show();
-		},
-		10.1: function _() {
-			var obj = arguments.length <= 0 || arguments[0] === undefined ? new Bomb(this.options.objects.bomb) : arguments[0];
-
-			return obj.hide();
-		}
-	};
+	var overridableAssetMap = (_overridableAssetMap = {}, babelHelpers.defineProperty(_overridableAssetMap, SPEEDPAD, 'speedpad'), babelHelpers.defineProperty(_overridableAssetMap, SPEEDPAD_RED, 'speedpadRed'), babelHelpers.defineProperty(_overridableAssetMap, SPEEDPAD_BLUE, 'speedpadBlue'), _overridableAssetMap);
 
 var objects = Object.freeze({
 		createBall: createBall,
-		objectMap: objectMap
+		objectMap: objectMap,
+		overridableAssetMap: overridableAssetMap
 	});
 
 	// Simplifying API of jsclipper.
@@ -907,6 +1322,7 @@ var objects = Object.freeze({
 
 		var mesh = new THREE.Mesh(geometry, material);
 		mesh.name = 'walls';
+
 		mesh.rotateX(Math.PI / 2);
 		mesh.position.set(-tileSize / 2, extrude.amount, -tileSize / 2);
 
@@ -950,29 +1366,12 @@ var objects = Object.freeze({
 
 				var left, right, top, bottom;
 
-				// if (Math.abs(a.y - b.y) < 0.01) {
-				// top, bottom
 				left = 5 * 40 / w;
 				right = 5.5 * 40 / w;
 				top = 4 * 40 / h;
 				bottom = 5 * 40 / h;
 
 				return [new THREE.Vector2(right, 1 - top), new THREE.Vector2(left, 1 - top), new THREE.Vector2(left, 1 - bottom), new THREE.Vector2(right, 1 - bottom)];
-				// }
-				// else {
-				// 	// left, right, diagonals
-				// 	left = (15 * 40) / w;
-				// 	right = (16 * 40) / w;
-				// 	top = (0 * 40) / h;
-				// 	bottom = (1 * 40) / h;
-
-				// 	return [
-				// 		new THREE.Vector2(right, 1 - top),
-				// 		new THREE.Vector2(left, 1 - top),
-				// 		new THREE.Vector2(left, 1 - bottom),
-				// 		new THREE.Vector2(right, 1 - bottom),
-				// 	];
-				// }
 			}
 		};
 	}
@@ -1074,173 +1473,6 @@ var walls = Object.freeze({
 		createWalls: createWalls
 	});
 
-	var ball = {
-		enabled: true,
-		velocityCoefficient: 0.1,
-		rotationCoefficient: 0.015,
-		geometry: {
-			radius: 19,
-			detail: 1
-		},
-		materials: {
-			blue: {
-				shading: THREE.FlatShading,
-				color: 0x0000ff
-			},
-			red: {
-				shading: THREE.FlatShading,
-				color: 0xff0000
-			}
-		},
-		outline: {
-			enabled: true,
-			detail: 2,
-			width: 1,
-			blue: {
-				color: 0x0000bb
-			},
-			red: {
-				color: 0xbb0000
-			}
-		}
-	};
-
-	var puck = {
-		enabled: true,
-		rotationCoefficient: 0.01,
-		geometry: {
-			radius: 19,
-			height: 10,
-			segments: 32
-		},
-		materials: {
-			default: {
-				transparent: true,
-				alphaTest: 0.1,
-				opacity: 0.9,
-				shading: THREE.FlatShading,
-				side: THREE.DoubleSide
-			},
-			blue: {
-				color: 0x0000ff
-			},
-			red: {
-				color: 0xff0000
-			}
-		}
-	};
-
-	var wall = {
-		material: {
-			shading: THREE.FlatShading,
-			color: 0xffffff
-		},
-		// opacity: 1.0,
-		// transparent: true
-		extrude: {
-			amount: 40,
-			steps: 1,
-			bevelEnabled: false,
-			bevelSegments: 1,
-			bevelSize: 5,
-			bevelThickness: 10
-		}
-	};
-
-	var spike = {
-		geometry: {
-			width: 32,
-			segments: 6
-		},
-		material: {
-			color: 0x666666,
-			opacity: 1
-		}
-	};
-
-	var bomb = {
-		material: {
-			body: {
-				color: 0x000000
-			},
-			show: {
-				transparent: false,
-				opacity: 1.0
-			},
-			hide: {
-				transparent: true,
-				opacity: 0.2
-			}
-		}
-	};
-
-	var button = {
-		geometry: {
-			width: 16,
-			height: 10,
-			segments: 20
-		},
-		material: {
-			color: 0xa06e32
-		}
-	};
-
-	var flag = {
-		animate: false,
-		width: 40,
-		height: 20,
-		waveDepth: 4,
-		widthSegments: 10,
-		heightSegments: 5,
-		restDistance: 4
-	};
-
-	var gate = {
-		geometry: {
-			width: 40
-		},
-		material: {
-			outline: {
-				color: 0x333333
-			},
-			off: {
-				transparent: true,
-				color: 0x000000,
-				opacity: 0.0
-			},
-			blue: {
-				color: 0x0000ff,
-				opacity: 0.7
-			},
-			green: {
-				color: 0x00ff00,
-				opacity: 0.7
-			},
-			red: {
-				color: 0xff0000,
-				opacity: 0.7
-			}
-		},
-		extrude: {
-			amount: 40,
-			bevelEnabled: true,
-			bevelSegments: 1,
-			bevelSize: 6,
-			bevelThickness: 10
-		}
-	};
-
-var objects$1 = Object.freeze({
-		ball: ball,
-		puck: puck,
-		wall: wall,
-		spike: spike,
-		bomb: bomb,
-		button: button,
-		flag: flag,
-		gate: gate
-	});
-
 	var options = {
 		renderer: {
 			antialias: true,
@@ -1259,6 +1491,7 @@ var objects$1 = Object.freeze({
 	var t3d = Object.assign({
 		TILE_SIZE: 40,
 		dynamicObjects: {},
+		updatableObjects: [],
 		options: options
 	}, objects, utils, walls, lights);
 
@@ -1301,6 +1534,13 @@ var objects$1 = Object.freeze({
 
 		after(tr, 'createRenderer', function () {
 			t3d.renderer = t3d.createRenderer(t3d.options.renderer);
+		});
+
+		after(tr, 'updateGraphics', function () {
+			var timestamp = performance.now();
+			t3d.updatableObjects.forEach(function (object) {
+				return object.update(timestamp);
+			});
 		});
 
 		after(tr, 'render', function () {
@@ -1379,14 +1619,7 @@ var objects$1 = Object.freeze({
 
 		var originalDrawDynamicTile = tr.drawDynamicTile;
 		tr.drawDynamicTile = function (x, y) {
-			var tile = tagpro__default.map[x][y];
-
-			var createOrUpdateObject = t3d.objectMap[tile];
-
-			if (!createOrUpdateObject) {
-				originalDrawDynamicTile(x, y);
-				return;
-			}
+			var tileId = tagpro__default.map[x][y];
 
 			if (!t3d.dynamicObjects[x]) {
 				t3d.dynamicObjects[x] = {};
@@ -1395,17 +1628,26 @@ var objects$1 = Object.freeze({
 			var mesh = t3d.dynamicObjects[x][y];
 
 			if (!mesh) {
-				mesh = createOrUpdateObject.call(t3d);
+				var TileObject = t3d.objectMap[tileId];
 
-				// NOTE: Some tiles are "noops", e.g. goal tiles
-				if (!mesh) return;
+				if (!TileObject) {
+					originalDrawDynamicTile(x, y);
+					return;
+				}
 
-				mesh.position.set(x * TILE_SIZE, 0, y * TILE_SIZE);
+				mesh = new TileObject(tileId);
+
+				mesh.position.x = x * TILE_SIZE;
+				mesh.position.z = y * TILE_SIZE;
+
 				t3d.scene.add(mesh);
-
 				t3d.dynamicObjects[x][y] = mesh;
+
+				if (mesh.update) {
+					t3d.updatableObjects.push(mesh);
+				}
 			} else {
-				createOrUpdateObject.call(t3d, mesh);
+				mesh.updateByTileId(tileId);
 			}
 		};
 

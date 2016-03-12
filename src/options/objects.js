@@ -24,7 +24,7 @@ export const ball = {
 	outline: {
 		enabled: true,
 		detail: 2,
-		width: 1,
+		thickness: 1,
 		blue: {
 			color: 0x0000bb
 		},
@@ -128,6 +128,7 @@ export const flag = {
 export const gate = {
 	geometry: {
 		width: 40,
+		height: 40
 	},
 	materials: {
 		default: {
@@ -135,7 +136,7 @@ export const gate = {
 			opacity: 0.7
 		},
 		off: {
-			opacity: 0.2
+			opacity: 0.3
 		},
 		green: {
 			opacity: 0.7
@@ -149,12 +150,15 @@ export const gate = {
 	},
 	outlineMaterials: {
 		default: { },
-	},
-	extrude: {
-		amount: 40,
-		bevelEnabled: true,
-		bevelSegments: 1,
-		bevelSize: 6,
-		bevelThickness: 10,
+		off: { },
+		green: { },
+		red: { },
+		blue: { },
+	}
+};
+
+export const tile = {
+	material: {
+		transparent: true,
 	}
 };

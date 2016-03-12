@@ -1,8 +1,9 @@
 import * as THREE from 'three';
+import { tiles } from 'tagpro';
 
 import bombJson from './bomb.json';
 import { bomb } from '../../options/objects';
-import { loadObjectFromJson } from '../utils';
+import { loadObjectFromJson, findDominantColorForTile } from '../utils';
 import * as objects from '../constants';
 
 export default class Bomb extends THREE.Object3D {
@@ -14,7 +15,10 @@ export default class Bomb extends THREE.Object3D {
 		this.materials = materials;
 
 		this.add(loadObjectFromJson(bombJson));
-		this.getObjectByName('bomb').material.setValues(materials.body);
+
+		var bombMaterial = this.getObjectByName('bomb').material;
+		bombMaterial.setValues(materials.body);
+		bombMaterial.color = findDominantColorForTile(tiles[tileId]);
 
 		this.updateByTileId(tileId);
 	}

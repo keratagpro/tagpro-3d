@@ -3,6 +3,8 @@ import * as THREE from 'three';
 import { TILE_SIZE, tiles } from 'tagpro';
 import RgbQuant from 'rgbquant';
 
+import SpriteTexture from '../lib/sprite_texture';
+
 export const textureLoader = new THREE.TextureLoader();
 textureLoader.setCrossOrigin('');
 
@@ -135,4 +137,29 @@ export function findDominantColorForTile(tile, tileSize = TILE_SIZE) {
 	var color = palette.find(col => col.getHSL().s > 0.5);
 
 	return color || palette[0];
+}
+
+var _tileTexture;
+export function getTileTexture() {
+	if (!_tileTexture) {
+		_tileTexture = createTexture(tiles.image);
+		return _tileTexture;
+	}
+
+	return _tileTexture.clone();
+}
+
+function createTexture(image) {
+	var canvas = document.createElement('canvas');
+	canvas.width = closestPowerOfTwo(image.width);
+	canvas.height = closestPowerOfTwo(image.height);
+
+	var context = canvas.getContext('2d');
+	context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+	return new SpriteTexture(canvas);
+}
+
+function closestPowerOfTwo(num) {
+	return Math.pow(2, Math.ceil(Math.log(num) / Math.log(2)));
 }

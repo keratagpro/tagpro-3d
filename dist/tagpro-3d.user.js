@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          TagPro 3D
 // @description   TagPro in 3D!
-// @version       0.0.3
+// @version       0.0.4
 // @author        Kera
 // @grant         GM_addStyle
 // @namespace     https://github.com/keratagpro/tagpro-3d/
@@ -184,7 +184,7 @@
 		});
 	}
 
-	var styles = "#tagpro3d {\r\n\tdisplay: block;\r\n\tpointer-events: none;\r\n\tposition: absolute;\r\n\tz-index: 1;\r\n}\r\n\r\n#viewport {\r\n\tz-index: 2;\r\n}\r\n\r\n#options {\r\n\tz-index: 3;\r\n}\r\n";
+	var styles = "#tagpro3d {\r\n\tdisplay: block;\r\n\tpointer-events: none;\r\n\tposition: absolute;\r\n\tz-index: -1;\r\n}\r\n";
 
 	function addAmbientLight(scene) {
 		var _ref = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
@@ -250,6 +250,38 @@ var lights = Object.freeze({
 		addDirectionalLight: addDirectionalLight,
 		addLights: addLights
 	});
+
+	var SpriteTexture = function (_THREE$Texture) {
+		babelHelpers.inherits(SpriteTexture, _THREE$Texture);
+
+		function SpriteTexture(image) {
+			var columns = arguments.length <= 1 || arguments[1] === undefined ? 16 : arguments[1];
+			var rows = arguments.length <= 2 || arguments[2] === undefined ? 11 : arguments[2];
+			var tileSize = arguments.length <= 3 || arguments[3] === undefined ? tagpro.TILE_SIZE : arguments[3];
+			babelHelpers.classCallCheck(this, SpriteTexture);
+
+			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(SpriteTexture).call(this, image));
+
+			_this.repeat.set(1 / columns, 1 / rows);
+
+			_this._columns = columns;
+			_this._rows = rows;
+			_this._tileSize = tileSize;
+			_this._width = columns * tileSize;
+			_this._height = rows * tileSize;
+			return _this;
+		}
+
+		babelHelpers.createClass(SpriteTexture, [{
+			key: 'setTile',
+			value: function setTile(tile) {
+				this.offset.set(tile.x * this._tileSize / this._width, 1 - (tile.y + 1) * this._tileSize / this._height);
+
+				this.needsUpdate = true;
+			}
+		}]);
+		return SpriteTexture;
+	}(THREE.Texture);
 
 	var textureLoader = new THREE.TextureLoader();
 	textureLoader.setCrossOrigin('');
@@ -414,6 +446,31 @@ var lights = Object.freeze({
 		return color || palette[0];
 	}
 
+	var _tileTexture;
+	function getTileTexture() {
+		if (!_tileTexture) {
+			_tileTexture = createTexture(tagpro.tiles.image);
+			return _tileTexture;
+		}
+
+		return _tileTexture.clone();
+	}
+
+	function createTexture(image) {
+		var canvas = document.createElement('canvas');
+		canvas.width = closestPowerOfTwo(image.width);
+		canvas.height = closestPowerOfTwo(image.height);
+
+		var context = canvas.getContext('2d');
+		context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+		return new SpriteTexture(canvas);
+	}
+
+	function closestPowerOfTwo(num) {
+		return Math.pow(2, Math.ceil(Math.log(num) / Math.log(2)));
+	}
+
 var utils = Object.freeze({
 		textureLoader: textureLoader,
 		objectLoader: objectLoader,
@@ -427,7 +484,8 @@ var utils = Object.freeze({
 		createBackgroundPlaneFromChunks: createBackgroundPlaneFromChunks,
 		mapBackgroundChunksToTextures: mapBackgroundChunksToTextures,
 		loadObjectFromJson: loadObjectFromJson,
-		findDominantColorForTile: findDominantColorForTile
+		findDominantColorForTile: findDominantColorForTile,
+		getTileTexture: getTileTexture
 	});
 
 	var tempQuaternion = new THREE.Quaternion();
@@ -544,7 +602,7 @@ var utils = Object.freeze({
 		outline: {
 			enabled: true,
 			detail: 2,
-			width: 1,
+			thickness: 1,
 			blue: {
 				color: 0x0000bb
 			},
@@ -647,7 +705,8 @@ var utils = Object.freeze({
 
 	var gate = {
 		geometry: {
-			width: 40
+			width: 40,
+			height: 40
 		},
 		materials: {
 			default: {
@@ -655,7 +714,7 @@ var utils = Object.freeze({
 				opacity: 0.7
 			},
 			off: {
-				opacity: 0.2
+				opacity: 0.3
 			},
 			green: {
 				opacity: 0.7
@@ -668,14 +727,17 @@ var utils = Object.freeze({
 			}
 		},
 		outlineMaterials: {
-			default: {}
-		},
-		extrude: {
-			amount: 40,
-			bevelEnabled: true,
-			bevelSegments: 1,
-			bevelSize: 6,
-			bevelThickness: 10
+			default: {},
+			off: {},
+			green: {},
+			red: {},
+			blue: {}
+		}
+	};
+
+	var tile = {
+		material: {
+			transparent: true
 		}
 	};
 
@@ -687,7 +749,8 @@ var objects$1 = Object.freeze({
 		bomb: bomb,
 		button: button,
 		flag: flag,
-		gate: gate
+		gate: gate,
+		tile: tile
 	});
 
 	var Bomb = function (_THREE$Object3D) {
@@ -704,7 +767,10 @@ var objects$1 = Object.freeze({
 			_this.materials = materials;
 
 			_this.add(loadObjectFromJson(bombJson));
-			_this.getObjectByName('bomb').material.setValues(materials.body);
+
+			var bombMaterial = _this.getObjectByName('bomb').material;
+			bombMaterial.setValues(materials.body);
+			bombMaterial.color = findDominantColorForTile(tagpro.tiles[tileId]);
 
 			_this.updateByTileId(tileId);
 			return _this;
@@ -739,41 +805,6 @@ var objects$1 = Object.freeze({
 		return Bomb;
 	}(THREE.Object3D);
 
-	function createRectangleShape(width) {
-		var half = width / 2;
-
-		var shape = new THREE.Shape();
-		shape.moveTo(-half, -half);
-		shape.lineTo(half, -half);
-		shape.lineTo(half, half);
-		shape.lineTo(-half, half);
-
-		return shape;
-	}
-
-	function createRectangleGeometry(width) {
-		var extrude = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-
-		var shape = createRectangleShape(width);
-
-		var geometry = extrudeShape(shape, extrude, width);
-
-		return geometry;
-	}
-
-	function extrudeShape(shape, extrude, width) {
-		var radius = width / 2;
-		var geometry = shape.extrude(extrude);
-		geometry.translate(0, 0, -extrude.amount);
-
-		if (extrude.bevelEnabled) {
-			var xy = 1 / ((radius + extrude.bevelSize) / radius);
-			geometry.scale(xy, xy, 1);
-		}
-
-		return geometry;
-	}
-
 	var _geometry;
 	var gateColors = {};
 
@@ -789,8 +820,13 @@ var objects$1 = Object.freeze({
 			var extrude = _ref.extrude;
 			babelHelpers.classCallCheck(this, Gate);
 
-			if (!_geometry) _geometry = createRectangleGeometry(geometry.width, extrude);
+			if (!_geometry) {
+				_geometry = new THREE.CubeGeometry(geometry.width, geometry.width, geometry.height, 1, 1, 1);
+			}
+
 			var material = new THREE.MeshPhongMaterial(materials.default);
+			material.map = getTileTexture();
+			material.map.setTile(tagpro.tiles[tileId]);
 
 			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Gate).call(this, _geometry, material));
 
@@ -832,7 +868,7 @@ var objects$1 = Object.freeze({
 				this._outlineMaterial.color = gateColors[tileId];
 				this._outlineMaterial.setValues(outlineMaterial);
 
-				this.material.color = gateColors[tileId];
+				this.material.map.setTile(tagpro.tiles[tileId]);
 				this.material.setValues(material);
 			}
 		}, {
@@ -1006,28 +1042,24 @@ var objects$1 = Object.freeze({
 	}
 
 	var _geometry$2;
-	var _texture;
 	var Tile = function (_THREE$Mesh) {
 		babelHelpers.inherits(Tile, _THREE$Mesh);
 
 		function Tile(tileId) {
-			babelHelpers.classCallCheck(this, Tile);
+			var _ref = arguments.length <= 1 || arguments[1] === undefined ? tile : arguments[1];
 
-			if (!_texture) {
-				_texture = createTexture(tagpro.tiles.image);
-			}
+			var material = _ref.material;
+			babelHelpers.classCallCheck(this, Tile);
 
 			if (!_geometry$2) {
 				_geometry$2 = new THREE.PlaneGeometry(tagpro.TILE_SIZE, tagpro.TILE_SIZE, 1, 1);
 				_geometry$2.rotateX(-Math.PI / 2);
 			}
 
-			var material = new THREE.MeshPhongMaterial({
-				transparent: true,
-				map: _texture.clone()
-			});
+			var _material = new THREE.MeshPhongMaterial(material);
+			_material.map = getTileTexture();
 
-			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Tile).call(this, _geometry$2, material));
+			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Tile).call(this, _geometry$2, _material));
 
 			_this.updateByTileId(tileId);
 			return _this;
@@ -1036,37 +1068,11 @@ var objects$1 = Object.freeze({
 		babelHelpers.createClass(Tile, [{
 			key: 'updateByTileId',
 			value: function updateByTileId(tileId) {
-				var texture = this.material.map;
-				var tile = tagpro.tiles[tileId];
-				var _tiles$image = tagpro.tiles.image;
-				var width = _tiles$image.width;
-				var height = _tiles$image.height;
-
-
-				texture.offset.set(tile.x * tagpro.TILE_SIZE / width, 1 - (tile.y + 1) * tagpro.TILE_SIZE / height);
-
-				texture.repeat.set(tagpro.TILE_SIZE / width, tagpro.TILE_SIZE / height);
-
-				texture.needsUpdate = true;
+				this.material.map.setTile(tagpro.tiles[tileId]);
 			}
 		}]);
 		return Tile;
 	}(THREE.Mesh);
-
-	function createTexture(image) {
-		var canvas = document.createElement('canvas');
-		canvas.width = closestPowerOfTwo(image.width);
-		canvas.height = closestPowerOfTwo(image.height);
-
-		var context = canvas.getContext('2d');
-		context.drawImage(image, 0, 0, canvas.width, canvas.height);
-
-		return new THREE.Texture(canvas);
-	}
-
-	function closestPowerOfTwo(num) {
-		return Math.pow(2, Math.ceil(Math.log(num) / Math.log(2)));
-	}
 
 	var _objectMap;
 

@@ -2,13 +2,5 @@
 	display: block;
 	pointer-events: none;
 	position: absolute;
-	z-index: 1;
-}
-
-#viewport {
-	z-index: 2;
-}
-
-#options {
-	z-index: 3;
+	z-index: -1;
 }

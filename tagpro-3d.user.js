@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          TagPro 3D
 // @description   TagPro in 3D!
-// @version       0.0.4
+// @version       0.0.5
 // @author        Kera
 // @grant         GM_addStyle
 // @namespace     https://github.com/keratagpro/tagpro-3d/
@@ -153,17 +153,8 @@
 
 	babelHelpers;
 
-	function after(obj, methodName, callback) {
-		var orig = obj[methodName];
-		obj[methodName] = function () {
-			var result = orig.apply(this, arguments);
-			callback.apply(this, arguments);
-			return result;
-		};
-	}
-
-	function addStyles(styles) {
-		GM_addStyle(styles);
+	function isInGame() {
+		return tagpro.state > 0;
 	}
 
 	// https://www.reddit.com/r/TagPro/wiki/api#wiki_tiles
@@ -190,7 +181,8 @@
 	var GATE_RED = 9.2;
 	var GATE_BLUE = 9.3;
 
-	var PORTAL_OFF = 13;
+	var PORTAL = 13;
+	var PORTAL_OFF = 13.1;
 
 	var POWERUP_NONE = 6;
 	var POWERUP_GRIP = 6.1;
@@ -703,20 +695,13 @@ var utils = Object.freeze({
 		materials: {
 			default: {
 				transparent: true,
-				opacity: 0.7
-			},
-			off: {
+				side: THREE.DoubleSide,
 				opacity: 0.3
 			},
-			green: {
-				opacity: 0.7
-			},
-			red: {
-				opacity: 0.7
-			},
-			blue: {
-				opacity: 0.7
-			}
+			off: {},
+			green: {},
+			red: {},
+			blue: {}
 		},
 		outlineMaterials: {
 			default: {},
@@ -1235,9 +1220,9 @@ var objects$1 = Object.freeze({
 		return mesh;
 	}
 
-	var objectMap = (_objectMap = {}, babelHelpers.defineProperty(_objectMap, BOMB, Bomb), babelHelpers.defineProperty(_objectMap, BOMB_OFF, Bomb), babelHelpers.defineProperty(_objectMap, BUTTON, Tile), babelHelpers.defineProperty(_objectMap, FLAG_RED, Tile), babelHelpers.defineProperty(_objectMap, FLAG_RED_TAKEN, Tile), babelHelpers.defineProperty(_objectMap, FLAG_BLUE, Tile), babelHelpers.defineProperty(_objectMap, FLAG_BLUE_TAKEN, Tile), babelHelpers.defineProperty(_objectMap, FLAG_YELLOW, Tile), babelHelpers.defineProperty(_objectMap, FLAG_YELLOW_TAKEN, Tile), babelHelpers.defineProperty(_objectMap, GATE_BLUE, Gate), babelHelpers.defineProperty(_objectMap, GATE_GREEN, Gate), babelHelpers.defineProperty(_objectMap, GATE_OFF, Gate), babelHelpers.defineProperty(_objectMap, GATE_RED, Gate), babelHelpers.defineProperty(_objectMap, SPIKE, Spike), babelHelpers.defineProperty(_objectMap, POWERUP_BOMB, Tile), babelHelpers.defineProperty(_objectMap, POWERUP_GRIP, Tile), babelHelpers.defineProperty(_objectMap, POWERUP_NONE, Tile), babelHelpers.defineProperty(_objectMap, POWERUP_SPEED, Tile), babelHelpers.defineProperty(_objectMap, POWERUP_TAGPRO, Tile), babelHelpers.defineProperty(_objectMap, SPEEDPAD, AnimatedTile), babelHelpers.defineProperty(_objectMap, SPEEDPAD_OFF, AnimatedTile), babelHelpers.defineProperty(_objectMap, SPEEDPAD_RED, AnimatedTile), babelHelpers.defineProperty(_objectMap, SPEEDPAD_RED_OFF, AnimatedTile), babelHelpers.defineProperty(_objectMap, SPEEDPAD_BLUE, AnimatedTile), babelHelpers.defineProperty(_objectMap, SPEEDPAD_BLUE_OFF, AnimatedTile), _objectMap);
+	var objectMap = (_objectMap = {}, babelHelpers.defineProperty(_objectMap, BOMB, Bomb), babelHelpers.defineProperty(_objectMap, BOMB_OFF, Bomb), babelHelpers.defineProperty(_objectMap, BUTTON, Tile), babelHelpers.defineProperty(_objectMap, FLAG_RED, Tile), babelHelpers.defineProperty(_objectMap, FLAG_RED_TAKEN, Tile), babelHelpers.defineProperty(_objectMap, FLAG_BLUE, Tile), babelHelpers.defineProperty(_objectMap, FLAG_BLUE_TAKEN, Tile), babelHelpers.defineProperty(_objectMap, FLAG_YELLOW, Tile), babelHelpers.defineProperty(_objectMap, FLAG_YELLOW_TAKEN, Tile), babelHelpers.defineProperty(_objectMap, GATE_BLUE, Gate), babelHelpers.defineProperty(_objectMap, GATE_GREEN, Gate), babelHelpers.defineProperty(_objectMap, GATE_OFF, Gate), babelHelpers.defineProperty(_objectMap, GATE_RED, Gate), babelHelpers.defineProperty(_objectMap, SPIKE, Spike), babelHelpers.defineProperty(_objectMap, ENDZONE_BLUE, Tile), babelHelpers.defineProperty(_objectMap, ENDZONE_RED, Tile), babelHelpers.defineProperty(_objectMap, POWERUP_BOMB, Tile), babelHelpers.defineProperty(_objectMap, POWERUP_GRIP, Tile), babelHelpers.defineProperty(_objectMap, POWERUP_NONE, Tile), babelHelpers.defineProperty(_objectMap, POWERUP_SPEED, Tile), babelHelpers.defineProperty(_objectMap, POWERUP_TAGPRO, Tile), babelHelpers.defineProperty(_objectMap, PORTAL, AnimatedTile), babelHelpers.defineProperty(_objectMap, PORTAL_OFF, AnimatedTile), babelHelpers.defineProperty(_objectMap, SPEEDPAD, AnimatedTile), babelHelpers.defineProperty(_objectMap, SPEEDPAD_OFF, AnimatedTile), babelHelpers.defineProperty(_objectMap, SPEEDPAD_RED, AnimatedTile), babelHelpers.defineProperty(_objectMap, SPEEDPAD_RED_OFF, AnimatedTile), babelHelpers.defineProperty(_objectMap, SPEEDPAD_BLUE, AnimatedTile), babelHelpers.defineProperty(_objectMap, SPEEDPAD_BLUE_OFF, AnimatedTile), _objectMap);
 
-	var overridableAssetMap = (_overridableAssetMap = {}, babelHelpers.defineProperty(_overridableAssetMap, SPEEDPAD, 'speedpad'), babelHelpers.defineProperty(_overridableAssetMap, SPEEDPAD_RED, 'speedpadRed'), babelHelpers.defineProperty(_overridableAssetMap, SPEEDPAD_BLUE, 'speedpadBlue'), _overridableAssetMap);
+	var overridableAssetMap = (_overridableAssetMap = {}, babelHelpers.defineProperty(_overridableAssetMap, SPEEDPAD, 'speedpad'), babelHelpers.defineProperty(_overridableAssetMap, SPEEDPAD_OFF, 'speedpad'), babelHelpers.defineProperty(_overridableAssetMap, SPEEDPAD_RED, 'speedpadRed'), babelHelpers.defineProperty(_overridableAssetMap, SPEEDPAD_RED_OFF, 'speedpadRed'), babelHelpers.defineProperty(_overridableAssetMap, SPEEDPAD_BLUE, 'speedpadBlue'), babelHelpers.defineProperty(_overridableAssetMap, SPEEDPAD_BLUE_OFF, 'speedpadBlue'), babelHelpers.defineProperty(_overridableAssetMap, PORTAL, 'portal'), babelHelpers.defineProperty(_overridableAssetMap, PORTAL_OFF, 'portal'), _overridableAssetMap);
 
 var objects = Object.freeze({
 		createBall: createBall,
@@ -1324,7 +1309,7 @@ var objects = Object.freeze({
 		mesh.name = 'walls';
 
 		mesh.rotateX(Math.PI / 2);
-		mesh.position.set(-tileSize / 2, extrude.amount, -tileSize / 2);
+		mesh.position.set(-19, extrude.amount, -19);
 
 		this.scene.add(mesh);
 
@@ -1495,11 +1480,18 @@ var walls = Object.freeze({
 		options: options
 	}, objects, utils, walls, lights);
 
-	// Extend tagpro.ready.after
-	tagpro__default.ready.after = readyAfter.bind(null, tagpro__default);
+	function after(obj, methodName, callback) {
+		var orig = obj[methodName];
+		obj[methodName] = function () {
+			var result = orig.apply(this, arguments);
+			callback.apply(this, arguments);
+			return result;
+		};
+	}
 
-	// HACK: for debugging
-	window.t3d = t3d;
+	function addStyles(styles) {
+		GM_addStyle(styles);
+	}
 
 	function createRenderer3D() {
 		var TILE_SIZE = tagpro__default.TILE_SIZE;
@@ -1654,6 +1646,13 @@ var walls = Object.freeze({
 		console.log('TagPro 3D Initialized.');
 	}
 
-	tagpro__default.ready(createRenderer3D);
+	// Extend tagpro.ready.after
+	tagpro__default.ready.after = readyAfter.bind(null, tagpro__default);
+
+	tagpro__default.ready(function () {
+		if (isInGame()) {
+			createRenderer3D();
+		}
+	});
 
 }(tagpro,THREE,$,RgbQuant,ClipperLib));

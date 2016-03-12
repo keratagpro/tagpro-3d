@@ -9,5 +9,6 @@ import options from '../options';
 export default Object.assign({
 	TILE_SIZE: 40,
 	dynamicObjects: {},
+	updatableObjects: [],
 	options
 }, objects, utils, walls, lights);

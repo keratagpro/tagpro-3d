@@ -8,29 +8,20 @@ export const ball = {
 	velocityCoefficient: 0.1,
 	rotationCoefficient: 0.015,
 	geometry: {
-		radius: 19,
-		detail: 1
+		detail: 1,
+		radius: 17
 	},
 	materials: {
-		blue: {
-			shading: THREE.FlatShading,
-			color: 0x0000ff
+		default: {
+			shading: THREE.FlatShading
 		},
-		red: {
-			shading: THREE.FlatShading,
-			color: 0xff0000
-		}
+		// blue: { },
+		// red: { }
 	},
 	outline: {
 		enabled: true,
 		detail: 2,
-		thickness: 1,
-		blue: {
-			color: 0x0000bb
-		},
-		red: {
-			color: 0xbb0000
-		}
+		radius: 19
 	}
 };
 
@@ -160,5 +151,11 @@ export const gate = {
 export const tile = {
 	material: {
 		transparent: true,
+	}
+};
+
+export const animatedTile = {
+	material: {
+		transparent: true
 	}
 };

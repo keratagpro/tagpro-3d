@@ -47,6 +47,11 @@ function createRenderer3D() {
 		t3d.renderer = t3d.createRenderer(t3d.options.renderer);
 	});
 
+	after(tr, 'updateGraphics', function () {
+		var timestamp = performance.now();
+		t3d.updatableObjects.forEach(object => object.update(timestamp));
+	});
+
 	after(tr, 'render', function () {
 		t3d.renderer.render(t3d.scene, t3d.camera);
 	});
@@ -146,6 +151,10 @@ function createRenderer3D() {
 
 			t3d.scene.add(mesh);
 			t3d.dynamicObjects[x][y] = mesh;
+
+			if (mesh.update) {
+				t3d.updatableObjects.push(mesh);
+			}
 		}
 		else {
 			mesh.updateByTileId(tileId);

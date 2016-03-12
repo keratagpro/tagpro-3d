@@ -4,6 +4,7 @@ import { TILE_SIZE, tiles } from 'tagpro';
 import RgbQuant from 'rgbquant';
 
 import SpriteTexture from '../lib/sprite_texture';
+import { overridableAssetMap } from './objects';
 
 export const textureLoader = new THREE.TextureLoader();
 textureLoader.setCrossOrigin('');
@@ -139,27 +140,49 @@ export function findDominantColorForTile(tile, tileSize = TILE_SIZE) {
 	return color || palette[0];
 }
 
-var _tileTexture;
-export function getTileTexture() {
-	if (!_tileTexture) {
-		_tileTexture = createTexture(tiles.image);
-		return _tileTexture;
-	}
-
-	return _tileTexture.clone();
+export function getTilesTexture() {
+	return new SpriteTexture(
+		resizeImageToPowerOfTwo(tiles.image),
+		tiles.image.width / TILE_SIZE,
+		tiles.image.height / TILE_SIZE
+	);
 }
 
-function createTexture(image) {
+export function getTextureByTileId(tileId, tileSize = TILE_SIZE) {
+	var assetName = overridableAssetMap[tileId];
+	var img = $(overrideableAssets[assetName])[0];
+
+	return new SpriteTexture(
+		resizeImageToPowerOfTwo(img),
+		img.width / tileSize,
+		img.height / tileSize
+	);
+}
+
+var resizedImageCache = {};
+
+export function resizeImageToPowerOfTwo(image) {
+	if (!resizedImageCache[image.src]) {
+		var w = closestPowerOfTwo(image.width);
+		var h = closestPowerOfTwo(image.height);
+		var img = resizeImage(image, w, h);
+		resizedImageCache[image.src] = img;
+	}
+
+	return resizedImageCache[image.src];
+}
+
+export function resizeImage(image, width, height) {
 	var canvas = document.createElement('canvas');
-	canvas.width = closestPowerOfTwo(image.width);
-	canvas.height = closestPowerOfTwo(image.height);
+	canvas.width = width;
+	canvas.height = height;
 
 	var context = canvas.getContext('2d');
 	context.drawImage(image, 0, 0, canvas.width, canvas.height);
 
-	return new SpriteTexture(canvas);
+	return canvas;
 }
 
-function closestPowerOfTwo(num) {
+export function closestPowerOfTwo(num) {
 	return Math.pow(2, Math.ceil(Math.log(num) / Math.log(2)));
 }

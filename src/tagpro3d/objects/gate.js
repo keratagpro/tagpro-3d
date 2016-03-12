@@ -3,8 +3,8 @@ import { tiles } from 'tagpro';
 
 import * as geometries from '../geometries';
 import * as objects from '../constants';
+import * as utils from '../utils';
 import { gate } from '../../options/objects';
-import { findDominantColorForTile, getTileTexture } from '../utils';
 
 var _geometry;
 var gateColors = {};
@@ -17,17 +17,19 @@ export default class Gate extends THREE.Mesh {
 		extrude
 	} = gate) {
 		if (!_geometry) {
-			_geometry = new THREE.CubeGeometry(geometry.width, geometry.width, geometry.height, 1, 1, 1);
+			_geometry = new THREE.BoxGeometry(geometry.width, geometry.height, geometry.width, 1, 1, 1);
+			_geometry.translate(0, geometry.height / 2, 0);
 		}
 
-		var material = new THREE.MeshPhongMaterial(materials.default);
-		material.map = getTileTexture();
-		material.map.setTile(tiles[tileId]);
+		var texture = utils.getTilesTexture();
+		texture.setTile(tiles[tileId]);
+
+		var material = new THREE.MeshPhongMaterial(
+			Object.assign({ map: texture }, materials.default)
+		);
 
 		super(_geometry, material);
 		this.name = 'gate';
-
-		this.rotateX(Math.PI / 2);
 
 		this.materials = materials;
 		this.outlineMaterials = outlineMaterials;
@@ -58,7 +60,7 @@ export default class Gate extends THREE.Mesh {
 
 	updateMaterials(tileId, material, outlineMaterial) {
 		if (!gateColors[tileId]) {
-			gateColors[tileId] = findDominantColorForTile(tiles[tileId]);
+			gateColors[tileId] = utils.findDominantColorForTile(tiles[tileId]);
 		}
 
 		this._outlineMaterial.color = gateColors[tileId];

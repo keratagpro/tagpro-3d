@@ -30,7 +30,6 @@ export function createWalls(map, backgroundTextures, tilesImage) {
 		}
 	});
 
-
 	var materials = backgroundTextures.map(({ texture }) => {
 		let opts = Object.assign({}, params.material, {
 			map: texture
@@ -50,6 +49,7 @@ export function createWalls(map, backgroundTextures, tilesImage) {
 
 	var mesh = new THREE.Mesh(geometry, material);
 	mesh.name = 'walls';
+
 	mesh.rotateX(Math.PI / 2);
 	mesh.position.set(-tileSize / 2, extrude.amount, -tileSize / 2);
 
@@ -92,34 +92,17 @@ function createUVGenerator({ x, y, width, height }, index, sideIndex) {
 
 			var left, right, top, bottom;
 
-			// if (Math.abs(a.y - b.y) < 0.01) {
-				// top, bottom
-				left = (5 * 40) / w;
-				right = (5.5 * 40) / w;
-				top = (4 * 40) / h;
-				bottom = (5 * 40) / h;
+			left = (5 * 40) / w;
+			right = (5.5 * 40) / w;
+			top = (4 * 40) / h;
+			bottom = (5 * 40) / h;
 
-				return [
-					new THREE.Vector2(right, 1 - top),
-					new THREE.Vector2(left, 1 - top),
-					new THREE.Vector2(left, 1 - bottom),
-					new THREE.Vector2(right, 1 - bottom),
-				];
-			// }
-			// else {
-			// 	// left, right, diagonals
-			// 	left = (15 * 40) / w;
-			// 	right = (16 * 40) / w;
-			// 	top = (0 * 40) / h;
-			// 	bottom = (1 * 40) / h;
-
-			// 	return [
-			// 		new THREE.Vector2(right, 1 - top),
-			// 		new THREE.Vector2(left, 1 - top),
-			// 		new THREE.Vector2(left, 1 - bottom),
-			// 		new THREE.Vector2(right, 1 - bottom),
-			// 	];
-			// }
+			return [
+				new THREE.Vector2(right, 1 - top),
+				new THREE.Vector2(left, 1 - top),
+				new THREE.Vector2(left, 1 - bottom),
+				new THREE.Vector2(right, 1 - bottom),
+			];
 		}
 	};
 }

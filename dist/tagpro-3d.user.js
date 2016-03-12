@@ -64,6 +64,31 @@
 	  return obj;
 	};
 
+	babelHelpers.get = function get(object, property, receiver) {
+	  if (object === null) object = Function.prototype;
+	  var desc = Object.getOwnPropertyDescriptor(object, property);
+
+	  if (desc === undefined) {
+	    var parent = Object.getPrototypeOf(object);
+
+	    if (parent === null) {
+	      return undefined;
+	    } else {
+	      return get(parent, property, receiver);
+	    }
+	  } else if ("value" in desc) {
+	    return desc.value;
+	  } else {
+	    var getter = desc.get;
+
+	    if (getter === undefined) {
+	      return undefined;
+	    }
+
+	    return getter.call(receiver);
+	  }
+	};
+
 	babelHelpers.inherits = function (subClass, superClass) {
 	  if (typeof superClass !== "function" && superClass !== null) {
 	    throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
@@ -143,22 +168,44 @@
 
 	// https://www.reddit.com/r/TagPro/wiki/api#wiki_tiles
 
-	var SPIKE = 7;
+	var BOMB = 10;
+	var BOMB_OFF = 10.1;
+
 	var BUTTON = 8;
+
+	var ENDZONE_RED = 17;
+	var ENDZONE_BLUE = 18;
+
+	var FLAG_BLUE = 4;
+	var FLAG_BLUE_TAKEN = 4.1;
+
+	var FLAG_RED = 3;
+	var FLAG_RED_TAKEN = 3.1;
+
+	var FLAG_YELLOW = 16;
+	var FLAG_YELLOW_TAKEN = 16.1;
+
 	var GATE_OFF = 9;
 	var GATE_GREEN = 9.1;
 	var GATE_RED = 9.2;
 	var GATE_BLUE = 9.3;
-	var BOMB = 10;
-	var BOMB_OFF = 10.1;
-	var ENDZONE_RED = 17;
-	var ENDZONE_BLUE = 18;
+
+	var PORTAL_OFF = 13;
 
 	var POWERUP_NONE = 6;
 	var POWERUP_GRIP = 6.1;
 	var POWERUP_BOMB = 6.2;
 	var POWERUP_TAGPRO = 6.3;
 	var POWERUP_SPEED = 6.4;
+
+	var SPEEDPAD = 5;
+	var SPEEDPAD_OFF = 5.1;
+	var SPEEDPAD_RED = 14;
+	var SPEEDPAD_RED_OFF = 14.1;
+	var SPEEDPAD_BLUE = 15;
+	var SPEEDPAD_BLUE_OFF = 15.1;
+
+	var SPIKE = 7;
 
 	/**
 	 * Delays callbacks when resourcesLoaded == true, so it's possible to run stuff
@@ -254,10 +301,7 @@ var lights = Object.freeze({
 	var SpriteTexture = function (_THREE$Texture) {
 		babelHelpers.inherits(SpriteTexture, _THREE$Texture);
 
-		function SpriteTexture(image) {
-			var columns = arguments.length <= 1 || arguments[1] === undefined ? 16 : arguments[1];
-			var rows = arguments.length <= 2 || arguments[2] === undefined ? 11 : arguments[2];
-			var tileSize = arguments.length <= 3 || arguments[3] === undefined ? tagpro.TILE_SIZE : arguments[3];
+		function SpriteTexture(image, columns, rows) {
 			babelHelpers.classCallCheck(this, SpriteTexture);
 
 			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(SpriteTexture).call(this, image));
@@ -266,18 +310,48 @@ var lights = Object.freeze({
 
 			_this._columns = columns;
 			_this._rows = rows;
-			_this._tileSize = tileSize;
-			_this._width = columns * tileSize;
-			_this._height = rows * tileSize;
 			return _this;
 		}
 
 		babelHelpers.createClass(SpriteTexture, [{
-			key: 'setTile',
-			value: function setTile(tile) {
-				this.offset.set(tile.x * this._tileSize / this._width, 1 - (tile.y + 1) * this._tileSize / this._height);
+			key: 'copy',
+			value: function copy(source) {
+				babelHelpers.get(Object.getPrototypeOf(SpriteTexture.prototype), 'copy', this).call(this, source);
+
+				this._columns = source._columns;
+				this._rows = source._rows;
+
+				return this;
+			}
+		}, {
+			key: 'setXY',
+			value: function setXY(x, y) {
+				if (x === this._x && y === this._y) return;
+
+				this._x = x;
+				this._y = y;
+
+				this.offset.set(x / this._columns, 1 - (y + 1) / this._rows);
 
 				this.needsUpdate = true;
+			}
+		}, {
+			key: 'setTile',
+			value: function setTile(_ref) {
+				var x = _ref.x;
+				var y = _ref.y;
+
+				this.setXY(x, y);
+			}
+		}, {
+			key: 'columns',
+			get: function get() {
+				return this._columns;
+			}
+		}, {
+			key: 'rows',
+			get: function get() {
+				return this._rows;
 			}
 		}]);
 		return SpriteTexture;
@@ -446,25 +520,41 @@ var lights = Object.freeze({
 		return color || palette[0];
 	}
 
-	var _tileTexture;
-	function getTileTexture() {
-		if (!_tileTexture) {
-			_tileTexture = createTexture(tagpro.tiles.image);
-			return _tileTexture;
-		}
-
-		return _tileTexture.clone();
+	function getTilesTexture() {
+		return new SpriteTexture(resizeImageToPowerOfTwo(tagpro.tiles.image), tagpro.tiles.image.width / tagpro.TILE_SIZE, tagpro.tiles.image.height / tagpro.TILE_SIZE);
 	}
 
-	function createTexture(image) {
+	function getTextureByTileId(tileId) {
+		var tileSize = arguments.length <= 1 || arguments[1] === undefined ? tagpro.TILE_SIZE : arguments[1];
+
+		var assetName = overridableAssetMap[tileId];
+		var img = $(overrideableAssets[assetName])[0];
+
+		return new SpriteTexture(resizeImageToPowerOfTwo(img), img.width / tileSize, img.height / tileSize);
+	}
+
+	var resizedImageCache = {};
+
+	function resizeImageToPowerOfTwo(image) {
+		if (!resizedImageCache[image.src]) {
+			var w = closestPowerOfTwo(image.width);
+			var h = closestPowerOfTwo(image.height);
+			var img = resizeImage(image, w, h);
+			resizedImageCache[image.src] = img;
+		}
+
+		return resizedImageCache[image.src];
+	}
+
+	function resizeImage(image, width, height) {
 		var canvas = document.createElement('canvas');
-		canvas.width = closestPowerOfTwo(image.width);
-		canvas.height = closestPowerOfTwo(image.height);
+		canvas.width = width;
+		canvas.height = height;
 
 		var context = canvas.getContext('2d');
 		context.drawImage(image, 0, 0, canvas.width, canvas.height);
 
-		return new SpriteTexture(canvas);
+		return canvas;
 	}
 
 	function closestPowerOfTwo(num) {
@@ -485,130 +575,32 @@ var utils = Object.freeze({
 		mapBackgroundChunksToTextures: mapBackgroundChunksToTextures,
 		loadObjectFromJson: loadObjectFromJson,
 		findDominantColorForTile: findDominantColorForTile,
-		getTileTexture: getTileTexture
+		getTilesTexture: getTilesTexture,
+		getTextureByTileId: getTextureByTileId,
+		resizeImageToPowerOfTwo: resizeImageToPowerOfTwo,
+		resizeImage: resizeImage,
+		closestPowerOfTwo: closestPowerOfTwo
 	});
-
-	var tempQuaternion = new THREE.Quaternion();
-	var AXIS_X = new THREE.Vector3(1, 0, 0);
-	var AXIS_Y = new THREE.Vector3(0, 1, 0);
-	var AXIS_Z = new THREE.Vector3(0, 0, 1);
-
-	var ballTileColors = {};
-
-	var Ball = function (_THREE$Mesh) {
-		babelHelpers.inherits(Ball, _THREE$Mesh);
-
-		function Ball(options) {
-			babelHelpers.classCallCheck(this, Ball);
-
-			var material = new THREE.MeshPhongMaterial();
-			var geometry = new THREE.IcosahedronGeometry(options.geometry.radius, options.geometry.detail);
-			// var geometry = new THREE.SphereGeometry(options.geometry.radius, 12, 8);
-
-			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Ball).call(this, geometry, material));
-
-			_this.options = options;
-			_this._createOutline();
-
-			_this.position.y = options.geometry.radius;
-			return _this;
-		}
-
-		babelHelpers.createClass(Ball, [{
-			key: '_createOutline',
-			value: function _createOutline() {
-				var outline = this.options.outline;
-
-				if (outline && outline.enabled) {
-					var radius = this.options.geometry.radius;
-					var geometry = new THREE.IcosahedronGeometry(radius, outline.detail);
-
-					this.outlineMaterial = new THREE.MeshBasicMaterial({ side: THREE.BackSide });
-					this.add(new THREE.Mesh(geometry, this.outlineMaterial));
-
-					var scale = 1 - outline.width / radius;
-					this.geometry.scale(scale, scale, scale);
-				}
-			}
-		}, {
-			key: 'updateColor',
-			value: function updateColor(player) {
-				var tileName = player.team === 1 ? 'redball' : 'blueball';
-
-				var materials = this.options.materials;
-				this.material.setValues(player.team === 1 ? materials.red : materials.blue);
-
-				if (!ballTileColors[tileName]) {
-					var tile = tagpro.tiles[tileName];
-					ballTileColors[tileName] = findDominantColorForTile(tile);
-				}
-
-				this.material.color = ballTileColors[tileName];
-
-				var outline = this.options.outline;
-				if (outline && outline.enabled) {
-					this.outlineMaterial.setValues(player.team === 1 ? outline.red : outline.blue);
-					this.outlineMaterial.color = ballTileColors[tileName];
-				}
-			}
-		}, {
-			key: 'updatePosition',
-			value: function updatePosition(player) {
-				this.position.x = player.sprite.x;
-				this.position.z = player.sprite.y;
-
-				tempQuaternion.setFromAxisAngle(AXIS_X, (player.ly || 0) * this.options.velocityCoefficient);
-				this.quaternion.multiplyQuaternions(tempQuaternion, this.quaternion);
-
-				tempQuaternion.setFromAxisAngle(AXIS_Z, -(player.lx || 0) * this.options.velocityCoefficient);
-				this.quaternion.multiplyQuaternions(tempQuaternion, this.quaternion);
-
-				tempQuaternion.setFromAxisAngle(AXIS_Y, -(player.a || 0) * this.options.rotationCoefficient);
-				this.quaternion.multiplyQuaternions(tempQuaternion, this.quaternion);
-			}
-		}]);
-		return Ball;
-	}(THREE.Mesh);
-
-	var metadata = { "version": 4.4, "type": "Object", "generator": "Object3D.toJSON" };
-	var geometries = [{ "uuid": "533B036E-7BD8-412A-9826-C270344C731B", "type": "SphereGeometry", "radius": 16, "widthSegments": 16, "heightSegments": 16, "phiStart": 0, "phiLength": 6.283185307179586, "thetaStart": 0, "thetaLength": 3.141592653589793 }, { "uuid": "EDC5A60E-30F9-46AD-8F00-57694EA6046F", "type": "CylinderGeometry", "radiusTop": 2, "radiusBottom": 3, "height": 3, "radialSegments": 32, "heightSegments": 1, "openEnded": false }, { "uuid": "D0B38B94-F57F-43DA-B2D5-EE90F990436E", "type": "TorusGeometry", "radius": 4.38, "tube": 0.76, "radialSegments": 8, "tubularSegments": 4, "arc": 1.5 }];
-	var materials = [{ "uuid": "1F3DD044-3AE4-4584-86A8-C8456E25A261", "type": "MeshPhongMaterial", "color": 0, "emissive": 0, "specular": 1118481, "shininess": 30 }, { "uuid": "F74765F4-EA20-4137-94DD-F083E9E5D714", "type": "MeshPhongMaterial", "color": 8421504, "emissive": 0, "specular": 1118481, "shininess": 30 }, { "uuid": "0E765FB3-278F-4EFE-BE0F-656922DD6B22", "type": "MeshPhongMaterial", "color": 16777215, "emissive": 0, "specular": 1118481, "shininess": 30 }];
-	var object = { "uuid": "DA35D27C-42A2-431C-88DE-E56516B50BBC", "type": "Mesh", "name": "bomb", "matrix": [0.7899922132492065, -0.4315394461154938, 0.43552955985069275, 0, 0.6131168603897095, 0.5560322999954224, -0.5611735582351685, 0, 0, 0.7103532552719116, 0.7038453221321106, 0, 0, 0, 0, 1], "geometry": "533B036E-7BD8-412A-9826-C270344C731B", "material": "1F3DD044-3AE4-4584-86A8-C8456E25A261", "children": [{ "uuid": "3DD112B4-0A42-4E6A-A96D-5BF76D3D877D", "type": "Mesh", "name": "head", "matrix": [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0.36041587591171265, 16.43364143371582, 2.5216023921966553, 1], "geometry": "EDC5A60E-30F9-46AD-8F00-57694EA6046F", "material": "F74765F4-EA20-4137-94DD-F083E9E5D714", "children": [{ "uuid": "36583292-82F4-43A0-A341-165C18F8536A", "type": "Mesh", "name": "fuse", "matrix": [-0.7485897541046143, -0.19866932928562164, 0.6325692534446716, 0, -0.15174666047096252, 0.9800665974617004, 0.12822814285755157, 0, -0.6454349756240845, 0, -0.7638152241706848, 0, 3.29097580909729, 1.9205838441848755, -2.8663127422332764, 1], "geometry": "D0B38B94-F57F-43DA-B2D5-EE90F990436E", "material": "0E765FB3-278F-4EFE-BE0F-656922DD6B22" }] }] };
-	var bombJson = {
-		metadata: metadata,
-		geometries: geometries,
-		materials: materials,
-		object: object
-	};
 
 	var ball = {
 		enabled: true,
 		velocityCoefficient: 0.1,
 		rotationCoefficient: 0.015,
 		geometry: {
-			radius: 19,
-			detail: 1
+			detail: 1,
+			radius: 17
 		},
 		materials: {
-			blue: {
-				shading: THREE.FlatShading,
-				color: 0x0000ff
-			},
-			red: {
-				shading: THREE.FlatShading,
-				color: 0xff0000
+			default: {
+				shading: THREE.FlatShading
 			}
 		},
+		// blue: { },
+		// red: { }
 		outline: {
 			enabled: true,
 			detail: 2,
-			thickness: 1,
-			blue: {
-				color: 0x0000bb
-			},
-			red: {
-				color: 0xbb0000
-			}
+			radius: 19
 		}
 	};
 
@@ -741,6 +733,12 @@ var utils = Object.freeze({
 		}
 	};
 
+	var animatedTile = {
+		material: {
+			transparent: true
+		}
+	};
+
 var objects$1 = Object.freeze({
 		ball: ball,
 		puck: puck,
@@ -750,8 +748,158 @@ var objects$1 = Object.freeze({
 		button: button,
 		flag: flag,
 		gate: gate,
-		tile: tile
+		tile: tile,
+		animatedTile: animatedTile
 	});
+
+	var _geometry;
+
+	var AnimatedTile = function (_THREE$Mesh) {
+		babelHelpers.inherits(AnimatedTile, _THREE$Mesh);
+
+		function AnimatedTile(tileId) {
+			var params = arguments.length <= 1 || arguments[1] === undefined ? animatedTile : arguments[1];
+			babelHelpers.classCallCheck(this, AnimatedTile);
+
+			if (!_geometry) {
+				_geometry = new THREE.PlaneGeometry(tagpro.TILE_SIZE, tagpro.TILE_SIZE, 1, 1);
+				_geometry.rotateX(-Math.PI / 2);
+			}
+
+			var texture = getTextureByTileId(tileId);
+
+			var material = new THREE.MeshPhongMaterial(Object.assign({ map: texture }, params.material));
+
+			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(AnimatedTile).call(this, _geometry, material));
+
+			_this._startTime = performance.now();
+			_this._frameDuration = 1000 / (6 + Math.random() / 10);
+
+			_this.texture = texture;
+			_this.updateByTileId(tileId);
+			return _this;
+		}
+
+		babelHelpers.createClass(AnimatedTile, [{
+			key: 'updateByTileId',
+			value: function updateByTileId(tileId) {
+				if (tileId == SPEEDPAD_OFF || tileId == SPEEDPAD_BLUE_OFF || tileId == SPEEDPAD_RED_OFF || tileId == PORTAL_OFF) this.pause();else this.play();
+			}
+		}, {
+			key: 'play',
+			value: function play() {
+				this.setRange(0, this.texture.columns - 2);
+			}
+		}, {
+			key: 'pause',
+			value: function pause() {
+				this.setRange(this.texture.columns - 1, this.texture.columns - 1);
+			}
+		}, {
+			key: 'setRange',
+			value: function setRange(from, to) {
+				this._from = from;
+				this._to = to;
+			}
+		}, {
+			key: 'update',
+			value: function update(timestamp) {
+				if (this._from === this._to) {
+					this.texture.setXY(this._from, 0);
+				} else {
+					var range = this._to - this._from;
+					var delta = timestamp - this._startTime;
+					var index = Math.round(delta / this._frameDuration % range);
+					this.texture.setXY(index + this._from, 0);
+				}
+			}
+		}]);
+		return AnimatedTile;
+	}(THREE.Mesh);
+
+	var tempQuaternion = new THREE.Quaternion();
+	var AXIS_X = new THREE.Vector3(1, 0, 0);
+	var AXIS_Y = new THREE.Vector3(0, 1, 0);
+	var AXIS_Z = new THREE.Vector3(0, 0, 1);
+
+	var ballTileColors = {};
+
+	var Ball = function (_THREE$Mesh) {
+		babelHelpers.inherits(Ball, _THREE$Mesh);
+
+		function Ball() {
+			var params = arguments.length <= 0 || arguments[0] === undefined ? ball : arguments[0];
+			babelHelpers.classCallCheck(this, Ball);
+
+			var _geometry = new THREE.IcosahedronGeometry(params.geometry.radius, params.geometry.detail);
+			var _material = new THREE.MeshPhongMaterial(params.materials.default);
+
+			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Ball).call(this, _geometry, _material));
+
+			_this.position.y = params.geometry.radius;
+			_this._createOutline(params.outline);
+
+			_this.params = params;
+			return _this;
+		}
+
+		babelHelpers.createClass(Ball, [{
+			key: '_createOutline',
+			value: function _createOutline(opts) {
+				if (!opts.enabled) return;
+
+				var outline = new THREE.Mesh(new THREE.IcosahedronGeometry(opts.radius, opts.detail), new THREE.MeshBasicMaterial({ side: THREE.BackSide }));
+
+				this.add(outline);
+				this._outline = outline;
+			}
+		}, {
+			key: 'updateColor',
+			value: function updateColor(player) {
+				var tileName = player.team === 1 ? 'redball' : 'blueball';
+
+				if (!ballTileColors[tileName]) {
+					ballTileColors[tileName] = findDominantColorForTile(tagpro.tiles[tileName]);
+				}
+
+				this.material.color = ballTileColors[tileName];
+
+				var materials = this.params.materials;
+				this.material.setValues(player.team === 1 ? materials.red : materials.blue);
+
+				if (this.params.outline.enabled) {
+					this._outline.material.color = this.material.color;
+				}
+			}
+		}, {
+			key: 'updatePosition',
+			value: function updatePosition(player) {
+				this.position.x = player.sprite.x;
+				this.position.z = player.sprite.y;
+
+				tempQuaternion.setFromAxisAngle(AXIS_X, (player.ly || 0) * this.params.velocityCoefficient);
+				this.quaternion.multiplyQuaternions(tempQuaternion, this.quaternion);
+
+				tempQuaternion.setFromAxisAngle(AXIS_Z, -(player.lx || 0) * this.params.velocityCoefficient);
+				this.quaternion.multiplyQuaternions(tempQuaternion, this.quaternion);
+
+				tempQuaternion.setFromAxisAngle(AXIS_Y, -(player.a || 0) * this.params.rotationCoefficient);
+				this.quaternion.multiplyQuaternions(tempQuaternion, this.quaternion);
+			}
+		}]);
+		return Ball;
+	}(THREE.Mesh);
+
+	var metadata = { "version": 4.4, "type": "Object", "generator": "Object3D.toJSON" };
+	var geometries = [{ "uuid": "533B036E-7BD8-412A-9826-C270344C731B", "type": "SphereGeometry", "radius": 16, "widthSegments": 16, "heightSegments": 16, "phiStart": 0, "phiLength": 6.283185307179586, "thetaStart": 0, "thetaLength": 3.141592653589793 }, { "uuid": "EDC5A60E-30F9-46AD-8F00-57694EA6046F", "type": "CylinderGeometry", "radiusTop": 2, "radiusBottom": 3, "height": 3, "radialSegments": 32, "heightSegments": 1, "openEnded": false }, { "uuid": "D0B38B94-F57F-43DA-B2D5-EE90F990436E", "type": "TorusGeometry", "radius": 4.38, "tube": 0.76, "radialSegments": 8, "tubularSegments": 4, "arc": 1.5 }];
+	var materials = [{ "uuid": "1F3DD044-3AE4-4584-86A8-C8456E25A261", "type": "MeshPhongMaterial", "color": 0, "emissive": 0, "specular": 1118481, "shininess": 30 }, { "uuid": "F74765F4-EA20-4137-94DD-F083E9E5D714", "type": "MeshPhongMaterial", "color": 8421504, "emissive": 0, "specular": 1118481, "shininess": 30 }, { "uuid": "0E765FB3-278F-4EFE-BE0F-656922DD6B22", "type": "MeshPhongMaterial", "color": 16777215, "emissive": 0, "specular": 1118481, "shininess": 30 }];
+	var object = { "uuid": "DA35D27C-42A2-431C-88DE-E56516B50BBC", "type": "Mesh", "name": "bomb", "matrix": [0.7899922132492065, -0.4315394461154938, 0.43552955985069275, 0, 0.6131168603897095, 0.5560322999954224, -0.5611735582351685, 0, 0, 0.7103532552719116, 0.7038453221321106, 0, 0, 0, 0, 1], "geometry": "533B036E-7BD8-412A-9826-C270344C731B", "material": "1F3DD044-3AE4-4584-86A8-C8456E25A261", "children": [{ "uuid": "3DD112B4-0A42-4E6A-A96D-5BF76D3D877D", "type": "Mesh", "name": "head", "matrix": [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0.36041587591171265, 16.43364143371582, 2.5216023921966553, 1], "geometry": "EDC5A60E-30F9-46AD-8F00-57694EA6046F", "material": "F74765F4-EA20-4137-94DD-F083E9E5D714", "children": [{ "uuid": "36583292-82F4-43A0-A341-165C18F8536A", "type": "Mesh", "name": "fuse", "matrix": [-0.7485897541046143, -0.19866932928562164, 0.6325692534446716, 0, -0.15174666047096252, 0.9800665974617004, 0.12822814285755157, 0, -0.6454349756240845, 0, -0.7638152241706848, 0, 3.29097580909729, 1.9205838441848755, -2.8663127422332764, 1], "geometry": "D0B38B94-F57F-43DA-B2D5-EE90F990436E", "material": "0E765FB3-278F-4EFE-BE0F-656922DD6B22" }] }] };
+	var bombJson = {
+		metadata: metadata,
+		geometries: geometries,
+		materials: materials,
+		object: object
+	};
 
 	var Bomb = function (_THREE$Object3D) {
 		babelHelpers.inherits(Bomb, _THREE$Object3D);
@@ -805,7 +953,7 @@ var objects$1 = Object.freeze({
 		return Bomb;
 	}(THREE.Object3D);
 
-	var _geometry;
+	var _geometry$1;
 	var gateColors = {};
 
 	var Gate = function (_THREE$Mesh) {
@@ -820,19 +968,19 @@ var objects$1 = Object.freeze({
 			var extrude = _ref.extrude;
 			babelHelpers.classCallCheck(this, Gate);
 
-			if (!_geometry) {
-				_geometry = new THREE.CubeGeometry(geometry.width, geometry.width, geometry.height, 1, 1, 1);
+			if (!_geometry$1) {
+				_geometry$1 = new THREE.BoxGeometry(geometry.width, geometry.height, geometry.width, 1, 1, 1);
+				_geometry$1.translate(0, geometry.height / 2, 0);
 			}
 
-			var material = new THREE.MeshPhongMaterial(materials.default);
-			material.map = getTileTexture();
-			material.map.setTile(tagpro.tiles[tileId]);
+			var texture = getTilesTexture();
+			texture.setTile(tagpro.tiles[tileId]);
 
-			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Gate).call(this, _geometry, material));
+			var material = new THREE.MeshPhongMaterial(Object.assign({ map: texture }, materials.default));
+
+			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Gate).call(this, _geometry$1, material));
 
 			_this.name = 'gate';
-
-			_this.rotateX(Math.PI / 2);
 
 			_this.materials = materials;
 			_this.outlineMaterials = outlineMaterials;
@@ -989,7 +1137,7 @@ var objects$1 = Object.freeze({
 	}
 
 	var _material;
-	var _geometry$1;
+	var _geometry$2;
 	var Spike = function (_THREE$Mesh) {
 		babelHelpers.inherits(Spike, _THREE$Mesh);
 
@@ -1000,8 +1148,8 @@ var objects$1 = Object.freeze({
 			var material = _ref.material;
 			babelHelpers.classCallCheck(this, Spike);
 
-			if (!_geometry$1) {
-				_geometry$1 = createSpikeGeometry(geometry);
+			if (!_geometry$2) {
+				_geometry$2 = createSpikeGeometry(geometry);
 			}
 
 			if (!_material) {
@@ -1009,7 +1157,7 @@ var objects$1 = Object.freeze({
 				_material.color = findDominantColorForTile(tagpro.tiles[SPIKE]);
 			}
 
-			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Spike).call(this, _geometry$1, _material));
+			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Spike).call(this, _geometry$2, _material));
 
 			_this.name = 'spike';
 			return _this;
@@ -1041,25 +1189,26 @@ var objects$1 = Object.freeze({
 		return geom;
 	}
 
-	var _geometry$2;
+	var _geometry$3;
+
 	var Tile = function (_THREE$Mesh) {
 		babelHelpers.inherits(Tile, _THREE$Mesh);
 
 		function Tile(tileId) {
-			var _ref = arguments.length <= 1 || arguments[1] === undefined ? tile : arguments[1];
-
-			var material = _ref.material;
+			var params = arguments.length <= 1 || arguments[1] === undefined ? tile : arguments[1];
 			babelHelpers.classCallCheck(this, Tile);
 
-			if (!_geometry$2) {
-				_geometry$2 = new THREE.PlaneGeometry(tagpro.TILE_SIZE, tagpro.TILE_SIZE, 1, 1);
-				_geometry$2.rotateX(-Math.PI / 2);
+			if (!_geometry$3) {
+				_geometry$3 = new THREE.PlaneGeometry(tagpro.TILE_SIZE, tagpro.TILE_SIZE, 1, 1);
+				_geometry$3.rotateX(-Math.PI / 2);
 			}
 
-			var _material = new THREE.MeshPhongMaterial(material);
-			_material.map = getTileTexture();
+			var texture = getTilesTexture();
+			texture.setTile(tagpro.tiles[tileId]);
 
-			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Tile).call(this, _geometry$2, _material));
+			var material = new THREE.MeshPhongMaterial(Object.assign({ map: texture }, params.material));
+
+			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Tile).call(this, _geometry$3, material));
 
 			_this.updateByTileId(tileId);
 			return _this;
@@ -1075,7 +1224,7 @@ var objects$1 = Object.freeze({
 	}(THREE.Mesh);
 
 	var _objectMap;
-
+	var _overridableAssetMap;
 	function createBall(player) {
 		var options = this.options;
 
@@ -1086,11 +1235,14 @@ var objects$1 = Object.freeze({
 		return mesh;
 	}
 
-	var objectMap = (_objectMap = {}, babelHelpers.defineProperty(_objectMap, BOMB, Bomb), babelHelpers.defineProperty(_objectMap, BOMB_OFF, Bomb), babelHelpers.defineProperty(_objectMap, BUTTON, Tile), babelHelpers.defineProperty(_objectMap, GATE_BLUE, Gate), babelHelpers.defineProperty(_objectMap, GATE_GREEN, Gate), babelHelpers.defineProperty(_objectMap, GATE_OFF, Gate), babelHelpers.defineProperty(_objectMap, GATE_RED, Gate), babelHelpers.defineProperty(_objectMap, SPIKE, Spike), babelHelpers.defineProperty(_objectMap, POWERUP_BOMB, Tile), babelHelpers.defineProperty(_objectMap, POWERUP_GRIP, Tile), babelHelpers.defineProperty(_objectMap, POWERUP_NONE, Tile), babelHelpers.defineProperty(_objectMap, POWERUP_SPEED, Tile), babelHelpers.defineProperty(_objectMap, POWERUP_TAGPRO, Tile), _objectMap);
+	var objectMap = (_objectMap = {}, babelHelpers.defineProperty(_objectMap, BOMB, Bomb), babelHelpers.defineProperty(_objectMap, BOMB_OFF, Bomb), babelHelpers.defineProperty(_objectMap, BUTTON, Tile), babelHelpers.defineProperty(_objectMap, FLAG_RED, Tile), babelHelpers.defineProperty(_objectMap, FLAG_RED_TAKEN, Tile), babelHelpers.defineProperty(_objectMap, FLAG_BLUE, Tile), babelHelpers.defineProperty(_objectMap, FLAG_BLUE_TAKEN, Tile), babelHelpers.defineProperty(_objectMap, FLAG_YELLOW, Tile), babelHelpers.defineProperty(_objectMap, FLAG_YELLOW_TAKEN, Tile), babelHelpers.defineProperty(_objectMap, GATE_BLUE, Gate), babelHelpers.defineProperty(_objectMap, GATE_GREEN, Gate), babelHelpers.defineProperty(_objectMap, GATE_OFF, Gate), babelHelpers.defineProperty(_objectMap, GATE_RED, Gate), babelHelpers.defineProperty(_objectMap, SPIKE, Spike), babelHelpers.defineProperty(_objectMap, POWERUP_BOMB, Tile), babelHelpers.defineProperty(_objectMap, POWERUP_GRIP, Tile), babelHelpers.defineProperty(_objectMap, POWERUP_NONE, Tile), babelHelpers.defineProperty(_objectMap, POWERUP_SPEED, Tile), babelHelpers.defineProperty(_objectMap, POWERUP_TAGPRO, Tile), babelHelpers.defineProperty(_objectMap, SPEEDPAD, AnimatedTile), babelHelpers.defineProperty(_objectMap, SPEEDPAD_OFF, AnimatedTile), babelHelpers.defineProperty(_objectMap, SPEEDPAD_RED, AnimatedTile), babelHelpers.defineProperty(_objectMap, SPEEDPAD_RED_OFF, AnimatedTile), babelHelpers.defineProperty(_objectMap, SPEEDPAD_BLUE, AnimatedTile), babelHelpers.defineProperty(_objectMap, SPEEDPAD_BLUE_OFF, AnimatedTile), _objectMap);
+
+	var overridableAssetMap = (_overridableAssetMap = {}, babelHelpers.defineProperty(_overridableAssetMap, SPEEDPAD, 'speedpad'), babelHelpers.defineProperty(_overridableAssetMap, SPEEDPAD_RED, 'speedpadRed'), babelHelpers.defineProperty(_overridableAssetMap, SPEEDPAD_BLUE, 'speedpadBlue'), _overridableAssetMap);
 
 var objects = Object.freeze({
 		createBall: createBall,
-		objectMap: objectMap
+		objectMap: objectMap,
+		overridableAssetMap: overridableAssetMap
 	});
 
 	// Simplifying API of jsclipper.
@@ -1170,6 +1322,7 @@ var objects = Object.freeze({
 
 		var mesh = new THREE.Mesh(geometry, material);
 		mesh.name = 'walls';
+
 		mesh.rotateX(Math.PI / 2);
 		mesh.position.set(-tileSize / 2, extrude.amount, -tileSize / 2);
 
@@ -1213,29 +1366,12 @@ var objects = Object.freeze({
 
 				var left, right, top, bottom;
 
-				// if (Math.abs(a.y - b.y) < 0.01) {
-				// top, bottom
 				left = 5 * 40 / w;
 				right = 5.5 * 40 / w;
 				top = 4 * 40 / h;
 				bottom = 5 * 40 / h;
 
 				return [new THREE.Vector2(right, 1 - top), new THREE.Vector2(left, 1 - top), new THREE.Vector2(left, 1 - bottom), new THREE.Vector2(right, 1 - bottom)];
-				// }
-				// else {
-				// 	// left, right, diagonals
-				// 	left = (15 * 40) / w;
-				// 	right = (16 * 40) / w;
-				// 	top = (0 * 40) / h;
-				// 	bottom = (1 * 40) / h;
-
-				// 	return [
-				// 		new THREE.Vector2(right, 1 - top),
-				// 		new THREE.Vector2(left, 1 - top),
-				// 		new THREE.Vector2(left, 1 - bottom),
-				// 		new THREE.Vector2(right, 1 - bottom),
-				// 	];
-				// }
 			}
 		};
 	}
@@ -1355,6 +1491,7 @@ var walls = Object.freeze({
 	var t3d = Object.assign({
 		TILE_SIZE: 40,
 		dynamicObjects: {},
+		updatableObjects: [],
 		options: options
 	}, objects, utils, walls, lights);
 
@@ -1397,6 +1534,13 @@ var walls = Object.freeze({
 
 		after(tr, 'createRenderer', function () {
 			t3d.renderer = t3d.createRenderer(t3d.options.renderer);
+		});
+
+		after(tr, 'updateGraphics', function () {
+			var timestamp = performance.now();
+			t3d.updatableObjects.forEach(function (object) {
+				return object.update(timestamp);
+			});
 		});
 
 		after(tr, 'render', function () {
@@ -1498,6 +1642,10 @@ var walls = Object.freeze({
 
 				t3d.scene.add(mesh);
 				t3d.dynamicObjects[x][y] = mesh;
+
+				if (mesh.update) {
+					t3d.updatableObjects.push(mesh);
+				}
 			} else {
 				mesh.updateByTileId(tileId);
 			}

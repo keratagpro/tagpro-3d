@@ -1,25 +1,48 @@
 import * as THREE from 'three';
-import { TILE_SIZE } from 'tagpro';
 
 export default class SpriteTexture extends THREE.Texture {
-	constructor(image, columns = 16, rows = 11, tileSize = TILE_SIZE) {
+	constructor(image, columns, rows) {
 		super(image);
 
 		this.repeat.set(1 / columns, 1 / rows);
 
 		this._columns = columns;
 		this._rows = rows;
-		this._tileSize = tileSize;
-		this._width = columns * tileSize;
-		this._height = rows * tileSize;
 	}
 
-	setTile(tile) {
+	get columns() {
+		return this._columns;
+	}
+
+	get rows() {
+		return this._rows;
+	}
+
+	copy(source) {
+		super.copy(source);
+
+		this._columns = source._columns;
+		this._rows = source._rows;
+
+		return this;
+	}
+
+	setXY(x, y) {
+		if (x === this._x && y === this._y)
+			return;
+
+		this._x = x;
+		this._y = y;
+
 		this.offset.set(
-			tile.x * this._tileSize / this._width,
-			1 - ((tile.y + 1) * this._tileSize) / this._height
+			x / this._columns,
+			1 - (y + 1) / this._rows
 		);
 
 		this.needsUpdate = true;
+	}
+
+	setTile({ x, y }) {
+		this.setXY(x, y);
 	}
 }

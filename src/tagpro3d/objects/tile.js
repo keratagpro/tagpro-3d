@@ -1,24 +1,27 @@
 import * as THREE from 'three';
 import { TILE_SIZE, tiles } from 'tagpro';
 
-import { getTileTexture } from '../utils';
+import * as utils from '../utils';
 import { tile } from '../../options/objects';
+import SpriteTexture from '../../lib/sprite_texture';
 
-var _geometry, _texture;
+var _geometry;
 
 export default class Tile extends THREE.Mesh {
-	constructor(tileId, {
-		material
-	} = tile) {
+	constructor(tileId, params = tile) {
 		if (!_geometry) {
 			_geometry = new THREE.PlaneGeometry(TILE_SIZE, TILE_SIZE, 1, 1);
 			_geometry.rotateX(-Math.PI / 2);
 		}
 
-		var _material = new THREE.MeshPhongMaterial(material);
-		_material.map = getTileTexture();
+		var texture = utils.getTilesTexture();
+		texture.setTile(tiles[tileId]);
 
-		super(_geometry, _material);
+		var material = new THREE.MeshPhongMaterial(
+			Object.assign({ map: texture }, params.material)
+		);
+
+		super(_geometry, material);
 
 		this.updateByTileId(tileId);
 	}

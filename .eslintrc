@@ -35,6 +35,7 @@
 		"no-console": 0
     },
 	"globals": {
-		"GM_addStyle": true
+		"GM_addStyle": true,
+		"overrideableAssets": true
 	}
 }

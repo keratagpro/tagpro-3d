@@ -23,7 +23,7 @@ export const GATE_RED = 9.2;
 export const GATE_BLUE = 9.3;
 
 export const PORTAL = 13;
-export const PORTAL_OFF = 13;
+export const PORTAL_OFF = 13.1;
 
 export const POWERUP_NONE = 6;
 export const POWERUP_GRIP = 6.1;

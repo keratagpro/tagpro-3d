@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          TagPro 3D
 // @description   TagPro in 3D!
-// @version       0.0.4
+// @version       0.0.5
 // @author        Kera
 // @grant         GM_addStyle
 // @namespace     https://github.com/keratagpro/tagpro-3d/

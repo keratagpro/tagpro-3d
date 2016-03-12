@@ -124,20 +124,13 @@ export const gate = {
 	materials: {
 		default: {
 			transparent: true,
-			opacity: 0.7
-		},
-		off: {
+			side: THREE.DoubleSide,
 			opacity: 0.3
 		},
-		green: {
-			opacity: 0.7
-		},
-		red: {
-			opacity: 0.7
-		},
-		blue: {
-			opacity: 0.7
-		}
+		off: { },
+		green: { },
+		red: { },
+		blue: { }
 	},
 	outlineMaterials: {
 		default: { },

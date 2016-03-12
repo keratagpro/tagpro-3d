@@ -51,7 +51,7 @@ export function createWalls(map, backgroundTextures, tilesImage) {
 	mesh.name = 'walls';
 
 	mesh.rotateX(Math.PI / 2);
-	mesh.position.set(-tileSize / 2, extrude.amount, -tileSize / 2);
+	mesh.position.set(-19, extrude.amount, -19);
 
 	this.scene.add(mesh);
 

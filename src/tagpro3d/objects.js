@@ -37,11 +37,15 @@ export const objectMap = {
 	[constants.GATE_OFF]: Gate,
 	[constants.GATE_RED]: Gate,
 	[constants.SPIKE]: Spike,
+	[constants.ENDZONE_BLUE]: Tile,
+	[constants.ENDZONE_RED]: Tile,
 	[constants.POWERUP_BOMB]: Tile,
 	[constants.POWERUP_GRIP]: Tile,
 	[constants.POWERUP_NONE]: Tile,
 	[constants.POWERUP_SPEED]: Tile,
 	[constants.POWERUP_TAGPRO]: Tile,
+	[constants.PORTAL]: AnimatedTile,
+	[constants.PORTAL_OFF]: AnimatedTile,
 	[constants.SPEEDPAD]: AnimatedTile,
 	[constants.SPEEDPAD_OFF]: AnimatedTile,
 	[constants.SPEEDPAD_RED]: AnimatedTile,
@@ -52,6 +56,11 @@ export const objectMap = {
 
 export const overridableAssetMap = {
 	[constants.SPEEDPAD]: 'speedpad',
+	[constants.SPEEDPAD_OFF]: 'speedpad',
 	[constants.SPEEDPAD_RED]: 'speedpadRed',
+	[constants.SPEEDPAD_RED_OFF]: 'speedpadRed',
 	[constants.SPEEDPAD_BLUE]: 'speedpadBlue',
+	[constants.SPEEDPAD_BLUE_OFF]: 'speedpadBlue',
+	[constants.PORTAL]: 'portal',
+	[constants.PORTAL_OFF]: 'portal',
 };

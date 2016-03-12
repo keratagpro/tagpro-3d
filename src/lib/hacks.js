@@ -23,7 +23,7 @@ export function changeSomeTilesToFloorTiles(tiles) {
 		constants.GATE_RED,
 		constants.GATE_BLUE,
 		constants.ENDZONE_RED,
-		constants.ENDZONE_BLUE,
+		constants.ENDZONE_BLUE
 	];
 
 	flooredTiles.forEach(tile => {

@@ -1,56 +1,56 @@
 import * as THREE from 'three';
 import { tiles } from 'tagpro';
 
-import { ball } from '../../options/objects';
-import { findDominantColorForTile } from '../utils';
+import { ball } from '../options/objects';
+import * as utils from '../utils';
 
 const tempQuaternion = new THREE.Quaternion();
 const AXIS_X = new THREE.Vector3(1, 0, 0);
 const AXIS_Y = new THREE.Vector3(0, 1, 0);
 const AXIS_Z = new THREE.Vector3(0, 0, 1);
 
-var ballTileColors = {};
-
 export default class Ball extends THREE.Mesh {
-	constructor(params = ball) {
+	constructor(tileId, params = ball) {
 		var _geometry = new THREE.IcosahedronGeometry(params.geometry.radius, params.geometry.detail);
 		var _material = new THREE.MeshPhongMaterial(params.materials.default);
 
 		super(_geometry, _material);
 
-		this.position.y = params.geometry.radius;
-		this._createOutline(params.outline);
-
 		this.params = params;
+		this.position.y = params.geometry.radius;
+
+		this.addOutline(params.outline, params.outlineMaterials);
+		this.updateByTileId(tileId);
 	}
 
-	_createOutline(opts) {
-		if (!opts.enabled)
+	addOutline(params, materials) {
+		if (!params.enabled)
 			return;
 
 		var outline = new THREE.Mesh(
-			new THREE.IcosahedronGeometry(opts.radius, opts.detail),
-			new THREE.MeshBasicMaterial({ side: THREE.BackSide })
+			new THREE.IcosahedronGeometry(params.radius, params.detail),
+			new THREE.MeshBasicMaterial(materials.default)
 		);
 
 		this.add(outline);
 		this._outline = outline;
 	}
 
-	updateColor(player) {
-		var tileName = player.team === 1 ? 'redball' : 'blueball';
+	updateByTileId(tileId) {
+		var material = this.params.materials[tileId === 'redball' ? 'red' : 'blue'];
 
-		if (!ballTileColors[tileName]) {
-			ballTileColors[tileName] = findDominantColorForTile(tiles[tileName]);
-		}
+		if (!material.color)
+			material.color = utils.getDominantColorForTile(tiles.image, tiles[tileId]);
 
-		this.material.color = ballTileColors[tileName];
+		this.material.setValues(material);
 
-		var materials = this.params.materials;
-		this.material.setValues(player.team === 1 ? materials.red : materials.blue);
+		if (this._outline) {
+			var outlineMaterial = this.params.outlineMaterials[tileId === 'redball' ? 'red' : 'blue'];
 
-		if (this.params.outline.enabled) {
-			this._outline.material.color = this.material.color;
+			if (!outlineMaterial.color)
+				outlineMaterial.color = material.color;
+
+			this._outline.material.setValues(outlineMaterial);
 		}
 	}
 

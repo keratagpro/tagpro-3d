@@ -1,6 +1,6 @@
 {
   "name": "tagpro-3d",
-  "version": "0.0.5",
+  "version": "0.1.0",
   "description": "TagPro in 3D!",
   "main": "src/main.js",
   "private": true,

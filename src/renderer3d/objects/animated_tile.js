@@ -3,7 +3,7 @@ import { TILE_SIZE, tiles } from 'tagpro';
 
 import * as constants from '../constants';
 import * as utils from '../utils';
-import { animatedTile } from '../../options/objects';
+import { animatedTile } from '../options/objects';
 
 var _geometry;
 

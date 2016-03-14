@@ -1,7 +1,4 @@
 import * as THREE from 'three';
-// import { extend } from 'jquery';
-
-import { textureLoader as loader } from '../tagpro3d/utils';
 
 export const ball = {
 	enabled: true,
@@ -15,38 +12,58 @@ export const ball = {
 		default: {
 			shading: THREE.FlatShading
 		},
-		// blue: { },
-		// red: { }
+		blue: { },
+		red: { }
 	},
 	outline: {
 		enabled: true,
 		detail: 2,
 		radius: 19
+	},
+	outlineMaterials: {
+		default: {
+			side: THREE.BackSide
+		},
+		blue: { },
+		red: { }
 	}
 };
 
 export const puck = {
 	enabled: true,
 	rotationCoefficient: 0.01,
-	geometry: {
-		radiusTop: 17,
-		radiusBottom: 19,
-		height: 10,
-		segments: 32
+	geometries: {
+		circle: {
+			height: 10,
+			radius: 17,
+			segments: 32
+		},
+		cylinder: {
+			height: 10,
+			radiusTop: 17,
+			radiusBottom: 19,
+			segments: 32
+		}
 	},
 	materials: {
-		default: {
-			transparent: true,
-			alphaTest: 0.1,
-			opacity: 0.9,
-			shading: THREE.FlatShading,
-			side: THREE.DoubleSide
+		circle: {
+			default: {
+				transparent: true,
+				alphaTest: 0.1,
+				opacity: 0.9,
+				shading: THREE.FlatShading
+			},
+			blue: { },
+			red: { }
 		},
-		blue: {
-			color: 0x0000ff,
-		},
-		red: {
-			color: 0xff0000,
+		cylinder: {
+			default: {
+				transparent: true,
+				opacity: 0.9,
+				shading: THREE.FlatShading
+			},
+			blue: { },
+			red: { }
 		}
 	}
 };
@@ -65,6 +82,14 @@ export const wall = {
 		bevelSegments: 1,
 		bevelSize: 5,
 		bevelThickness: 10,
+	},
+	topWallTile: {
+		x: 5.5,
+		y: 5.5
+	},
+	sideWallTile: {
+		x: 5.5,
+		y: 5.5
 	}
 };
 

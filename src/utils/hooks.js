@@ -6,7 +6,3 @@ export function after(obj, methodName, callback) {
 		return result;
 	};
 }
-
-export function addStyles(styles) {
-	GM_addStyle(styles);
-}

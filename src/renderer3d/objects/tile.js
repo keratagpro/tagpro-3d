@@ -2,8 +2,8 @@ import * as THREE from 'three';
 import { TILE_SIZE, tiles } from 'tagpro';
 
 import * as utils from '../utils';
-import { tile } from '../../options/objects';
-import SpriteTexture from '../../lib/sprite_texture';
+import { tile } from '../options/objects';
+import SpriteTexture from '../three/sprite_texture';
 
 var _geometry;
 

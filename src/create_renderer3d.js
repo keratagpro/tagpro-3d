@@ -1,32 +1,23 @@
 import tagpro from 'tagpro';
 import * as THREE from 'three';
 
-import * as hacks from './lib/hacks';
-import styles from './styles.css';
-import t3d from './tagpro3d';
-import { after, addStyles, isGame } from './lib/utils';
+import * as utils from './utils';
+import options from './renderer3d/options';
+import Renderer3D from './renderer3d';
+
+const TILE_SIZE = tagpro.TILE_SIZE;
 
 export default function createRenderer3D() {
-	const TILE_SIZE = tagpro.TILE_SIZE;
+	const after = utils.after;
+	const tr = tagpro.renderer;
+	const t3d = new Renderer3D(options);
 
 	tagpro.tagpro3d = t3d;
-
-	var tr = tagpro.renderer;
 
 	// Make game canvas transparent
 	tr.options.transparent = true;
 
-	hacks.changeSomeTilesToFloorTiles(tagpro.tiles);
-
-	// Add styles
-	addStyles(styles);
-
-	// Draw extra tiles to the 2D background layer.
-	// after(tr, 'drawBackgroundTiles', () => hacks.drawExtraTilesToBackground(tagpro));
-
-	t3d.camera = t3d.createCamera(t3d.options.camera);
-	t3d.scene = t3d.createScene();
-	t3d.scene.add(t3d.camera);
+	utils.changeSomeTilesToFloorTiles(tagpro.tiles);
 
 	//
 	// Renderer
@@ -42,8 +33,7 @@ export default function createRenderer3D() {
 	});
 
 	after(tr, 'updateGraphics', function () {
-		var timestamp = performance.now();
-		t3d.updatableObjects.forEach(object => object.update(timestamp));
+		t3d.update(performance.now());
 	});
 
 	after(tr, 'render', function () {
@@ -85,7 +75,7 @@ export default function createRenderer3D() {
 	tr.updatePlayerColor = function (player) {
 		if (player.team !== player.currentTeam) {
 			player.currentTeam = player.team;
-			player.object3d.updateColor(player);
+			player.object3d.updateByTileId(player.team === 1 ? 'redball' : 'blueball');
 		}
 	};
 
@@ -107,9 +97,7 @@ export default function createRenderer3D() {
 	//
 
 	after(tr, 'createBackgroundTexture', (container) => {
-		var textures = t3d.mapBackgroundChunksToTextures(tr.backgroundChunks);
-
-		t3d.createWalls(tagpro.map, textures, tagpro.tiles.image.src);
+		t3d.createWalls(tagpro.map);
 
 		var plane = t3d.createBackgroundPlaneFromChunks(tr.backgroundChunks);
 		t3d.scene.add(plane);

@@ -1,9 +1,9 @@
 import * as THREE from 'three';
 import { tiles } from 'tagpro';
 
-import * as objects from '../constants';
-import { spike } from '../../options/objects';
-import { findDominantColorForTile } from '../utils';
+import * as constants from '../constants';
+import * as utils from '../utils';
+import { spike } from '../options/objects';
 
 var _material, _geometry;
 
@@ -17,8 +17,11 @@ export default class Spike extends THREE.Mesh {
 		}
 
 		if (!_material) {
+			if (!material.color) {
+				material.color = utils.getDominantColorForTile(tiles.image, tiles[constants.SPIKE]);
+			}
+
 			_material = new THREE.MeshPhongMaterial(material);
-			_material.color = findDominantColorForTile(tiles[objects.SPIKE]);
 		}
 
 		super(_geometry, _material);
@@ -26,7 +29,7 @@ export default class Spike extends THREE.Mesh {
 		this.name = 'spike';
 	}
 
-	updateByTile() { }
+	updateByTileId() { }
 }
 
 function createSpikeGeometry({ width = 32, segments = 6 } = {}) {

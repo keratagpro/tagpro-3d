@@ -97,7 +97,7 @@ export default function createRenderer3D() {
 	//
 
 	after(tr, 'createBackgroundTexture', (container) => {
-		t3d.createWalls(tagpro.map);
+		t3d.createWalls(tagpro.map, t3d.options.objects.wall);
 
 		var plane = t3d.createBackgroundPlaneFromChunks(tr.backgroundChunks);
 		t3d.scene.add(plane);

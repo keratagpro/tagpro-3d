@@ -17,8 +17,8 @@ export function updateCameraFOV(camera, gameCanvas) {
 }
 
 export function updateCameraPosition(camera, x, y) {
-	camera.position.x = x - 20;
-	camera.position.z = y - 20;
+	camera.position.x = x - 19;
+	camera.position.z = y - 19;
 }
 
 export function updateCameraZoom(camera, zoom) {

@@ -5,7 +5,7 @@
 // @author        Kera
 // @grant         GM_addStyle
 // @namespace     https://github.com/keratagpro/tagpro-3d/
-// @icon          https://keratagpro.github.io/tagpro-3d/assets/3d.png
+// @icon          https://keratagpro.github.io/tagpro-3d/assets/icon.png
 // @downloadUrl   https://keratagpro.github.io/tagpro-3d/tagpro-3d.user.js
 // @updateUrl     https://keratagpro.github.io/tagpro-3d/tagpro-3d.meta.js
 // @include       http://tagpro-*.koalabeast.com*
@@ -247,13 +247,12 @@
 		rotationCoefficient: 0.01,
 		geometries: {
 			circle: {
-				height: 10,
-				radius: 17,
+				radius: 19,
 				segments: 32
 			},
 			cylinder: {
 				height: 10,
-				radiusTop: 17,
+				radiusTop: 19,
 				radiusBottom: 19,
 				segments: 32
 			}
@@ -273,7 +272,8 @@
 				default: {
 					transparent: true,
 					opacity: 0.9,
-					shading: THREE.FlatShading
+					shading: THREE.FlatShading,
+					side: THREE.DoubleSide
 				},
 				blue: {},
 				red: {}
@@ -282,12 +282,18 @@
 	};
 
 	var wall = {
-		material: {
-			shading: THREE.FlatShading,
-			color: 0xffffff
+		materials: {
+			top: {
+				opacity: 0.7,
+				shading: THREE.FlatShading,
+				transparent: true
+			},
+			side: {
+				opacity: 0.7,
+				shading: THREE.FlatShading,
+				transparent: true
+			}
 		},
-		// opacity: 1.0,
-		// transparent: true
 		extrude: {
 			amount: 40,
 			steps: 1,
@@ -296,13 +302,15 @@
 			bevelSize: 5,
 			bevelThickness: 10
 		},
-		topWallTile: {
-			x: 5.5,
-			y: 5.5
-		},
-		sideWallTile: {
-			x: 5.5,
-			y: 5.5
+		tiles: {
+			top: {
+				x: 5.5,
+				y: 5.5
+			},
+			side: {
+				x: 5.5,
+				y: 5.5
+			}
 		}
 	};
 
@@ -444,8 +452,8 @@ var objects = Object.freeze({
 	}
 
 	function updateCameraPosition(camera, x, y) {
-		camera.position.x = x - 20;
-		camera.position.z = y - 20;
+		camera.position.x = x - 19;
+		camera.position.z = y - 19;
 	}
 
 	function updateCameraZoom(camera, zoom) {
@@ -988,21 +996,21 @@ var lights = Object.freeze({
 	}(THREE.Mesh);
 
 	var AXIS_Y$1 = new THREE.Vector3(0, 1, 0);
-	var BALL_RADIUS = 38;
 	var tempQuaternion$1 = new THREE.Quaternion();
 
 	function createCircle(geometry, material) {
 		var geom = new THREE.CircleGeometry(geometry.radius, geometry.segments);
+		geom.rotateX(-Math.PI / 2);
 
 		var mat = new THREE.MeshPhongMaterial(material);
 
-		return new THREE.Mesh(geom, mat);
+		var mesh = new THREE.Mesh(geom, mat);
+
+		return mesh;
 	}
 
 	function createCylinder(geometry, material) {
 		var geom = new THREE.CylinderGeometry(geometry.radiusTop, geometry.radiusBottom, geometry.height, geometry.segments, 1, true);
-		geom.rotateX(-Math.PI / 2);
-		geom.translate(0, 0, geometry.height / 2);
 
 		var mat = new THREE.MeshPhongMaterial(material);
 
@@ -1018,12 +1026,12 @@ var lights = Object.freeze({
 
 			var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Puck).call(this));
 
-			_this.rotateX(Math.PI / 2);
-			_this.position.y = params.geometry.height;
-
 			_this.params = params;
 
+			_this.position.y = params.geometries.cylinder.height / 2;
+
 			_this._circle = createCircle(params.geometries.circle, params.materials.circle.default);
+			_this._circle.position.y = params.geometries.cylinder.height / 2;
 			_this.add(_this._circle);
 
 			_this._cylinder = createCylinder(params.geometries.cylinder, params.materials.cylinder.default);
@@ -1054,16 +1062,14 @@ var lights = Object.freeze({
 					var texture = circle.material.map;
 					texture.setTile(tagpro.tiles[tileId]);
 
-					// Shrink texture mapping based on ball size.
-					var diff = tagpro.TILE_SIZE / 2 - BALL_RADIUS;
-					texture.offset.x += diff / tagpro.TILE_SIZE;
-					texture.offset.y += diff / tagpro.TILE_SIZE;
-					texture.repeat.x -= 2 * diff / tagpro.TILE_SIZE;
-					texture.repeat.y -= 2 * diff / tagpro.TILE_SIZE;
-					texture.needsUpdate = true;
+					// HACK: Shrink texture mapping since ball is 38px, not 40px.
+					texture.offset.x += 1 / tagpro.TILE_SIZE / 16;
+					texture.offset.y += 1 / tagpro.TILE_SIZE / 11;
+					texture.repeat.x -= 2 / tagpro.TILE_SIZE / 16;
+					texture.repeat.y -= 2 / tagpro.TILE_SIZE / 11;
+				} else if (!circleMaterial.color) {
+					circleMaterial.color = getDominantColorForTile(tagpro.tiles.image, tagpro.tiles[tileId]);
 				}
-
-				if (!circleMaterial.color) circleMaterial.color = getDominantColorForTile(tagpro.tiles.image, tagpro.tiles[tileId]);
 
 				circle.material.setValues(circleMaterial);
 
@@ -1079,7 +1085,7 @@ var lights = Object.freeze({
 				this.position.x = player.sprite.x;
 				this.position.z = player.sprite.y;
 
-				tempQuaternion$1.setFromAxisAngle(AXIS_Y$1, -(player.a || 0) * this.options.rotationCoefficient);
+				tempQuaternion$1.setFromAxisAngle(AXIS_Y$1, -(player.a || 0) * this.params.rotationCoefficient);
 				this.quaternion.multiplyQuaternions(tempQuaternion$1, this.quaternion);
 			}
 		}]);
@@ -1357,18 +1363,21 @@ var scene = Object.freeze({
 	var BR = 1.4; // ◢ bottom right
 
 	function createWalls(map) {
-		var params = this.options.objects.wall;
+		var params = arguments.length <= 1 || arguments[1] === undefined ? wall : arguments[1];
+
 		var cols = tagpro.tiles.image.width / tagpro.TILE_SIZE;
 		var rows = tagpro.tiles.image.height / tagpro.TILE_SIZE;
 
-		var sideWallTexture = new THREE.Texture(tagpro.tiles.image);
-		setTextureOffset(sideWallTexture, cols, rows, params.sideWallTile);
+		var topWallTexture = new THREE.Texture(tagpro.tiles.image);
+		setTextureOffset(topWallTexture, cols, rows, params.tiles.top);
 
-		var wallTexture = new THREE.Texture(tagpro.tiles.image);
-		setTextureOffset(wallTexture, cols, rows, params.topWallTile);
+		var sideWallTexture = new THREE.Texture(tagpro.tiles.image);
+		setTextureOffset(sideWallTexture, cols, rows, params.tiles.side);
 
 		var geom = createGeometryFromTilemap(map);
-		var mat = new THREE.MultiMaterial([new THREE.MeshBasicMaterial({ map: wallTexture, transparent: true, opacity: 0.7 }), new THREE.MeshBasicMaterial({ map: sideWallTexture, transparent: true, opacity: 0.7 })]);
+
+		var mat = new THREE.MultiMaterial([new THREE.MeshPhongMaterial(Object.assign({ map: topWallTexture }, params.materials.top)), new THREE.MeshPhongMaterial(Object.assign({ map: sideWallTexture }, params.materials.side))]);
+
 		var mesh = new THREE.Mesh(geom, mat);
 
 		mesh.rotation.x = Math.PI / 2;
@@ -1554,7 +1563,7 @@ var walls = Object.freeze({
 		//
 
 		after$$(tr, 'createBackgroundTexture', function (container) {
-			t3d.createWalls(tagpro__default.map);
+			t3d.createWalls(tagpro__default.map, t3d.options.objects.wall);
 
 			var plane = t3d.createBackgroundPlaneFromChunks(tr.backgroundChunks);
 			t3d.scene.add(plane);

@@ -4,6 +4,7 @@ import { TILE_SIZE, tiles } from 'tagpro';
 import * as geometries from './geometries';
 import * as utils from './utils';
 import * as debug from '../utils/debug';
+import { wall } from '../options/objects';
 
 const WALL = 1;
 const BL = 1.1; // ◣ bottom left
@@ -11,22 +12,23 @@ const TL = 1.2; // ◤ top left
 const TR = 1.3; // ◥ top right
 const BR = 1.4; // ◢ bottom right
 
-export function createWalls(map) {
-	var params = this.options.objects.wall;
+export function createWalls(map, params = wall) {
 	var cols = tiles.image.width / TILE_SIZE;
 	var rows = tiles.image.height / TILE_SIZE;
 
-	var sideWallTexture = new THREE.Texture(tiles.image);
-	setTextureOffset(sideWallTexture, cols, rows, params.sideWallTile);
+	var topWallTexture = new THREE.Texture(tiles.image);
+	setTextureOffset(topWallTexture, cols, rows, params.tiles.top);
 
-	var wallTexture = new THREE.Texture(tiles.image);
-	setTextureOffset(wallTexture, cols, rows, params.topWallTile);
+	var sideWallTexture = new THREE.Texture(tiles.image);
+	setTextureOffset(sideWallTexture, cols, rows, params.tiles.side);
 
 	var geom = createGeometryFromTilemap(map);
+
 	var mat = new THREE.MultiMaterial([
-		new THREE.MeshBasicMaterial({ map: wallTexture, transparent: true, opacity: 0.7 }),
-		new THREE.MeshBasicMaterial({ map: sideWallTexture, transparent: true, opacity: 0.7 }),
+		new THREE.MeshPhongMaterial(Object.assign({ map: topWallTexture }, params.materials.top)),
+		new THREE.MeshPhongMaterial(Object.assign({ map: sideWallTexture }, params.materials.side)),
 	]);
+
 	var mesh = new THREE.Mesh(geom, mat);
 
 	mesh.rotation.x = Math.PI / 2;

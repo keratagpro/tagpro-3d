@@ -34,13 +34,12 @@ export const puck = {
 	rotationCoefficient: 0.01,
 	geometries: {
 		circle: {
-			height: 10,
-			radius: 17,
+			radius: 19,
 			segments: 32
 		},
 		cylinder: {
 			height: 10,
-			radiusTop: 17,
+			radiusTop: 19,
 			radiusBottom: 19,
 			segments: 32
 		}
@@ -60,7 +59,8 @@ export const puck = {
 			default: {
 				transparent: true,
 				opacity: 0.9,
-				shading: THREE.FlatShading
+				shading: THREE.FlatShading,
+				side: THREE.DoubleSide
 			},
 			blue: { },
 			red: { }
@@ -69,11 +69,17 @@ export const puck = {
 };
 
 export const wall = {
-	material: {
-		shading: THREE.FlatShading,
-		color: 0xffffff,
-		// opacity: 1.0,
-		// transparent: true
+	materials: {
+		top: {
+			opacity: 0.7,
+			shading: THREE.FlatShading,
+			transparent: true
+		},
+		side: {
+			opacity: 0.7,
+			shading: THREE.FlatShading,
+			transparent: true,
+		}
 	},
 	extrude: {
 		amount: 40,
@@ -83,13 +89,15 @@ export const wall = {
 		bevelSize: 5,
 		bevelThickness: 10,
 	},
-	topWallTile: {
-		x: 5.5,
-		y: 5.5
-	},
-	sideWallTile: {
-		x: 5.5,
-		y: 5.5
+	tiles: {
+		top: {
+			x: 5.5,
+			y: 5.5
+		},
+		side: {
+			x: 5.5,
+			y: 5.5
+		}
 	}
 };
 

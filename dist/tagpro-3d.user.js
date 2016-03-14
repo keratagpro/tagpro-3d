@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          TagPro 3D
 // @description   TagPro in 3D!
-// @version       0.1.0
+// @version       0.1.1
 // @author        Kera
 // @grant         GM_addStyle
 // @namespace     https://github.com/keratagpro/tagpro-3d/
@@ -1368,10 +1368,10 @@ var scene = Object.freeze({
 		var cols = tagpro.tiles.image.width / tagpro.TILE_SIZE;
 		var rows = tagpro.tiles.image.height / tagpro.TILE_SIZE;
 
-		var topWallTexture = new THREE.Texture(tagpro.tiles.image);
+		var topWallTexture = getTilesTexture();
 		setTextureOffset(topWallTexture, cols, rows, params.tiles.top);
 
-		var sideWallTexture = new THREE.Texture(tagpro.tiles.image);
+		var sideWallTexture = getTilesTexture();
 		setTextureOffset(sideWallTexture, cols, rows, params.tiles.side);
 
 		var geom = createGeometryFromTilemap(map);

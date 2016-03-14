@@ -5,6 +5,7 @@ import * as geometries from './geometries';
 import * as utils from './utils';
 import * as debug from '../utils/debug';
 import { wall } from '../options/objects';
+import { getTilesTexture } from '../utils';
 
 const WALL = 1;
 const BL = 1.1; // ◣ bottom left
@@ -16,10 +17,10 @@ export function createWalls(map, params = wall) {
 	var cols = tiles.image.width / TILE_SIZE;
 	var rows = tiles.image.height / TILE_SIZE;
 
-	var topWallTexture = new THREE.Texture(tiles.image);
+	var topWallTexture = getTilesTexture();
 	setTextureOffset(topWallTexture, cols, rows, params.tiles.top);
 
-	var sideWallTexture = new THREE.Texture(tiles.image);
+	var sideWallTexture = getTilesTexture();
 	setTextureOffset(sideWallTexture, cols, rows, params.tiles.side);
 
 	var geom = createGeometryFromTilemap(map);

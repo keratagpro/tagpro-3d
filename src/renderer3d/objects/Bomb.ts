@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import * as objects from '../constants';
 import { bomb } from '../options/objects';
 import * as utils from '../utils';
-import * as bombJson from './bomb.json';
+import * as bombModel from './bomb-model.json';
 
 export class Bomb extends THREE.Object3D {
 	constructor(tileId, params = bomb) {
@@ -12,7 +12,7 @@ export class Bomb extends THREE.Object3D {
 
 		this.materials = params.materials;
 
-		this.add(utils.loadObjectFromJson(bombJson));
+		this.add(utils.loadObjectFromJson(bombModel));
 
 		const bombMaterial = this.getObjectByName('bomb').material;
 

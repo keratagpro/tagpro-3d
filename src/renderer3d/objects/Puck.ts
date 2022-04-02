@@ -35,6 +35,12 @@ function createCylinder(geometry: any, material: any) {
 }
 
 export class Puck extends THREE.Object3D {
+	params: typeof puck;
+
+	_circle: ReturnType<typeof createCircle>;
+	_cylinder: ReturnType<typeof createCylinder>;
+	_tileTexture?: THREE.Texture;
+
 	constructor(tileId: string, params = puck) {
 		super();
 
@@ -62,23 +68,23 @@ export class Puck extends THREE.Object3D {
 		const circleMaterial = materials.circle[materialName];
 
 		// Use built-in ball texture if not explicitly set
-		if (!circleMaterial.map) {
-			if (!this._tileTexture) {
-				this._tileTexture = utils.getTilesTexture();
-				circle.material.map = this._tileTexture;
-			}
+		// if (!circleMaterial.map) {
+		// 	if (!this._tileTexture) {
+		// 		this._tileTexture = utils.getTilesTexture();
+		// 		circle.material.map = this._tileTexture!;
+		// 	}
 
-			const texture = circle.material.map;
-			texture.setTile(tiles[tileId]);
+		// 	const texture = circle.material.map;
+		// 	texture.setTile(tiles[tileId]);
 
-			// HACK: Shrink texture mapping since ball is 38px, not 40px.
-			texture.offset.x += 1 / TILE_SIZE / 16;
-			texture.offset.y += 1 / TILE_SIZE / 11;
-			texture.repeat.x -= 2 / TILE_SIZE / 16;
-			texture.repeat.y -= 2 / TILE_SIZE / 11;
-		} else if (!circleMaterial.color) {
-			circleMaterial.color = utils.getDominantColorForTile(tiles.image, tiles[tileId]);
-		}
+		// 	// HACK: Shrink texture mapping since ball is 38px, not 40px.
+		// 	texture.offset.x += 1 / TILE_SIZE / 16;
+		// 	texture.offset.y += 1 / TILE_SIZE / 11;
+		// 	texture.repeat.x -= 2 / TILE_SIZE / 16;
+		// 	texture.repeat.y -= 2 / TILE_SIZE / 11;
+		// } else if (!circleMaterial.color) {
+		// 	circleMaterial.color = utils.getDominantColorForTile(tiles.image, tiles[tileId]);
+		// }
 
 		circle.material.setValues(circleMaterial);
 

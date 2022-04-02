@@ -451,7 +451,7 @@ declare namespace TagPro {
 	}
 
 	interface Tiles extends Array<any> {
-		image;
+		image: any;
 
 		draw(
 			container: PIXI.DisplayObjectContainer,

@@ -2,8 +2,8 @@ import * as constants from './constants';
 import { Ball } from './objects/Ball';
 import { Bomb } from './objects/Bomb';
 import { Gate } from './objects/Gate';
-import { Puck } from './objects/puck';
-import { Spike } from './objects/spike';
+import { Puck } from './objects/Puck';
+import { Spike } from './objects/Spike';
 
 export function createBall(this: any, player: any) {
 	const options = this.options;

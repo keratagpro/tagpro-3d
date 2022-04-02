@@ -3,7 +3,7 @@ import * as constants from '../Renderer3D/constants';
 /**
  * Draws some extra tiles to the background layer.
  */
-export function changeSomeTilesToFloorTiles(tiles) {
+export function changeSomeTilesToFloorTiles(tiles: TagPro.Tiles) {
 	const flooredTiles = [
 		constants.GATE_OFF,
 		constants.GATE_GREEN,

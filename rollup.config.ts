@@ -1,14 +1,15 @@
+import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
 import nodeResolve from '@rollup/plugin-node-resolve';
-import replace from '@rollup/plugin-replace';
 import typescript from '@rollup/plugin-typescript';
-import { readFileSync } from 'fs';
-import { template } from 'lodash-es';
+import * as fs from 'fs';
 import { defineConfig } from 'rollup';
-
-const meta = template(readFileSync(__dirname + '/src/meta.js.tpl', 'utf8'));
+const template = require('lodash.template');
 
 import { version } from './package.json';
+
+const meta = template(fs.readFileSync(__dirname + '/src/meta.js.tpl', 'utf8'));
+
 const banner = meta({ version });
 
 const globals = {
@@ -29,13 +30,6 @@ export default defineConfig([
 			globals,
 		},
 		external: Object.keys(globals),
-		plugins: [
-			json(),
-			typescript(),
-			nodeResolve(),
-			replace({
-				TEXTURES_URL: 'https://keratagpro.github.io/tagpro-balls-3d/textures',
-			}),
-		],
+		plugins: [json(), commonjs(), nodeResolve(), typescript()],
 	},
 ]);

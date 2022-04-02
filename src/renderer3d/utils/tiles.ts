@@ -3,9 +3,11 @@ import { TILE_SIZE } from 'tagpro';
 import * as color from './color';
 import * as image from './image';
 
-const tileColorCache = {};
+const tileColorCache: Record<string, number> = {};
 
-export function getDominantColorForTile(img, { x, y }, width = TILE_SIZE, height = TILE_SIZE) {
+type Tile = { x: number; y: number };
+
+export function getDominantColorForTile(img: HTMLImageElement, { x, y }: Tile, width = TILE_SIZE, height = TILE_SIZE) {
 	const key = `${img.src}-${x}-${y}-${width}-${height}`;
 
 	if (!tileColorCache[key]) {

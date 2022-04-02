@@ -1,7 +1,7 @@
 import { tiles } from 'tagpro';
 import * as THREE from 'three';
 
-import { ball } from '../options/objects';
+import { ballOptions } from '../options/objects';
 import * as utils from '../utils';
 
 const tempQuaternion = new THREE.Quaternion();
@@ -9,21 +9,25 @@ const AXIS_X = new THREE.Vector3(1, 0, 0);
 const AXIS_Y = new THREE.Vector3(0, 1, 0);
 const AXIS_Z = new THREE.Vector3(0, 0, 1);
 
-export class Ball extends THREE.Mesh {
-	constructor(tileId, params = ball) {
-		const _geometry = new THREE.IcosahedronGeometry(params.geometry.radius, params.geometry.detail);
-		const _material = new THREE.MeshPhongMaterial(params.materials.default);
+export class Ball extends THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshPhongMaterial> {
+	options: typeof ballOptions;
+
+	_outline?: THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshBasicMaterial>;
+
+	constructor(tileId: number | string, options = ballOptions) {
+		const _geometry = new THREE.IcosahedronGeometry(options.geometry.radius, options.geometry.detail);
+		const _material = new THREE.MeshPhongMaterial(options.materials.default);
 
 		super(_geometry, _material);
 
-		this.params = params;
-		this.position.y = params.geometry.radius;
+		this.options = options;
+		this.position.y = options.geometry.radius;
 
-		this.addOutline(params.outline, params.outlineMaterials);
+		this.addOutline(options.outline, options.outlineMaterials);
 		this.updateByTileId(tileId);
 	}
 
-	addOutline(params, materials) {
+	addOutline(params: typeof ballOptions.outline, materials: typeof ballOptions.outlineMaterials) {
 		if (!params.enabled) return;
 
 		const outline = new THREE.Mesh(
@@ -35,15 +39,15 @@ export class Ball extends THREE.Mesh {
 		this._outline = outline;
 	}
 
-	updateByTileId(tileId) {
-		const material = this.params.materials[tileId === 'redball' ? 'red' : 'blue'];
+	updateByTileId(tileId: number | string) {
+		const material = this.options.materials[tileId === 'redball' ? 'red' : 'blue'];
 
 		if (!material.color) material.color = utils.getDominantColorForTile(tiles.image, tiles[tileId]);
 
 		this.material.setValues(material);
 
 		if (this._outline) {
-			const outlineMaterial = this.params.outlineMaterials[tileId === 'redball' ? 'red' : 'blue'];
+			const outlineMaterial = this.options.outlineMaterials[tileId === 'redball' ? 'red' : 'blue'];
 
 			if (!outlineMaterial.color) outlineMaterial.color = material.color;
 
@@ -51,17 +55,17 @@ export class Ball extends THREE.Mesh {
 		}
 	}
 
-	updatePosition(player) {
+	updatePosition(player: TagPro.Player) {
 		this.position.x = player.sprite.x;
 		this.position.z = player.sprite.y;
 
-		tempQuaternion.setFromAxisAngle(AXIS_X, (player.ly || 0) * this.params.velocityCoefficient);
+		tempQuaternion.setFromAxisAngle(AXIS_X, (player.ly || 0) * this.options.velocityCoefficient);
 		this.quaternion.multiplyQuaternions(tempQuaternion, this.quaternion);
 
-		tempQuaternion.setFromAxisAngle(AXIS_Z, -(player.lx || 0) * this.params.velocityCoefficient);
+		tempQuaternion.setFromAxisAngle(AXIS_Z, -(player.lx || 0) * this.options.velocityCoefficient);
 		this.quaternion.multiplyQuaternions(tempQuaternion, this.quaternion);
 
-		tempQuaternion.setFromAxisAngle(AXIS_Y, -(player.a || 0) * this.params.rotationCoefficient);
+		tempQuaternion.setFromAxisAngle(AXIS_Y, -(player.a || 0) * this.options.rotationCoefficient);
 		this.quaternion.multiplyQuaternions(tempQuaternion, this.quaternion);
 	}
 }

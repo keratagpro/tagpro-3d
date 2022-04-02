@@ -1,6 +1,31 @@
 import * as THREE from 'three';
 
-export const ball = {
+interface BallOptions {
+	enabled: boolean;
+	velocityCoefficient: number;
+	rotationCoefficient: number;
+	geometry: {
+		detail: number;
+		radius: number;
+	};
+	materials: {
+		default: THREE.MeshPhongMaterialParameters;
+		red: THREE.MeshPhongMaterialParameters;
+		blue: THREE.MeshPhongMaterialParameters;
+	};
+	outline: {
+		enabled: boolean;
+		detail: number;
+		radius: number;
+	};
+	outlineMaterials: {
+		default: THREE.MeshBasicMaterialParameters;
+		red: THREE.MeshBasicMaterialParameters;
+		blue: THREE.MeshBasicMaterialParameters;
+	};
+}
+
+export const ballOptions: BallOptions = {
 	enabled: true,
 	velocityCoefficient: 0.1,
 	rotationCoefficient: 0.015,
@@ -68,7 +93,16 @@ export const puck = {
 	},
 };
 
-export const wall = {
+interface WallOptions {
+	materials: {
+		top: THREE.MeshPhongMaterialParameters;
+		side: THREE.MeshPhongMaterialParameters;
+	};
+	extrude: THREE.ExtrudeGeometryOptions;
+	tiles: any;
+}
+
+export const wallOptions: WallOptions = {
 	materials: {
 		top: {
 			opacity: 0.7,
@@ -82,7 +116,7 @@ export const wall = {
 		},
 	},
 	extrude: {
-		amount: 40,
+		depth: 40,
 		steps: 1,
 		bevelEnabled: false,
 		bevelSegments: 1,

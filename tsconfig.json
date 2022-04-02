@@ -1,6 +1,8 @@
 {
 	"compilerOptions": {
+		"moduleResolution": "Node",
 		"resolveJsonModule": true,
-		"strict": true
+		"strict": true,
+		"forceConsistentCasingInFileNames": true
 	}
 }

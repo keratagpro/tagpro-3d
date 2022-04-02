@@ -1,6 +1,41 @@
+import * as THREE from 'three';
 import * as objects from './objects';
 
-export const defaultOptions = {
+interface CameraLightOptions {
+	type: 'camera';
+	color: number;
+	intensity?: number;
+}
+
+interface AmbientLightOptions {
+	type: 'ambient';
+	color: number;
+}
+
+interface DirectionalLightOptions {
+	type: 'directional';
+	color: number;
+	intensity: number;
+	position: [number, number, number];
+}
+
+type LightOptions = { enabled: boolean } & (CameraLightOptions | AmbientLightOptions | DirectionalLightOptions);
+
+interface Options {
+	renderer: THREE.WebGLRendererParameters;
+	camera: {
+		near: number;
+		far: number;
+		distance: number;
+	};
+	lights: LightOptions[];
+	objects: typeof objects;
+	ballsArePucks: boolean;
+	ballsAre3D: boolean;
+	wallsAre3D: boolean;
+}
+
+export const defaultOptions: Options = {
 	renderer: {
 		antialias: true,
 		alpha: true,
@@ -17,4 +52,6 @@ export const defaultOptions = {
 	],
 	objects,
 	ballsArePucks: false,
+	ballsAre3D: true,
+	wallsAre3D: true,
 };

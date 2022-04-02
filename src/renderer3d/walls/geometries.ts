@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 function createPathGeometry(...points: [number, number][]) {
 	const shape = new THREE.Shape();
-	points.forEach(([x, y]) => shape.moveTo(x, y));
+	points.forEach(([x, y]) => shape.lineTo(x, y));
 
 	const geometry = new THREE.ExtrudeGeometry(shape, { depth: 1, bevelEnabled: false });
 	geometry.translate(-0.5, -0.5, -0.5);

@@ -1,6 +1,8 @@
 import RgbQuant from 'rgbquant';
 import * as THREE from 'three';
 
+const target: THREE.HSL = { h: 0, s: 0, l: 0 };
+
 export function getDominantColor(canvas: HTMLCanvasElement) {
 	const quantizer = new RgbQuant({
 		colors: 4,
@@ -17,7 +19,7 @@ export function getDominantColor(canvas: HTMLCanvasElement) {
 	palette = palette.map(([r, g, b]: [number, number, number]) => new THREE.Color(r / 256, g / 256, b / 256));
 
 	// Try to find a non-grayscale color.
-	const color = palette.find((col: any) => col.getHSL().s > 0.5);
+	const color = palette.find((col: THREE.Color) => col.getHSL(target).s > 0.5);
 
 	return color || palette[0];
 }

@@ -28,7 +28,7 @@ export default defineConfig([
 			format: 'iife',
 			banner,
 			globals,
-			interop: false,
+			interop: false, // NOTE: tries to load tagpro.default, if true
 		},
 		external: Object.keys(globals),
 		plugins: [json(), commonjs(), nodeResolve(), typescript()],

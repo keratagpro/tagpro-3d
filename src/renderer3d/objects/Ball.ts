@@ -1,4 +1,4 @@
-import { tiles } from 'tagpro';
+import { tiles, renderer } from 'tagpro';
 import * as THREE from 'three';
 
 import { ballOptions } from '../options/objects';
@@ -20,13 +20,14 @@ export class Ball extends THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshPhongM
 
 		this.position.y = options.geometry.radius;
 
-		this.addOutline(options.outline, options.outlineMaterials);
+		if (options.outline.enabled) {
+			this.addOutline(options.outline, options.outlineMaterials);
+		}
+
 		this.updateByTileId(tileId);
 	}
 
 	addOutline(params: typeof ballOptions.outline, materials: typeof ballOptions.outlineMaterials) {
-		if (!params.enabled) return;
-
 		const outline = new THREE.Mesh(
 			new THREE.IcosahedronGeometry(params.radius, params.detail),
 			new THREE.MeshBasicMaterial(materials.default)
@@ -55,6 +56,10 @@ export class Ball extends THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshPhongM
 	updatePosition(player: TagPro.Player) {
 		this.position.x = player.sprite.x;
 		this.position.z = player.sprite.y;
+
+		if (renderer.options.disableBallSpin) {
+			return;
+		}
 
 		tempQuaternion.setFromAxisAngle(AXIS_X, (player.ly || 0) * this.options.velocityCoefficient);
 		this.quaternion.multiplyQuaternions(tempQuaternion, this.quaternion);

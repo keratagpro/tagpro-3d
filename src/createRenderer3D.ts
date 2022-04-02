@@ -24,6 +24,8 @@ export function createRenderer3D() {
 
 	after(tr, 'createBackground', function () {
 		const canvas3D = document.createElement('canvas');
+		canvas3D.width = tr.canvas.width;
+		canvas3D.height = tr.canvas.height;
 		const threeTexture = PIXI.Texture.fromCanvas(canvas3D);
 		const threeSprite = new PIXI.Sprite(threeTexture);
 		threeSprite.name = 'tagpro3d';
@@ -88,9 +90,11 @@ export function createRenderer3D() {
 		player.object3d.visible = player.sprite.visible;
 	});
 
-	after(tr, 'updatePlayerSpritePosition', function (player: any) {
+	tr.updatePlayerSpritePosition = function (player: any) {
+		player.sprite.x = player.x;
+		player.sprite.y = player.y;
 		player.object3d.updatePosition(player);
-	});
+	};
 
 	after(tr, 'destroyPlayer', function (player: any) {
 		t3d.scene.remove(player.object3d);

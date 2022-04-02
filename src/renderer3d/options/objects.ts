@@ -37,8 +37,12 @@ export const ballOptions: BallOptions = {
 		default: {
 			flatShading: true,
 		},
-		blue: {},
-		red: {},
+		blue: {
+			color: 0x0000ff,
+		},
+		red: {
+			color: 0xff0000,
+		},
 	},
 	outline: {
 		enabled: true,

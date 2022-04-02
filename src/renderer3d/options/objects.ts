@@ -54,7 +54,36 @@ export const ballOptions: BallOptions = {
 	},
 };
 
-export const puck = {
+interface PuckOptions {
+	enabled: boolean;
+	rotationCoefficient: number;
+	geometries: {
+		circle: {
+			radius: number;
+			segments: number;
+		};
+		cylinder: {
+			height: number;
+			radiusTop: number;
+			radiusBottom: number;
+			segments: number;
+		};
+	};
+	materials: {
+		circle: {
+			default: THREE.MeshPhongMaterialParameters;
+			red: THREE.MeshPhongMaterialParameters;
+			blue: THREE.MeshPhongMaterialParameters;
+		};
+		cylinder: {
+			default: THREE.MeshPhongMaterialParameters;
+			red: THREE.MeshPhongMaterialParameters;
+			blue: THREE.MeshPhongMaterialParameters;
+		};
+	};
+}
+
+export const puckOptions: PuckOptions = {
 	enabled: true,
 	rotationCoefficient: 0.01,
 	geometries: {
@@ -146,7 +175,15 @@ export const spike = {
 	},
 };
 
-export const bomb = {
+export interface BombOptions {
+	materials: {
+		body: THREE.MeshPhongMaterialParameters;
+		show: THREE.MeshPhongMaterialParameters;
+		hide: THREE.MeshPhongMaterialParameters;
+	};
+}
+
+export const bombOptions: BombOptions = {
 	materials: {
 		body: {
 			color: 0x000000,

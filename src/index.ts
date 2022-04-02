@@ -1,6 +1,6 @@
 import * as tagpro from 'tagpro';
 
-import createRenderer3D from './createRenderer3D';
+import { createRenderer3D } from './createRenderer3D';
 import * as utils from './utils';
 
 /**

@@ -460,13 +460,14 @@ declare namespace TagPro {
 			width: number,
 			height: number
 		): void;
-		drawLayers(container, x, y, position, container2): void;
-		getTexture(tileId): void;
+		drawLayers(container: any, x: number, y: number, position: any, container2: number): void;
+		getTexture(tileId: any): void;
 
 		splats: {
 			red: Array<PIXI.Sprite>;
 			blue: Array<PIXI.Sprite>;
 		};
+		[tileId: number | string]: any;
 	}
 
 	interface UI {

@@ -2,28 +2,37 @@ import { tiles } from 'tagpro';
 import * as THREE from 'three';
 
 import * as objects from '../constants';
-import { bomb } from '../options/objects';
+import { BombOptions, bombOptions } from '../options/objects';
 import * as utils from '../utils';
 import * as bombModel from './bomb-model.json';
 
+function isMesh(obj: THREE.Object3D): obj is THREE.Mesh<THREE.BufferGeometry, THREE.MeshPhongMaterial> {
+	return 'material' in obj;
+}
+
 export class Bomb extends THREE.Object3D {
-	constructor(tileId, params = bomb) {
+	materials: BombOptions['materials'];
+
+	constructor(tileId: number | string, public options = bombOptions) {
 		super();
 
-		this.materials = params.materials;
+		this.materials = options.materials;
 
 		this.add(utils.loadObjectFromJson(bombModel));
 
-		const bombMaterial = this.getObjectByName('bomb').material;
+		const bomb = this.getObjectByName('bomb') as THREE.Mesh<THREE.BufferGeometry, THREE.MeshPhongMaterial>;
+		const bombMaterial = bomb.material;
 
-		if (!bombMaterial.color) bombMaterial.color = utils.getDominantColorForTile(tiles.image, tiles[tileId]);
+		if (!bombMaterial.color) {
+			bombMaterial.color = new THREE.Color(utils.getDominantColorForTile(tiles.image, tiles[tileId]));
+		}
 
-		bombMaterial.setValues(params.materials.body);
+		bombMaterial.setValues(options.materials.body);
 
 		this.updateByTileId(tileId);
 	}
 
-	updateByTileId(tileId) {
+	updateByTileId(tileId: number | string) {
 		if (tileId == objects.BOMB) this.show();
 		else if (tileId == objects.BOMB_OFF) this.hide();
 	}
@@ -31,18 +40,20 @@ export class Bomb extends THREE.Object3D {
 	show() {
 		const params = this.materials.show;
 
-		this.traverse((o) => {
-			if (!o.material) return;
-			o.material.setValues(params);
+		this.traverse((obj) => {
+			if (isMesh(obj)) {
+				obj.material.setValues(params);
+			}
 		});
 	}
 
 	hide() {
 		const params = this.materials.hide;
 
-		this.traverse((o) => {
-			if (!o.material) return;
-			o.material.setValues(params);
+		this.traverse((obj) => {
+			if (isMesh(obj)) {
+				obj.material.setValues(params);
+			}
 		});
 	}
 }

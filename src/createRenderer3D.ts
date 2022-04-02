@@ -3,7 +3,7 @@ import * as tagpro from 'tagpro';
 import { Renderer3D } from './Renderer3D';
 import * as utils from './utils';
 
-export default function createRenderer3D() {
+export function createRenderer3D() {
 	const after = utils.after;
 	const tr = tagpro.renderer;
 	const t3d = new Renderer3D();
@@ -88,7 +88,7 @@ export default function createRenderer3D() {
 	//
 
 	after(tr, 'createBackgroundTexture', () => {
-		t3d.createWalls(tagpro.map, t3d.options.objects.wall);
+		t3d.createWalls(tagpro.map, t3d.options.objects.wallOptions);
 	});
 
 	console.log('TagPro 3D Initialized.');

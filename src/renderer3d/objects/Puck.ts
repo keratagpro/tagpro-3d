@@ -1,7 +1,7 @@
 import { TILE_SIZE, tiles } from 'tagpro';
 import * as THREE from 'three';
 
-import { puck } from '../options/objects';
+import { puckOptions } from '../options/objects';
 import * as utils from '../utils';
 
 const AXIS_Y = new THREE.Vector3(0, 1, 0);
@@ -35,13 +35,13 @@ function createCylinder(geometry: any, material: any) {
 }
 
 export class Puck extends THREE.Object3D {
-	params: typeof puck;
+	params: typeof puckOptions;
 
 	_circle: ReturnType<typeof createCircle>;
 	_cylinder: ReturnType<typeof createCylinder>;
 	_tileTexture?: THREE.Texture;
 
-	constructor(tileId: string, params = puck) {
+	constructor(tileId: string, params = puckOptions) {
 		super();
 
 		this.params = params;
@@ -58,7 +58,7 @@ export class Puck extends THREE.Object3D {
 		this.updateByTileId(tileId);
 	}
 
-	updateByTileId(tileId: string) {
+	updateByTileId(tileId: number | string) {
 		const materialName = tileId === 'redball' ? 'red' : 'blue';
 
 		const circle = this._circle;
@@ -95,7 +95,7 @@ export class Puck extends THREE.Object3D {
 		cylinder.material.setValues(cylinderMaterial);
 	}
 
-	updatePosition(player) {
+	updatePosition(player: TagPro.Player) {
 		this.position.x = player.sprite.x;
 		this.position.z = player.sprite.y;
 

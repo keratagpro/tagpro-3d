@@ -1,9 +1,9 @@
 import * as constants from './constants';
 import { Ball } from './objects/Ball';
 import { Bomb } from './objects/Bomb';
-import { Gate } from './objects/Gate';
+// import { Gate } from './objects/Gate';
 import { Puck } from './objects/Puck';
-import { Spike } from './objects/Spike';
+// import { Spike } from './objects/Spike';
 
 export function createBall(this: any, player: any) {
 	const options = this.options;
@@ -27,10 +27,10 @@ export const objectMap = {
 	// [constants.FLAG_RED_TAKEN]: Tile,
 	// [constants.FLAG_YELLOW]: Tile,
 	// [constants.FLAG_YELLOW_TAKEN]: Tile,
-	[constants.GATE_BLUE]: Gate,
-	[constants.GATE_GREEN]: Gate,
-	[constants.GATE_OFF]: Gate,
-	[constants.GATE_RED]: Gate,
+	// [constants.GATE_BLUE]: Gate,
+	// [constants.GATE_GREEN]: Gate,
+	// [constants.GATE_OFF]: Gate,
+	// [constants.GATE_RED]: Gate,
 	// [constants.PORTAL]: AnimatedTile,
 	// [constants.PORTAL_OFF]: AnimatedTile,
 	// [constants.POWERUP_BOMB]: Tile,
@@ -44,7 +44,7 @@ export const objectMap = {
 	// [constants.SPEEDPAD_OFF]: AnimatedTile,
 	// [constants.SPEEDPAD_RED]: AnimatedTile,
 	// [constants.SPEEDPAD_RED_OFF]: AnimatedTile,
-	[constants.SPIKE]: Spike,
+	// [constants.SPIKE]: Spike,
 };
 
 export const animatedAssetMap = {

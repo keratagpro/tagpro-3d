@@ -8,7 +8,10 @@ export function createRenderer3D() {
 	const tr = tagpro.renderer;
 	const t3d = new Renderer3D();
 
-	Object.assign(tagpro, { tagpro3d: t3d });
+	console.log('tagpro.renderer', tr);
+	console.log('tagpro3d', t3d);
+
+	Object.assign(window, { tagpro3d: t3d });
 
 	//
 	// Renderer
@@ -19,8 +22,19 @@ export function createRenderer3D() {
 		t3d.addLights(t3d.options.lights, t3d.scene, t3d.camera);
 	});
 
-	after(tr, 'createRenderer', function () {
-		t3d.renderer = t3d.createRenderer(t3d.options.renderer);
+	after(tr, 'createBackground', function () {
+		const canvas3D = document.createElement('canvas');
+		const threeTexture = PIXI.Texture.fromCanvas(canvas3D);
+		const threeSprite = new PIXI.Sprite(threeTexture);
+		threeSprite.name = 'tagpro3d';
+		threeSprite.updateTransform = function () {};
+
+		tr.layers.foreground.addChild(threeSprite);
+
+		t3d.renderer = t3d.createRenderer({
+			...t3d.options.renderer,
+			canvas: canvas3D,
+		});
 	});
 
 	// after(tr, 'updateGraphics', function () {

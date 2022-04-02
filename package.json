@@ -6,8 +6,8 @@
   "private": true,
   "scripts": {
     "start": "npm run watch",
-    "build": "rollup -c",
-    "watch": "rollup -c --configPlugin typescript",
+    "build": "rollup -c --configPlugin typescript",
+    "watch": "rollup -c --configPlugin typescript --watch",
     "bump": "npm version patch",
     "assets": "node tasks/assets.mjs",
     "meta": "node tasks/meta.mjs",

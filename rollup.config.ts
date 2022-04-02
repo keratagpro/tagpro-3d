@@ -28,6 +28,7 @@ export default defineConfig([
 			format: 'iife',
 			banner,
 			globals,
+			interop: false,
 		},
 		external: Object.keys(globals),
 		plugins: [json(), commonjs(), nodeResolve(), typescript()],

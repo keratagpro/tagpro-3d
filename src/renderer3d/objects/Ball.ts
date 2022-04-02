@@ -10,17 +10,14 @@ const AXIS_Y = new THREE.Vector3(0, 1, 0);
 const AXIS_Z = new THREE.Vector3(0, 0, 1);
 
 export class Ball extends THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshPhongMaterial> {
-	options: typeof ballOptions;
-
 	_outline?: THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshBasicMaterial>;
 
-	constructor(tileId: number | string, options = ballOptions) {
-		const _geometry = new THREE.IcosahedronGeometry(options.geometry.radius, options.geometry.detail);
-		const _material = new THREE.MeshPhongMaterial(options.materials.default);
+	constructor(tileId: number | string, public options = ballOptions) {
+		const geometry = new THREE.IcosahedronGeometry(options.geometry.radius, options.geometry.detail);
+		const material = new THREE.MeshPhongMaterial(options.materials.default);
 
-		super(_geometry, _material);
+		super(geometry, material);
 
-		this.options = options;
 		this.position.y = options.geometry.radius;
 
 		this.addOutline(options.outline, options.outlineMaterials);

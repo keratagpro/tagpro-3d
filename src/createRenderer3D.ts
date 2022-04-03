@@ -2,7 +2,6 @@ import * as tagpro from 'tagpro';
 
 import { Renderer3D } from './Renderer3D';
 import * as utils from './utils';
-import { before } from './utils';
 
 export function createRenderer3D() {
 	const after = utils.after;
@@ -39,11 +38,7 @@ export function createRenderer3D() {
 		t3d.addLights(t3d.options.lights, t3d.scene, t3d.camera);
 	});
 
-	// after(tr, 'updateGraphics', function () {
-	// 	t3d.update(performance.now());
-	// });
-
-	before(tr, 'render', function () {
+	after(tr, 'updateGraphics', function () {
 		t3d.renderer?.render(t3d.scene, t3d.camera);
 	});
 
@@ -82,7 +77,6 @@ export function createRenderer3D() {
 				object3D: ball3D,
 			};
 			t3d.scene.add(ball3D);
-			player.sprites.actualBall.visible = false;
 		});
 
 		after(tr, 'updatePlayerColor', (player: TagPro.Player) => {
@@ -96,6 +90,9 @@ export function createRenderer3D() {
 		after(tr, 'updatePlayerVisibility', function (player: TagPro.Player) {
 			const player3D = t3d.players[player.id];
 			player3D.object3D.visible = player.sprite.visible;
+
+			// Hide the 2D ball
+			player.sprites.actualBall.visible = false;
 		});
 
 		after(tr, 'updatePlayerSpritePosition', (player: TagPro.Player) => {

@@ -1,12 +1,21 @@
+import { transfer, wrap } from 'comlink';
 import * as tagpro from 'tagpro';
-
-import { Renderer3D } from './Renderer3D';
 import { defaultOptions } from './Renderer3D/options';
+import { PositionUpdate } from './Renderer3D/types';
+
 import { after } from './utils';
+import { Worker3D } from './worker';
 
 export function createRenderer3D() {
-	const t3d = new Renderer3D(defaultOptions);
 	const tr = tagpro.renderer;
+
+	const workerUrl = GM_getResourceURL('worker');
+	const worker = new Worker(workerUrl, { type: 'module' });
+	const worker3D = wrap<Worker3D>(worker);
+
+	const options = defaultOptions;
+
+	worker3D.setup(options);
 
 	//
 	// Renderer
@@ -25,16 +34,13 @@ export function createRenderer3D() {
 
 		tr.layers.foreground.addChild(threeSprite);
 
-		t3d.renderer = t3d.createRenderer({
-			...t3d.options.renderer,
-			canvas: canvas3D,
-		});
+		const offscreenCanvas = canvas3D.transferControlToOffscreen();
 
-		t3d.addLights(t3d.options.lights, t3d.scene, t3d.camera);
+		worker3D.initialize(transfer(offscreenCanvas, [offscreenCanvas as any]), tr.canvas.width, tr.canvas.height);
 	});
 
 	after(tr, 'updateGraphics', function () {
-		t3d.renderer?.render(t3d.scene, t3d.camera);
+		worker3D.render();
 	});
 
 	//
@@ -42,63 +48,50 @@ export function createRenderer3D() {
 	//
 
 	after(tr, 'centerView', function () {
-		t3d.resizeCanvas(tr.canvas, t3d.renderer);
-		t3d.updateCameraFOV(t3d.camera, tr.canvas);
+		worker3D.resize(tr.canvas.width, tr.canvas.height);
 	});
 
 	after(tr, 'centerContainerToPoint', function (x: number, y: number) {
-		t3d.updateCameraPosition(t3d.camera, x, y);
+		worker3D.updateCameraPosition(x, y);
 	});
 
-	let zoom: number;
 	after(tr, 'updateCameraZoom', function () {
-		if (zoom !== tagpro.zoom) {
-			zoom = tagpro.zoom;
-			t3d.updateCameraZoom(t3d.camera, zoom);
-		}
+		worker3D.updateCameraZoom(tagpro.zoom);
 	});
 
 	//
 	// Balls
 	//
 
-	if (t3d.options.ballsAre3D) {
-		const players = t3d.players;
-
+	if (options.ballsAre3D) {
 		after(tr, 'createBallSprite', (player: TagPro.Player) => {
-			const ball3D = t3d.createBall(player, t3d.options);
-			players[player.id] = {
-				team: player.team,
-				object3D: ball3D,
-			};
-			t3d.scene.add(ball3D);
+			worker3D.createBall(player.id, player.team);
 		});
 
 		after(tr, 'updatePlayerColor', (player: TagPro.Player) => {
-			const player3D = t3d.players[player.id];
-			if (player.team !== player3D.team) {
-				player3D.team = player.team;
-				player3D.object3D.updateByTileId(player.team === 1 ? 'redball' : 'blueball');
-			}
+			worker3D.updatePlayerColor(player.id, player.team);
 		});
 
 		after(tr, 'updatePlayerVisibility', function (player: TagPro.Player) {
-			const player3D = t3d.players[player.id];
-			player3D.object3D.visible = player.sprite.visible;
+			worker3D.updatePlayerVisibility(player.id, player.sprite.visible);
 
 			// Hide the 2D ball
 			player.sprites.actualBall.visible = false;
 		});
 
 		after(tr, 'updatePlayerSpritePosition', (player: TagPro.Player) => {
-			const player3D = t3d.players[player.id];
-			player3D.object3D.updatePosition(player);
+			const pos: PositionUpdate = {
+				x: player.sprite.x,
+				y: player.sprite.y,
+				lx: player.lx,
+				ly: player.ly,
+				a: player.a,
+			};
+			worker3D.updatePlayerPosition(player.id, pos);
 		});
 
 		after(tr, 'destroyPlayer', function (player: TagPro.Player) {
-			const player3D = t3d.players[player.id];
-			t3d.scene.remove(player3D.object3D);
-			delete t3d.players[player.id];
+			worker3D.destroyPlayer(player.id);
 		});
 	}
 
@@ -106,10 +99,9 @@ export function createRenderer3D() {
 	// Walls
 	//
 
-	if (t3d.options.wallsAre3D) {
+	if (options.wallsAre3D) {
 		after(tr, 'createBackgroundTexture', () => {
-			const walls3D = t3d.createWalls(tagpro.map, t3d.options.objects.wall);
-			t3d.scene.add(walls3D);
+			worker3D.createWalls(tagpro.map, tagpro.TILE_SIZE);
 		});
 	}
 

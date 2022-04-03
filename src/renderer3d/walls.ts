@@ -1,4 +1,3 @@
-import { TILE_SIZE } from 'tagpro';
 import * as THREE from 'three';
 
 import { WallOptions } from './options/wallOptions';
@@ -22,25 +21,18 @@ function pointsToShape({
 	return new THREE.Shape(points.map(([x, y]) => new THREE.Vector2((x + offset) * scale, (y + offset) * scale)));
 }
 
-const squareShape = pointsToShape({
-	points: [
-		[0, 0],
-		[1, 0],
-		[1, 1],
-		[0, 1],
-	],
-	offset: -0.5,
-	scale: TILE_SIZE,
-});
-const diagonalShape = pointsToShape({
-	points: [
-		[0, 1],
-		[1, 1],
-		[0, 0],
-	],
-	offset: -0.5,
-	scale: TILE_SIZE,
-});
+const squarePoints: [number, number][] = [
+	[0, 0],
+	[1, 0],
+	[1, 1],
+	[0, 1],
+];
+
+const diagonalPoints: [number, number][] = [
+	[0, 1],
+	[1, 1],
+	[0, 0],
+];
 
 function extractWallTiles(map: TagPro.Map) {
 	const squares: { x: number; y: number }[] = [];
@@ -73,7 +65,7 @@ function extractWallTiles(map: TagPro.Map) {
 	return { squares, diagonals };
 }
 
-export function createWalls(map: TagPro.Map, options: WallOptions) {
+export function createWalls(map: TagPro.Map, tileSize: number, options: WallOptions) {
 	// const cols = tiles.image.width / TILE_SIZE;
 	// const rows = tiles.image.height / TILE_SIZE;
 
@@ -90,13 +82,24 @@ export function createWalls(map: TagPro.Map, options: WallOptions) {
 
 	const { squares, diagonals } = extractWallTiles(map);
 
+	const squareShape = pointsToShape({
+		points: squarePoints,
+		offset: -0.5,
+		scale: tileSize,
+	});
+	const diagonalShape = pointsToShape({
+		points: diagonalPoints,
+		offset: -0.5,
+		scale: tileSize,
+	});
+
 	const squareGeometry = new THREE.ExtrudeGeometry(squareShape, options.extrude);
 	const squareMesh = new THREE.InstancedMesh(squareGeometry, wallMaterials, squares.length);
 	squareMesh.name = 'walls-squares';
 	for (let i = 0; i < squares.length; i++) {
 		const square = squares[i];
 		const matrix = new THREE.Matrix4();
-		matrix.setPosition(square.x * TILE_SIZE, square.y * TILE_SIZE, 0);
+		matrix.setPosition(square.x * tileSize, square.y * tileSize, 0);
 		squareMesh.setMatrixAt(i, matrix);
 	}
 
@@ -109,7 +112,7 @@ export function createWalls(map: TagPro.Map, options: WallOptions) {
 		const diagonal = diagonals[i];
 		const matrix = new THREE.Matrix4();
 
-		const pos = new THREE.Vector3(diagonal.x * TILE_SIZE, diagonal.y * TILE_SIZE, 0);
+		const pos = new THREE.Vector3(diagonal.x * tileSize, diagonal.y * tileSize, 0);
 
 		const rot = new THREE.Euler();
 		rot.z = THREE.MathUtils.degToRad(diagonal.angle);

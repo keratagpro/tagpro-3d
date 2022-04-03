@@ -30,5 +30,6 @@ module.exports = {
 	},
 	globals: {
 		overrideableAssets: true,
+		GM_getResourceURL: true,
 	},
 };

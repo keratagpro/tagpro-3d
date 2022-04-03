@@ -10,5 +10,13 @@ export interface PlayerData {
 
 export interface PlayerObject {
 	updateByTileId(tileId: string): void;
-	updatePosition(player: TagPro.Player): void;
+	updatePosition(pos: PositionUpdate): void;
+}
+
+export interface PositionUpdate {
+	x: number;
+	y: number;
+	lx?: number;
+	ly?: number;
+	a?: number;
 }

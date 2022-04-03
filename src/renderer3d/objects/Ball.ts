@@ -2,6 +2,7 @@ import { renderer } from 'tagpro';
 import * as THREE from 'three';
 
 import { BallOptions } from '../options/ballOptions';
+import { PositionUpdate } from '../types';
 
 const tempQuaternion = new THREE.Quaternion();
 const AXIS_X = new THREE.Vector3(1, 0, 0);
@@ -11,7 +12,7 @@ const AXIS_Z = new THREE.Vector3(0, 0, 1);
 export class Ball extends THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshPhongMaterial> {
 	_outline?: THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshBasicMaterial>;
 
-	constructor(tileId: number | string, public options: BallOptions) {
+	constructor(public options: BallOptions) {
 		const geometry = new THREE.IcosahedronGeometry(options.geometry.radius, options.geometry.detail);
 		const material = new THREE.MeshPhongMaterial(options.materials.default);
 
@@ -22,8 +23,6 @@ export class Ball extends THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshPhongM
 		if (options.outline.enabled) {
 			this.addOutline(options.outline, options.outlineMaterials);
 		}
-
-		this.updateByTileId(tileId);
 	}
 
 	addOutline(params: BallOptions['outline'], materials: BallOptions['outlineMaterials']) {
@@ -52,21 +51,17 @@ export class Ball extends THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshPhongM
 		}
 	}
 
-	updatePosition(player: TagPro.Player) {
-		this.position.x = player.sprite.x;
-		this.position.z = player.sprite.y;
+	updatePosition({ x, y, lx = 0, ly = 0, a = 0 }: PositionUpdate) {
+		this.position.x = x;
+		this.position.z = y;
 
-		if (renderer.options.disableBallSpin) {
-			return;
-		}
-
-		tempQuaternion.setFromAxisAngle(AXIS_X, (player.ly || 0) * this.options.velocityCoefficient);
+		tempQuaternion.setFromAxisAngle(AXIS_X, ly * this.options.velocityCoefficient);
 		this.quaternion.multiplyQuaternions(tempQuaternion, this.quaternion);
 
-		tempQuaternion.setFromAxisAngle(AXIS_Z, -(player.lx || 0) * this.options.velocityCoefficient);
+		tempQuaternion.setFromAxisAngle(AXIS_Z, -lx * this.options.velocityCoefficient);
 		this.quaternion.multiplyQuaternions(tempQuaternion, this.quaternion);
 
-		tempQuaternion.setFromAxisAngle(AXIS_Y, -(player.a || 0) * this.options.rotationCoefficient);
+		tempQuaternion.setFromAxisAngle(AXIS_Y, -a * this.options.rotationCoefficient);
 		this.quaternion.multiplyQuaternions(tempQuaternion, this.quaternion);
 	}
 }

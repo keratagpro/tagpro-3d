@@ -17,6 +17,7 @@ tagpro.ready.after = function (callback) {
 
 tagpro.ready(function () {
 	if (isInGame()) {
+		console.log('TagPro 3D Initializing.');
 		createRenderer3D();
 	}
 });

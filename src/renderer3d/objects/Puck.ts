@@ -38,7 +38,7 @@ export class Puck extends THREE.Object3D {
 	_cylinder: ReturnType<typeof createCylinder>;
 	_tileTexture?: THREE.Texture;
 
-	constructor(tileId: string, public options: PuckOptions) {
+	constructor(public options: PuckOptions) {
 		super();
 
 		this.options = options;
@@ -51,8 +51,6 @@ export class Puck extends THREE.Object3D {
 
 		this._cylinder = createCylinder(options.geometries.cylinder, options.materials.cylinder.default);
 		this.add(this._cylinder);
-
-		this.updateByTileId(tileId);
 	}
 
 	updateByTileId(tileId: number | string) {

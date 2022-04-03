@@ -10,9 +10,9 @@ export function createCamera({ fov = 75, aspect = 1280 / 800, near, far, distanc
 	return camera;
 }
 
-export function updateCameraFOV(camera: THREE.PerspectiveCamera, gameCanvas: HTMLCanvasElement) {
-	camera.aspect = gameCanvas.width / gameCanvas.height;
-	camera.fov = 2 * Math.atan(gameCanvas.height / (camera.position.y * 2)) * RAD;
+export function updateCameraFOV(camera: THREE.PerspectiveCamera, width: number, height: number) {
+	camera.aspect = width / height;
+	camera.fov = 2 * Math.atan(height / (camera.position.y * 2)) * RAD;
 	camera.updateProjectionMatrix();
 }
 

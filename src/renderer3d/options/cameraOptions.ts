@@ -7,5 +7,5 @@ export interface CameraOptions {
 export const cameraOptions: CameraOptions = {
 	near: 10,
 	far: 10000,
-	distance: 1000,
+	distance: 3000,
 };

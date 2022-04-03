@@ -2,7 +2,6 @@ import { TILE_SIZE } from 'tagpro';
 import * as THREE from 'three';
 
 import { WallOptions } from './options/wallOptions';
-import * as debug from './utils/debug';
 // import { getTilesTexture } from './utils';
 
 const WALL = 1;
@@ -75,12 +74,21 @@ function extractWallTiles(map: TagPro.Map) {
 }
 
 export function createWalls(map: TagPro.Map, options: WallOptions) {
-	const { squares, diagonals } = extractWallTiles(map);
+	// const cols = tiles.image.width / TILE_SIZE;
+	// const rows = tiles.image.height / TILE_SIZE;
+
+	// const topWallTexture = getTilesTexture();
+	// setTextureOffset(topWallTexture, cols, rows, options.tiles.top);
+
+	// const sideWallTexture = getTilesTexture();
+	// setTextureOffset(sideWallTexture, cols, rows, options.tiles.side);
 
 	const wallMaterials = [
 		new THREE.MeshPhongMaterial({ ...options.materials.top }),
 		new THREE.MeshPhongMaterial({ ...options.materials.side }),
 	];
+
+	const { squares, diagonals } = extractWallTiles(map);
 
 	const squareGeometry = new THREE.ExtrudeGeometry(squareShape, options.extrude);
 	const squareMesh = new THREE.InstancedMesh(squareGeometry, wallMaterials, squares.length);
@@ -121,35 +129,6 @@ export function createWalls(map: TagPro.Map, options: WallOptions) {
 
 	return wallObject;
 }
-
-// export function createWalls(this: Renderer3D, map: TagPro.Map, options = wallOptions) {
-// 	// const cols = tiles.image.width / TILE_SIZE;
-// 	// const rows = tiles.image.height / TILE_SIZE;
-
-// 	// const topWallTexture = getTilesTexture();
-// 	// setTextureOffset(topWallTexture, cols, rows, options.tiles.top);
-
-// 	// const sideWallTexture = getTilesTexture();
-// 	// setTextureOffset(sideWallTexture, cols, rows, options.tiles.side);
-
-// 	const geom = createGeometryFromTilemap(map);
-
-// 	// const mesh = new THREE.Mesh(geom, [
-// 	// 	new THREE.MeshPhongMaterial(Object.assign({ map: topWallTexture }, options.materials.top)),
-// 	// 	new THREE.MeshPhongMaterial(Object.assign({ map: sideWallTexture }, options.materials.side)),
-// 	// ]);
-
-// 	mesh.rotation.x = Math.PI / 2;
-// 	mesh.position.y = TILE_SIZE / 2;
-// 	mesh.scale.set(TILE_SIZE, TILE_SIZE, TILE_SIZE);
-// 	this.scene.add(mesh);
-
-// 	const edgesGeometry = new THREE.EdgesGeometry(geom);
-// 	const lines = new THREE.LineSegments(edgesGeometry, new THREE.LineBasicMaterial({ color: 0xff0000 }));
-// 	this.scene.add(lines);
-// 	// const edges = new THREE.EdgesHelper(mesh, 0x000000);
-// 	// this.scene.add(edges);
-// }
 
 // function setTextureOffset(texture, cols, rows, tile) {
 // 	const x = tile.x / cols;

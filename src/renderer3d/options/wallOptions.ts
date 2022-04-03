@@ -12,20 +12,20 @@ export interface WallOptions {
 export const wallOptions: WallOptions = {
 	materials: {
 		top: {
-			color: 0x333333,
+			color: 0x666666,
 			opacity: 0.9,
 			flatShading: true,
 			transparent: true,
 		},
 		side: {
-			color: 0x333333,
+			color: 0x666666,
 			opacity: 0.9,
 			flatShading: true,
 			transparent: true,
 		},
 	},
 	extrude: {
-		depth: 40,
+		depth: 80,
 		steps: 1,
 		bevelEnabled: false,
 		bevelSegments: 1,

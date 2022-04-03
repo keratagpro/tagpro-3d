@@ -1,11 +1,10 @@
-import { TILE_SIZE, tiles } from 'tagpro';
+// import { TILE_SIZE, tiles } from 'tagpro';
 import * as THREE from 'three';
 
 import { PuckOptions } from '../options/puckOptions';
-import * as utils from '../utils';
 
 const AXIS_Y = new THREE.Vector3(0, 1, 0);
-const BALL_RADIUS = 38;
+// const BALL_RADIUS = 38;
 const tempQuaternion = new THREE.Quaternion();
 
 function createCircle(geometry: any, material: THREE.MeshPhongMaterialParameters) {
@@ -80,15 +79,11 @@ export class Puck extends THREE.Object3D {
 		// 	texture.offset.y += 1 / TILE_SIZE / 11;
 		// 	texture.repeat.x -= 2 / TILE_SIZE / 16;
 		// 	texture.repeat.y -= 2 / TILE_SIZE / 11;
-		// } else if (!circleMaterial.color) {
-		// 	circleMaterial.color = utils.getDominantColorForTile(tiles.image, tiles[tileId]);
 		// }
 
 		circle.material.setValues(circleMaterial);
 
 		const cylinderMaterial = materials.cylinder[materialName];
-
-		if (!cylinderMaterial.color) cylinderMaterial.color = utils.getDominantColorForTile(tiles.image, tiles[tileId]);
 
 		cylinder.material.setValues(cylinderMaterial);
 	}

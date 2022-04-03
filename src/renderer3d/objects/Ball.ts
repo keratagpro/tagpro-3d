@@ -1,8 +1,7 @@
-import { renderer, tiles } from 'tagpro';
+import { renderer } from 'tagpro';
 import * as THREE from 'three';
 
 import { BallOptions } from '../options/ballOptions';
-import * as utils from '../utils';
 
 const tempQuaternion = new THREE.Quaternion();
 const AXIS_X = new THREE.Vector3(1, 0, 0);
@@ -40,14 +39,14 @@ export class Ball extends THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshPhongM
 	updateByTileId(tileId: number | string) {
 		const material = this.options.materials[tileId === 'redball' ? 'red' : 'blue'];
 
-		if (!material.color) material.color = utils.getDominantColorForTile(tiles.image, tiles[tileId]);
-
 		this.material.setValues(material);
 
 		if (this._outline) {
 			const outlineMaterial = this.options.outlineMaterials[tileId === 'redball' ? 'red' : 'blue'];
 
-			if (!outlineMaterial.color) outlineMaterial.color = material.color;
+			if (!outlineMaterial.color) {
+				outlineMaterial.color = material.color;
+			}
 
 			this._outline.material.setValues(outlineMaterial);
 		}

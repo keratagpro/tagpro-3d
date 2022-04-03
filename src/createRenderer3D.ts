@@ -1,17 +1,12 @@
 import * as tagpro from 'tagpro';
 
 import { Renderer3D } from './Renderer3D';
-import * as utils from './utils';
+import { defaultOptions } from './Renderer3D/options';
+import { after } from './utils';
 
 export function createRenderer3D() {
-	const after = utils.after;
+	const t3d = new Renderer3D(defaultOptions);
 	const tr = tagpro.renderer;
-	const t3d = new Renderer3D();
-
-	console.log('tagpro.renderer', tr);
-	console.log('tagpro3d', t3d);
-
-	Object.assign(window, { tagpro3d: t3d });
 
 	//
 	// Renderer

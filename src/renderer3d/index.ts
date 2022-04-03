@@ -1,7 +1,7 @@
 import * as camera from './camera';
 import * as lights from './lights';
 import * as objects from './objects';
-import { defaultOptions, Options } from './options';
+import { Options } from './options';
 import * as scene from './scene';
 import { PlayerData, Renderer } from './types';
 import * as walls from './walls';
@@ -18,11 +18,7 @@ export class Renderer3D {
 	renderer?: THREE.WebGLRenderer;
 	players: Record<number, PlayerData> = {};
 
-	options: Options;
-
-	constructor(options = {}) {
-		this.options = Object.assign({}, defaultOptions, options);
-
+	constructor(public options: Options) {
 		this.camera = camera.createCamera(this.options.camera);
 		this.scene = scene.createScene();
 		this.scene.add(this.camera);

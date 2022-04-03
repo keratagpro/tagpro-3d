@@ -26,6 +26,7 @@ module.exports = {
 		semi: ['error', 'always'],
 		'@typescript-eslint/indent': ['error', 'tab'],
 		'@typescript-eslint/no-non-null-assertion': 0,
+		'@typescript-eslint/no-var-requires': 0,
 	},
 	globals: {
 		overrideableAssets: true,

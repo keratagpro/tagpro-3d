@@ -1,7 +1,7 @@
 import * as tagpro from 'tagpro';
 
 import { createRenderer3D } from './createRenderer3D';
-import * as utils from './utils';
+import { isInGame } from './utils';
 
 /**
  * Delays callbacks when resourcesLoaded == true, so it's possible to run stuff
@@ -16,7 +16,7 @@ tagpro.ready.after = function (callback) {
 };
 
 tagpro.ready(function () {
-	if (utils.isInGame()) {
+	if (isInGame()) {
 		createRenderer3D();
 	}
 });

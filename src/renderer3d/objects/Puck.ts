@@ -1,7 +1,7 @@
 import { TILE_SIZE, tiles } from 'tagpro';
 import * as THREE from 'three';
 
-import { puckOptions } from '../options/objects';
+import { PuckOptions } from '../options/puckOptions';
 import * as utils from '../utils';
 
 const AXIS_Y = new THREE.Vector3(0, 1, 0);
@@ -35,24 +35,22 @@ function createCylinder(geometry: any, material: any) {
 }
 
 export class Puck extends THREE.Object3D {
-	params: typeof puckOptions;
-
 	_circle: ReturnType<typeof createCircle>;
 	_cylinder: ReturnType<typeof createCylinder>;
 	_tileTexture?: THREE.Texture;
 
-	constructor(tileId: string, params = puckOptions) {
+	constructor(tileId: string, public options: PuckOptions) {
 		super();
 
-		this.params = params;
+		this.options = options;
 
-		this.position.y = params.geometries.cylinder.height / 2;
+		this.position.y = options.geometries.cylinder.height / 2;
 
-		this._circle = createCircle(params.geometries.circle, params.materials.circle.default);
-		this._circle.position.y = params.geometries.cylinder.height / 2;
+		this._circle = createCircle(options.geometries.circle, options.materials.circle.default);
+		this._circle.position.y = options.geometries.cylinder.height / 2;
 		this.add(this._circle);
 
-		this._cylinder = createCylinder(params.geometries.cylinder, params.materials.cylinder.default);
+		this._cylinder = createCylinder(options.geometries.cylinder, options.materials.cylinder.default);
 		this.add(this._cylinder);
 
 		this.updateByTileId(tileId);
@@ -63,7 +61,7 @@ export class Puck extends THREE.Object3D {
 
 		const circle = this._circle;
 		const cylinder = this._cylinder;
-		const materials = this.params.materials;
+		const materials = this.options.materials;
 
 		const circleMaterial = materials.circle[materialName];
 
@@ -99,7 +97,7 @@ export class Puck extends THREE.Object3D {
 		this.position.x = player.sprite.x;
 		this.position.z = player.sprite.y;
 
-		tempQuaternion.setFromAxisAngle(AXIS_Y, -(player.a || 0) * this.params.rotationCoefficient);
+		tempQuaternion.setFromAxisAngle(AXIS_Y, -(player.a || 0) * this.options.rotationCoefficient);
 		this.quaternion.multiplyQuaternions(tempQuaternion, this.quaternion);
 	}
 }

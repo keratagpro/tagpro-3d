@@ -3,16 +3,17 @@ import { Ball } from './objects/Ball';
 import { Bomb } from './objects/Bomb';
 // import { Gate } from './objects/Gate';
 import { Puck } from './objects/Puck';
+import { Options } from './options';
 // import { Spike } from './objects/Spike';
 
-export function createBall(this: any, player: any) {
-	const options = this.options;
-
+export function createBall(player: TagPro.Player, options: Options) {
 	const tileId = player.team === 1 ? 'redball' : 'blueball';
 
-	const mesh = options.ballsArePucks ? new Puck(tileId, options.objects.puck) : new Ball(tileId, options.objects.ball);
-
-	return mesh;
+	if (options.ballsArePucks) {
+		return new Puck(tileId, options.objects.puck);
+	} else {
+		return new Ball(tileId, options.objects.ball);
+	}
 }
 
 export const objectMap = {

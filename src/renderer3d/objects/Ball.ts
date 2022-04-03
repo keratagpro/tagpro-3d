@@ -1,7 +1,7 @@
-import { tiles, renderer } from 'tagpro';
+import { renderer, tiles } from 'tagpro';
 import * as THREE from 'three';
 
-import { ballOptions } from '../options/objects';
+import { BallOptions } from '../options/ballOptions';
 import * as utils from '../utils';
 
 const tempQuaternion = new THREE.Quaternion();
@@ -12,7 +12,7 @@ const AXIS_Z = new THREE.Vector3(0, 0, 1);
 export class Ball extends THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshPhongMaterial> {
 	_outline?: THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshBasicMaterial>;
 
-	constructor(tileId: number | string, public options = ballOptions) {
+	constructor(tileId: number | string, public options: BallOptions) {
 		const geometry = new THREE.IcosahedronGeometry(options.geometry.radius, options.geometry.detail);
 		const material = new THREE.MeshPhongMaterial(options.materials.default);
 
@@ -27,7 +27,7 @@ export class Ball extends THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshPhongM
 		this.updateByTileId(tileId);
 	}
 
-	addOutline(params: typeof ballOptions.outline, materials: typeof ballOptions.outlineMaterials) {
+	addOutline(params: BallOptions['outline'], materials: BallOptions['outlineMaterials']) {
 		const outline = new THREE.Mesh(
 			new THREE.IcosahedronGeometry(params.radius, params.detail),
 			new THREE.MeshBasicMaterial(materials.default)

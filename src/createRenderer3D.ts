@@ -1,15 +1,8 @@
 import * as tagpro from 'tagpro';
 
 import { Renderer3D } from './Renderer3D';
-import { Ball } from './Renderer3D/objects/Ball';
-import { Puck } from './Renderer3D/objects/Puck';
 import * as utils from './utils';
 import { before } from './utils';
-
-interface Player3D extends TagPro.Player {
-	currentTeam: number;
-	object3d: Ball | Puck;
-}
 
 export function createRenderer3D() {
 	const after = utils.after;
@@ -25,18 +18,15 @@ export function createRenderer3D() {
 	// Renderer
 	//
 
-	// TODO: Find a sensible tagpro.renderer function to hook this stuff into
-	after(tr, 'drawStartingSplats', () => {
-		t3d.addLights(t3d.options.lights, t3d.scene, t3d.camera);
-	});
-
 	after(tr, 'createBackground', function () {
 		const canvas3D = document.createElement('canvas');
 		canvas3D.width = tr.canvas.width;
 		canvas3D.height = tr.canvas.height;
+
 		const threeTexture = PIXI.Texture.fromCanvas(canvas3D);
 		const threeSprite = new PIXI.Sprite(threeTexture);
 		threeSprite.name = 'tagpro3d';
+		/* eslint-disable @typescript-eslint/no-empty-function */
 		threeSprite.updateTransform = function () {};
 
 		tr.layers.foreground.addChild(threeSprite);
@@ -45,6 +35,8 @@ export function createRenderer3D() {
 			...t3d.options.renderer,
 			canvas: canvas3D,
 		});
+
+		t3d.addLights(t3d.options.lights, t3d.scene, t3d.camera);
 	});
 
 	// after(tr, 'updateGraphics', function () {
@@ -81,30 +73,40 @@ export function createRenderer3D() {
 	//
 
 	if (t3d.options.ballsAre3D) {
-		after(tr, 'createBallSprite', (player: Player3D) => {
-			player.currentTeam = player.team;
-			player.object3d = t3d.createBall(player);
-			t3d.scene.add(player.object3d);
+		const players = t3d.players;
+
+		after(tr, 'createBallSprite', (player: TagPro.Player) => {
+			const ball3D = t3d.createBall(player, t3d.options);
+			players[player.id] = {
+				team: player.team,
+				object3D: ball3D,
+			};
+			t3d.scene.add(ball3D);
+			player.sprites.actualBall.visible = false;
 		});
 
-		after(tr, 'updatePlayerColor', (player: Player3D) => {
-			if (player.team !== player.currentTeam) {
-				player.currentTeam = player.team;
-				player.object3d.updateByTileId(player.team === 1 ? 'redball' : 'blueball');
+		after(tr, 'updatePlayerColor', (player: TagPro.Player) => {
+			const player3D = t3d.players[player.id];
+			if (player.team !== player3D.team) {
+				player3D.team = player.team;
+				player3D.object3D.updateByTileId(player.team === 1 ? 'redball' : 'blueball');
 			}
 		});
 
-		after(tr, 'updatePlayerVisibility', function (player: any) {
-			player.object3d.visible = player.sprite.visible;
+		after(tr, 'updatePlayerVisibility', function (player: TagPro.Player) {
+			const player3D = t3d.players[player.id];
+			player3D.object3D.visible = player.sprite.visible;
 		});
 
-		after(tr, 'updatePlayerSpritePosition', (player: Player3D) => {
-			player.object3d.updatePosition(player);
+		after(tr, 'updatePlayerSpritePosition', (player: TagPro.Player) => {
+			const player3D = t3d.players[player.id];
+			player3D.object3D.updatePosition(player);
 		});
 
-		after(tr, 'destroyPlayer', function (player: any) {
-			t3d.scene.remove(player.object3d);
-			delete player.object3d;
+		after(tr, 'destroyPlayer', function (player: TagPro.Player) {
+			const player3D = t3d.players[player.id];
+			t3d.scene.remove(player3D.object3D);
+			delete t3d.players[player.id];
 		});
 	}
 
@@ -114,7 +116,8 @@ export function createRenderer3D() {
 
 	if (t3d.options.wallsAre3D) {
 		after(tr, 'createBackgroundTexture', () => {
-			t3d.createWalls(tagpro.map, t3d.options.objects.wallOptions);
+			const walls3D = t3d.createWalls(tagpro.map, t3d.options.objects.wall);
+			t3d.scene.add(walls3D);
 		});
 	}
 

@@ -2,7 +2,7 @@ import { tiles } from 'tagpro';
 import * as THREE from 'three';
 
 import * as objects from '../constants';
-import { BombOptions, bombOptions } from '../options/objects';
+import { BombOptions } from '../options/bombOptions';
 import * as utils from '../utils';
 import * as bombModel from './bomb-model.json';
 
@@ -13,7 +13,7 @@ function isMesh(obj: THREE.Object3D): obj is THREE.Mesh<THREE.BufferGeometry, TH
 export class Bomb extends THREE.Object3D {
 	materials: BombOptions['materials'];
 
-	constructor(tileId: number | string, public options = bombOptions) {
+	constructor(tileId: number | string, public options: BombOptions) {
 		super();
 
 		this.materials = options.materials;

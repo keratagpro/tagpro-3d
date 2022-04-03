@@ -5,7 +5,6 @@ import typescript from '@rollup/plugin-typescript';
 import * as fs from 'fs';
 import { defineConfig } from 'rollup';
 import copy from 'rollup-plugin-copy';
-const cleanup = require('rollup-plugin-cleanup');
 const template = require('lodash.template');
 
 import { version } from './package.json';
@@ -39,9 +38,6 @@ export default defineConfig([
 			commonjs(),
 			nodeResolve(),
 			typescript(),
-			cleanup({
-				lineEndings: 'win',
-			}),
 			extractBanner({ file: 'docs/tagpro-3d.meta.js' }),
 			copy({
 				targets: [{ src: 'assets/', dest: 'docs/' }],

@@ -11,7 +11,7 @@ const template = require('lodash.template');
 import { version } from './package.json';
 import { extractBanner } from './scripts/extractBannerPlugin';
 
-const meta = template(fs.readFileSync(__dirname + '/src/meta.js.tpl', 'utf8'));
+const meta = template(fs.readFileSync(__dirname + '/src/meta.tpl.ts', 'utf8'));
 
 const banner = meta({ version });
 

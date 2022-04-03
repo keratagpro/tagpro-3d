@@ -21,7 +21,7 @@ module.exports = {
 		'simple-import-sort/imports': 'error',
 		'simple-import-sort/exports': 'error',
 		'prefer-rest-params': 'warn',
-		'linebreak-style': ['error', 'unix'],
+		'linebreak-style': ['error', 'windows'],
 		quotes: ['error', 'single'],
 		semi: ['error', 'always'],
 		'@typescript-eslint/indent': ['error', 'tab'],

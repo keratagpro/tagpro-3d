@@ -3,7 +3,5 @@
 		"target": "ES6",
 		"module": "commonjs"
 	},
-	"exclude": [
-		"node_modules"
-	]
+	"exclude": ["node_modules"]
 }

@@ -112,6 +112,4 @@ export function createRenderer3D() {
 			t3d.scene.add(walls3D);
 		});
 	}
-
-	console.log('TagPro 3D Initialized.');
 }

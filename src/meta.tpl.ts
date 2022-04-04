@@ -12,5 +12,6 @@
 // @include       http://tangent.jukejuice.com*
 // @include       https://tangent.jukejuice.com*
 // @include       https://bash-tp.github.io/tagpro-vcr/game*.html
+// @require       https://unpkg.com/loglevel@1.8.0/lib/loglevel.js
 // @require       https://unpkg.com/three@0.139.2/build/three.min.js
 // ==/UserScript==

@@ -15,11 +15,9 @@ const meta = template(fs.readFileSync(__dirname + '/src/meta.tpl.ts', 'utf8'));
 const banner = meta({ version });
 
 const globals = {
-	jquery: '$',
-	clipper: 'ClipperLib',
-	three: 'THREE',
 	tagpro: 'tagpro',
-	rgbquant: 'RgbQuant',
+	three: 'THREE',
+	loglevel: 'log',
 };
 
 export default defineConfig([

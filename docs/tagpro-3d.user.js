@@ -12,11 +12,166 @@
 // @include       http://tangent.jukejuice.com*
 // @include       https://tangent.jukejuice.com*
 // @include       https://bash-tp.github.io/tagpro-vcr/game*.html
+// @require       https://unpkg.com/loglevel@1.8.0/lib/loglevel.js
 // @require       https://unpkg.com/three@0.139.2/build/three.min.js
 // ==/UserScript==
 
-(function (tagpro, THREE) {
+(function (tagpro, THREE, log) {
     'use strict';
+
+    const ballOptions = {
+        enabled: true,
+        velocityCoefficient: 0.1,
+        rotationCoefficient: 0.015,
+        geometry: {
+            detail: 1,
+            radius: 17,
+        },
+        materials: {
+            default: {
+                flatShading: true,
+            },
+            blue: {
+                color: 0x0000ff,
+            },
+            red: {
+                color: 0xff0000,
+            },
+        },
+        outline: {
+            enabled: true,
+            detail: 2,
+            radius: 19,
+        },
+        outlineMaterials: {
+            default: {
+                side: THREE.BackSide,
+            },
+            blue: {},
+            red: {},
+        },
+    };
+
+    const bombOptions = {
+        materials: {
+            body: {
+                color: 0x000000,
+            },
+            show: {
+                transparent: false,
+                opacity: 1.0,
+            },
+            hide: {
+                transparent: true,
+                opacity: 0.2,
+            },
+        },
+    };
+
+    const cameraOptions = {
+        near: 10,
+        far: 10000,
+        distance: 3000,
+    };
+
+    const lightOptions = [
+        { enabled: false, type: 'camera', color: 0xffffff, intensity: 0.8 },
+        { enabled: true, type: 'ambient', color: 0x666666 },
+        { enabled: true, type: 'directional', color: 0xffffff, intensity: 1.0, position: [-500, 500, -500] },
+    ];
+
+    const puckOptions = {
+        enabled: true,
+        rotationCoefficient: 0.01,
+        geometries: {
+            circle: {
+                radius: 19,
+                segments: 32,
+            },
+            cylinder: {
+                height: 10,
+                radiusTop: 19,
+                radiusBottom: 19,
+                segments: 32,
+            },
+        },
+        materials: {
+            circle: {
+                default: {
+                    transparent: true,
+                    alphaTest: 0.1,
+                    opacity: 0.9,
+                    flatShading: true,
+                },
+                blue: {},
+                red: {},
+            },
+            cylinder: {
+                default: {
+                    transparent: true,
+                    opacity: 0.9,
+                    flatShading: true,
+                    side: THREE.DoubleSide,
+                },
+                blue: {},
+                red: {},
+            },
+        },
+    };
+
+    const wallOptions = {
+        materials: {
+            top: {
+                color: 0x666666,
+                opacity: 0.9,
+                flatShading: true,
+                transparent: true,
+            },
+            side: {
+                color: 0x666666,
+                opacity: 0.9,
+                flatShading: true,
+                transparent: true,
+            },
+        },
+        extrude: {
+            depth: 80,
+            steps: 1,
+            bevelEnabled: false,
+            bevelSegments: 1,
+            bevelSize: 5,
+            bevelThickness: 10,
+            bevelOffset: -5,
+        },
+        tiles: {
+            top: {
+                x: 5.5,
+                y: 5.5,
+            },
+            side: {
+                x: 5.5,
+                y: 5.5,
+            },
+        },
+    };
+
+    const defaultOptions = {
+        renderer: {
+            antialias: true,
+            alpha: true,
+        },
+        camera: cameraOptions,
+        lights: lightOptions,
+        objects: {
+            ball: ballOptions,
+            puck: puckOptions,
+            wall: wallOptions,
+            bomb: bombOptions,
+        },
+        ballsArePucks: false,
+        ballsAre3D: true,
+        wallsAre3D: true,
+    };
 
     const RAD = 180 / Math.PI;
     function createCamera({ fov = 75, aspect = 1280 / 800, near, far, distance }) {
@@ -369,163 +524,7 @@
     }
     Object.assign(Renderer3D.prototype, camera, lights, objects, scene, walls);
 
-    const ballOptions = {
-        enabled: true,
-        velocityCoefficient: 0.1,
-        rotationCoefficient: 0.015,
-        geometry: {
-            detail: 1,
-            radius: 17,
-        },
-        materials: {
-            default: {
-                flatShading: true,
-            },
-            blue: {
-                color: 0x0000ff,
-            },
-            red: {
-                color: 0xff0000,
-            },
-        },
-        outline: {
-            enabled: true,
-            detail: 2,
-            radius: 19,
-        },
-        outlineMaterials: {
-            default: {
-                side: THREE.BackSide,
-            },
-            blue: {},
-            red: {},
-        },
-    };
-
-    const bombOptions = {
-        materials: {
-            body: {
-                color: 0x000000,
-            },
-            show: {
-                transparent: false,
-                opacity: 1.0,
-            },
-            hide: {
-                transparent: true,
-                opacity: 0.2,
-            },
-        },
-    };
-
-    const cameraOptions = {
-        near: 10,
-        far: 10000,
-        distance: 3000,
-    };
-
-    const lightOptions = [
-        { enabled: false, type: 'camera', color: 0xffffff, intensity: 0.8 },
-        { enabled: true, type: 'ambient', color: 0x666666 },
-        { enabled: true, type: 'directional', color: 0xffffff, intensity: 1.0, position: [-500, 500, -500] },
-    ];
-
-    const puckOptions = {
-        enabled: true,
-        rotationCoefficient: 0.01,
-        geometries: {
-            circle: {
-                radius: 19,
-                segments: 32,
-            },
-            cylinder: {
-                height: 10,
-                radiusTop: 19,
-                radiusBottom: 19,
-                segments: 32,
-            },
-        },
-        materials: {
-            circle: {
-                default: {
-                    transparent: true,
-                    alphaTest: 0.1,
-                    opacity: 0.9,
-                    flatShading: true,
-                },
-                blue: {},
-                red: {},
-            },
-            cylinder: {
-                default: {
-                    transparent: true,
-                    opacity: 0.9,
-                    flatShading: true,
-                    side: THREE.DoubleSide,
-                },
-                blue: {},
-                red: {},
-            },
-        },
-    };
-
-    const wallOptions = {
-        materials: {
-            top: {
-                color: 0x666666,
-                opacity: 0.9,
-                flatShading: true,
-                transparent: true,
-            },
-            side: {
-                color: 0x666666,
-                opacity: 0.9,
-                flatShading: true,
-                transparent: true,
-            },
-        },
-        extrude: {
-            depth: 80,
-            steps: 1,
-            bevelEnabled: false,
-            bevelSegments: 1,
-            bevelSize: 5,
-            bevelThickness: 10,
-            bevelOffset: -5,
-        },
-        tiles: {
-            top: {
-                x: 5.5,
-                y: 5.5,
-            },
-            side: {
-                x: 5.5,
-                y: 5.5,
-            },
-        },
-    };
-
-    const defaultOptions = {
-        renderer: {
-            antialias: true,
-            alpha: true,
-        },
-        camera: cameraOptions,
-        lights: lightOptions,
-        objects: {
-            ball: ballOptions,
-            puck: puckOptions,
-            wall: wallOptions,
-            bomb: bombOptions,
-        },
-        ballsArePucks: false,
-        ballsAre3D: true,
-        wallsAre3D: true,
-    };
-
-    function isInGame() {
-        return tagpro.state > 0;
-    }
+    // TODO: How to narrow T[K] to a callable function?
     function after(obj, methodName, callback) {
         const orig = obj[methodName];
         obj[methodName] = function () {
@@ -533,6 +532,23 @@
             callback.apply(this, arguments);
             return result;
         };
+    }
+
+    const textureLoader = new THREE.TextureLoader();
+    textureLoader.setCrossOrigin('');
+    new THREE.ObjectLoader();
+
+    const originalFactory = log.methodFactory;
+    log.methodFactory = function (methodName, logLevel, loggerName) {
+        const rawMethod = originalFactory(methodName, logLevel, loggerName);
+        return function (message) {
+            rawMethod('[tagpro3d] ' + message);
+        };
+    };
+    log.setLevel(log.getLevel());
+
+    function isInGame() {
+        return tagpro.state > 0;
     }
 
     function createRenderer3D() {
@@ -622,7 +638,6 @@
                 t3d.scene.add(walls3D);
             });
         }
-        console.log('TagPro 3D Initialized.');
     }
 
     /**
@@ -639,8 +654,10 @@
     };
     tagpro.ready(function () {
         if (isInGame()) {
+            log.info('Initializing.');
             createRenderer3D();
+            log.info('Initialized.');
         }
     });
 
-})(tagpro, THREE);
+})(tagpro, THREE, log);

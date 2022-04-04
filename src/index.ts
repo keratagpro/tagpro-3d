@@ -16,6 +16,8 @@ tagpro.ready.after = function (callback) {
 };
 
 tagpro.ready(function () {
+	log.setLevel('info');
+
 	if (isInGame()) {
 		log.info('Initializing.');
 		createRenderer3D();

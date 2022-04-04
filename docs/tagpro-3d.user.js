@@ -7,8 +7,8 @@
 // @icon          https://keratagpro.github.io/tagpro-3d/assets/icon.png
 // @downloadUrl   https://keratagpro.github.io/tagpro-3d/tagpro-3d.user.js
 // @updateUrl     https://keratagpro.github.io/tagpro-3d/tagpro-3d.meta.js
-// @include       http://tagpro.koalabeast.com/game
-// @include       https://tagpro.koalabeast.com/game
+// @include       http://tagpro*.koalabeast.com/game*
+// @include       https://tagpro*.koalabeast.com/game*
 // @include       http://tangent.jukejuice.com*
 // @include       https://tangent.jukejuice.com*
 // @include       https://bash-tp.github.io/tagpro-vcr/game*.html
@@ -557,13 +557,15 @@
         //
         // Renderer
         //
+        let threeTexture;
         after(tr, 'createBackground', function () {
             const canvas3D = document.createElement('canvas');
             canvas3D.width = tr.canvas.width;
             canvas3D.height = tr.canvas.height;
-            const threeTexture = PIXI.Texture.fromCanvas(canvas3D);
+            threeTexture = PIXI.Texture.fromCanvas(canvas3D);
             const threeSprite = new PIXI.Sprite(threeTexture);
             threeSprite.name = 'tagpro3d';
+            threeSprite.interactiveChildren = false;
             /* eslint-disable @typescript-eslint/no-empty-function */
             threeSprite.updateTransform = function () { };
             tr.layers.foreground.addChild(threeSprite);
@@ -575,6 +577,7 @@
         });
         after(tr, 'updateGraphics', function () {
             t3d.renderer?.render(t3d.scene, t3d.camera);
+            threeTexture.update();
         });
         //
         // Camera
@@ -605,6 +608,7 @@
                     object3D: ball3D,
                 };
                 t3d.scene.add(ball3D);
+                log.info('Created 3D ball for ' + player.id);
             });
             after(tr, 'updatePlayerColor', (player) => {
                 const player3D = t3d.players[player.id];
@@ -636,8 +640,10 @@
             after(tr, 'createBackgroundTexture', () => {
                 const walls3D = t3d.createWalls(tagpro.map, t3d.options.objects.wall);
                 t3d.scene.add(walls3D);
+                log.info('Created 3D walls.');
             });
         }
+        return t3d;
     }
 
     /**
@@ -653,6 +659,7 @@
         }
     };
     tagpro.ready(function () {
+        log.setLevel('info');
         if (isInGame()) {
             log.info('Initializing.');
             createRenderer3D();

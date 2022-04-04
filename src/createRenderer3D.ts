@@ -2,7 +2,7 @@ import * as tagpro from 'tagpro';
 
 import { defaultOptions } from './options';
 import { Renderer3D } from './Renderer3D';
-import { after } from './utils';
+import { after, log } from './utils';
 
 export function createRenderer3D() {
 	const t3d = new Renderer3D(defaultOptions);
@@ -12,14 +12,17 @@ export function createRenderer3D() {
 	// Renderer
 	//
 
+	let threeTexture: PIXI.Texture;
+
 	after(tr, 'createBackground', function () {
 		const canvas3D = document.createElement('canvas');
 		canvas3D.width = tr.canvas.width;
 		canvas3D.height = tr.canvas.height;
 
-		const threeTexture = PIXI.Texture.fromCanvas(canvas3D);
+		threeTexture = PIXI.Texture.fromCanvas(canvas3D);
 		const threeSprite = new PIXI.Sprite(threeTexture);
 		threeSprite.name = 'tagpro3d';
+		threeSprite.interactiveChildren = false;
 		/* eslint-disable @typescript-eslint/no-empty-function */
 		threeSprite.updateTransform = function () {};
 
@@ -35,6 +38,7 @@ export function createRenderer3D() {
 
 	after(tr, 'updateGraphics', function () {
 		t3d.renderer?.render(t3d.scene, t3d.camera);
+		threeTexture.update();
 	});
 
 	//
@@ -72,6 +76,7 @@ export function createRenderer3D() {
 				object3D: ball3D,
 			};
 			t3d.scene.add(ball3D);
+			log.info('Created 3D ball for ' + player.id);
 		});
 
 		after(tr, 'updatePlayerColor', (player: TagPro.Player) => {
@@ -110,6 +115,9 @@ export function createRenderer3D() {
 		after(tr, 'createBackgroundTexture', () => {
 			const walls3D = t3d.createWalls(tagpro.map, t3d.options.objects.wall);
 			t3d.scene.add(walls3D);
+			log.info('Created 3D walls.');
 		});
 	}
+
+	return t3d;
 }

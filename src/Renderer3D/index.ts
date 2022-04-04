@@ -1,7 +1,7 @@
+import { Options } from '../options';
 import * as camera from './camera';
 import * as lights from './lights';
 import * as objects from './objects';
-import { Options } from './options';
 import * as scene from './scene';
 import { PlayerData, Renderer } from './types';
 import * as walls from './walls';

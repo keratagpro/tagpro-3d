@@ -1,11 +1,11 @@
 import * as THREE from 'three';
 
-import { BallOptions, ballOptions } from './options/ballOptions';
-import { BombOptions, bombOptions } from './options/bombOptions';
-import { CameraOptions, cameraOptions } from './options/cameraOptions';
-import { LightOptions, lightOptions } from './options/lightOptions';
-import { PuckOptions, puckOptions } from './options/puckOptions';
-import { WallOptions, wallOptions } from './options/wallOptions';
+import { BallOptions, ballOptions } from './ballOptions';
+import { BombOptions, bombOptions } from './bombOptions';
+import { CameraOptions, cameraOptions } from './cameraOptions';
+import { LightOptions, lightOptions } from './lightOptions';
+import { PuckOptions, puckOptions } from './puckOptions';
+import { WallOptions, wallOptions } from './wallOptions';
 
 interface ObjectsOptions {
 	ball: BallOptions;

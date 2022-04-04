@@ -1,7 +1,7 @@
 import { renderer } from 'tagpro';
 import * as THREE from 'three';
 
-import { BallOptions } from '../options/ballOptions';
+import { BallOptions } from '../../options/ballOptions';
 
 const tempQuaternion = new THREE.Quaternion();
 const AXIS_X = new THREE.Vector3(1, 0, 0);

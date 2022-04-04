@@ -1,7 +1,7 @@
 import { TILE_SIZE } from 'tagpro';
 import * as THREE from 'three';
 
-import { WallOptions } from './options/wallOptions';
+import { WallOptions } from '../options/wallOptions';
 // import { getTilesTexture } from './utils';
 
 const WALL = 1;

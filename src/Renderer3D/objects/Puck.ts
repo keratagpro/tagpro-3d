@@ -1,7 +1,7 @@
 // import { TILE_SIZE, tiles } from 'tagpro';
 import * as THREE from 'three';
 
-import { PuckOptions } from '../options/puckOptions';
+import { PuckOptions } from '../../options/puckOptions';
 
 const AXIS_Y = new THREE.Vector3(0, 1, 0);
 // const BALL_RADIUS = 38;

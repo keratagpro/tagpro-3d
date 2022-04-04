@@ -1,7 +1,7 @@
 import * as tagpro from 'tagpro';
 
+import { defaultOptions } from './options';
 import { Renderer3D } from './Renderer3D';
-import { defaultOptions } from './Renderer3D/options';
 import { after } from './utils';
 
 export function createRenderer3D() {

@@ -13,3 +13,41 @@ This userscript renders your [TagPro](http://tagpro.gg) games in 3D using [THREE
 ## Screenshots
 
 ![example1](assets/example1.png)
+
+## Development
+
+1. Build userscript
+
+	```bash
+	npm install
+
+	# build once
+	npm run build
+
+	# build & watch for changes
+	npm run watch
+	```
+
+2. Copy-paste contents of `docs/tagpro-3d.user.js` to TamperMonkey.
+
+## Publish
+
+1. Bump patch/minor/major version
+
+	```bash
+	npm version patch
+	```
+
+2. Build
+
+	```bash
+	npm run build
+	# git add -A
+	# git commit -m "..."
+	```
+
+3. Push to GitHub
+
+	```bash
+	git push origin
+	```

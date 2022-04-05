@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          TagPro 3D
 // @description   TagPro in 3D!
-// @version       0.2.1
+// @version       0.3.0
 // @author        Kera
 // @namespace     https://github.com/keratagpro/tagpro-3d/
 // @icon          https://keratagpro.github.io/tagpro-3d/assets/icon.png

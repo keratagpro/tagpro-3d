@@ -18,6 +18,7 @@ const globals = {
 	tagpro: 'tagpro',
 	three: 'THREE',
 	loglevel: 'log',
+	rgbquant: 'RgbQuant',
 };
 
 export default defineConfig([

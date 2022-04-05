@@ -1,15 +1,29 @@
 import * as THREE from 'three';
 
+export type TileParams = {
+	x: number;
+	y: number;
+	width?: number;
+	height?: number;
+};
+
 export interface WallOptions {
+	useDominantColorFromTexture: boolean;
+	useTexture: boolean;
 	materials: {
 		top: THREE.MeshPhongMaterialParameters;
 		side: THREE.MeshPhongMaterialParameters;
 	};
 	extrude: THREE.ExtrudeGeometryOptions;
-	tiles: any;
+	tiles: {
+		top: TileParams;
+		side: TileParams;
+	};
 }
 
 export const wallOptions: WallOptions = {
+	useDominantColorFromTexture: true,
+	useTexture: false,
 	materials: {
 		top: {
 			color: 0x666666,

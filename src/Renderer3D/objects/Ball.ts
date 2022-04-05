@@ -1,7 +1,8 @@
-import { renderer } from 'tagpro';
+import { tiles } from 'tagpro';
 import * as THREE from 'three';
 
 import { BallOptions } from '../../options/ballOptions';
+import { getDominantColorForTile } from '../utils';
 
 const tempQuaternion = new THREE.Quaternion();
 const AXIS_X = new THREE.Vector3(1, 0, 0);
@@ -39,6 +40,10 @@ export class Ball extends THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshPhongM
 	updateByTileId(tileId: number | string) {
 		const materialParams = this.options.materials[tileId === 'redball' ? 'red' : 'blue'];
 
+		if (this.options.useDominantColorFromTexture) {
+			materialParams.color = getDominantColorForTile(tiles.image, tiles[tileId]);
+		}
+
 		this.material.setValues(materialParams);
 
 		if (this.outline) {
@@ -55,10 +60,6 @@ export class Ball extends THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshPhongM
 	updatePosition(player: TagPro.Player) {
 		this.position.x = player.sprite.x;
 		this.position.z = player.sprite.y;
-
-		if (renderer.options.disableBallSpin) {
-			return;
-		}
 
 		tempQuaternion.setFromAxisAngle(AXIS_X, (player.ly || 0) * this.options.velocityCoefficient);
 		this.quaternion.multiplyQuaternions(tempQuaternion, this.quaternion);

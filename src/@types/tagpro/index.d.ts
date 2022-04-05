@@ -450,8 +450,17 @@ declare namespace TagPro {
 		NotStarted = 3,
 	}
 
-	interface Tiles extends Array<any> {
-		image: any;
+	interface Tile {
+		x: number;
+		y: number;
+		isFlag?: boolean;
+		dynamic?: boolean;
+		drawFloor?: boolean;
+		redrawFloor?: boolean;
+	}
+
+	type Tiles = Record<number | string, Tile> & {
+		image: HTMLImageElement;
 
 		draw(
 			container: PIXI.DisplayObjectContainer,
@@ -467,8 +476,7 @@ declare namespace TagPro {
 			red: Array<PIXI.Sprite>;
 			blue: Array<PIXI.Sprite>;
 		};
-		[tileId: number | string]: any;
-	}
+	};
 
 	interface UI {
 		blueFlagTaken: boolean;

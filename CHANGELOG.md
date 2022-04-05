@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.3.0] - 2022-04-06
+
+### Changed
+
+- Using RgbQuant to find dominant colors from 2D texture pack and applying it to Balls and Walls.
+
 ## [0.2.1] - 2022-04-05
 
 ### Added

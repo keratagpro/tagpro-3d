@@ -1,8 +1,9 @@
-import { TILE_SIZE } from 'tagpro';
+import { TILE_SIZE, tiles } from 'tagpro';
 import * as THREE from 'three';
 
-import { WallOptions } from '../options/wallOptions';
-// import { getTilesTexture } from './utils';
+import { TileParams, WallOptions } from '../options/wallOptions';
+import { getDominantColorForTile, getTextureByTileId, getTilesTexture } from './utils';
+import { SpriteTexture } from './utils/SpriteTexture';
 
 const WALL = 1;
 const BL = 1.1; // ◣ bottom left
@@ -74,18 +75,31 @@ function extractWallTiles(map: TagPro.Map) {
 }
 
 export function createWalls(map: TagPro.Map, options: WallOptions) {
-	// const cols = tiles.image.width / TILE_SIZE;
-	// const rows = tiles.image.height / TILE_SIZE;
+	const { top: topMaterialParams, side: sideMaterialParams } = options.materials;
 
-	// const topWallTexture = getTilesTexture();
-	// setTextureOffset(topWallTexture, cols, rows, options.tiles.top);
+	if (options.useTexture) {
+		// const cols = tiles.image.width / TILE_SIZE;
+		// const rows = tiles.image.height / TILE_SIZE;
 
-	// const sideWallTexture = getTilesTexture();
-	// setTextureOffset(sideWallTexture, cols, rows, options.tiles.side);
+		// const topWallTexture = getTilesTexture();
+		// setTextureOffset(topWallTexture, cols, rows, options.tiles.top);
+		const topWallTexture = getTextureByTileId('1.421');
+		topMaterialParams.map = topWallTexture;
+
+		// const sideWallTexture = getTilesTexture();
+		// setTextureOffset(sideWallTexture, cols, rows, options.tiles.side);
+		const sideWallTexture = getTextureByTileId('1.421');
+		sideMaterialParams.map = sideWallTexture;
+	}
+
+	if (options.useDominantColorFromTexture) {
+		topMaterialParams.color = getDominantColorForTile(tiles.image, options.tiles.top);
+		sideMaterialParams.color = getDominantColorForTile(tiles.image, options.tiles.side);
+	}
 
 	const wallMaterials = [
-		new THREE.MeshPhongMaterial({ ...options.materials.top }),
-		new THREE.MeshPhongMaterial({ ...options.materials.side }),
+		new THREE.MeshPhongMaterial(topMaterialParams),
+		new THREE.MeshPhongMaterial(sideMaterialParams),
 	];
 
 	const { squares, diagonals } = extractWallTiles(map);
@@ -130,7 +144,7 @@ export function createWalls(map: TagPro.Map, options: WallOptions) {
 	return wallObject;
 }
 
-// function setTextureOffset(texture, cols, rows, tile) {
+// function setTextureOffset(texture: SpriteTexture, cols: number, rows: number, tile: TileParams) {
 // 	const x = tile.x / cols;
 // 	const y = 1 - tile.y / rows;
 // 	const w = (tile.width || 1) / cols;

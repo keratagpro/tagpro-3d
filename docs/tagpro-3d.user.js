@@ -14,12 +14,14 @@
 // @include       https://bash-tp.github.io/tagpro-vcr/game*.html
 // @require       https://unpkg.com/loglevel@1.8.0/lib/loglevel.js
 // @require       https://unpkg.com/three@0.139.2/build/three.min.js
+// @require       https://unpkg.com/rgbquant@1.1.2/src/rgbquant.js
 // ==/UserScript==
 
-(function (tagpro, THREE, log) {
+(function (tagpro, THREE, RgbQuant, log) {
     'use strict';
 
     const ballOptions = {
+        useDominantColorFromTexture: true,
         velocityCoefficient: 0.1,
         rotationCoefficient: 0.015,
         geometry: {
@@ -121,6 +123,8 @@
     };
 
     const wallOptions = {
+        useDominantColorFromTexture: true,
+        useTexture: false,
         materials: {
             top: {
                 color: 0x666666,
@@ -244,55 +248,6 @@
         addLights: addLights
     });
 
-    const tempQuaternion$1 = new THREE.Quaternion();
-    const AXIS_X = new THREE.Vector3(1, 0, 0);
-    const AXIS_Y$1 = new THREE.Vector3(0, 1, 0);
-    const AXIS_Z = new THREE.Vector3(0, 0, 1);
-    class Ball extends THREE.Mesh {
-        options;
-        outline;
-        constructor(tileId, options) {
-            const geometry = new THREE.IcosahedronGeometry(options.geometry.radius, options.geometry.detail);
-            const material = new THREE.MeshPhongMaterial(options.materials.default);
-            super(geometry, material);
-            this.options = options;
-            this.position.y = options.geometry.radius;
-            if (options.outline.enabled) {
-                this.addOutline(options.outline, options.outlineMaterials);
-            }
-            this.updateByTileId(tileId);
-        }
-        addOutline(params, materials) {
-            const outline = new THREE.Mesh(new THREE.IcosahedronGeometry(params.radius, params.detail), new THREE.MeshBasicMaterial(materials.default));
-            this.add(outline);
-            this.outline = outline;
-        }
-        updateByTileId(tileId) {
-            const materialParams = this.options.materials[tileId === 'redball' ? 'red' : 'blue'];
-            this.material.setValues(materialParams);
-            if (this.outline) {
-                const outlineMaterial = this.options.outlineMaterials[tileId === 'redball' ? 'red' : 'blue'];
-                if (!outlineMaterial.color) {
-                    outlineMaterial.color = materialParams.color;
-                }
-                this.outline.material.setValues(outlineMaterial);
-            }
-        }
-        updatePosition(player) {
-            this.position.x = player.sprite.x;
-            this.position.z = player.sprite.y;
-            if (tagpro.renderer.options.disableBallSpin) {
-                return;
-            }
-            tempQuaternion$1.setFromAxisAngle(AXIS_X, (player.ly || 0) * this.options.velocityCoefficient);
-            this.quaternion.multiplyQuaternions(tempQuaternion$1, this.quaternion);
-            tempQuaternion$1.setFromAxisAngle(AXIS_Z, -(player.lx || 0) * this.options.velocityCoefficient);
-            this.quaternion.multiplyQuaternions(tempQuaternion$1, this.quaternion);
-            tempQuaternion$1.setFromAxisAngle(AXIS_Y$1, -(player.a || 0) * this.options.rotationCoefficient);
-            this.quaternion.multiplyQuaternions(tempQuaternion$1, this.quaternion);
-        }
-    }
-
     const resizedImageCache = {};
     function resizeImage(image, width, height) {
         const canvas = document.createElement('canvas');
@@ -313,6 +268,42 @@
     }
     function closestPowerOfTwo(num) {
         return Math.pow(2, Math.ceil(Math.log(num) / Math.log(2)));
+    }
+    function cropImageToCanvas(image, x, y, width, height) {
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const context = canvas.getContext('2d');
+        context?.drawImage(image, x, y, width, height, 0, 0, width, height);
+        return canvas;
+    }
+
+    function getDominantColor(canvas) {
+        const quantizer = new RgbQuant({ colors: 4 });
+        quantizer.sample(canvas);
+        const palette = quantizer.palette(true, true);
+        if (!palette) {
+            return new THREE.Color(0x333333);
+        }
+        const colors = palette.map(([r, g, b]) => new THREE.Color(r / 256, g / 256, b / 256));
+        // Try to find a non-grayscale color.
+        const hsl = { h: 0, s: 0, l: 0 };
+        const color = colors.find((col) => {
+            col.getHSL(hsl);
+            return hsl.s > 0.5;
+        });
+        return color || colors[0];
+    }
+    const tileColorCache = {};
+    function getDominantColorForTile(img, { x, y }, width = tagpro.TILE_SIZE, height = tagpro.TILE_SIZE) {
+        const left = x * tagpro.TILE_SIZE;
+        const top = y * tagpro.TILE_SIZE;
+        const key = [img.src, left, top, width, height].join('-');
+        if (!tileColorCache[key]) {
+            const cropped = cropImageToCanvas(img, left, top, width, height);
+            tileColorCache[key] = getDominantColor(cropped);
+        }
+        return tileColorCache[key];
     }
 
     class SpriteTexture extends THREE.Texture {
@@ -347,6 +338,60 @@
 
     function getTilesTexture() {
         return new SpriteTexture(getOrCreatePowerOfTwoImage(tagpro.tiles.image), tagpro.tiles.image.width / tagpro.TILE_SIZE, tagpro.tiles.image.height / tagpro.TILE_SIZE);
+    }
+    function getTextureByTileId(tileId) {
+        const texture = getTilesTexture();
+        texture.setTile(tagpro.tiles[tileId]);
+        return texture;
+    }
+
+    const tempQuaternion$1 = new THREE.Quaternion();
+    const AXIS_X = new THREE.Vector3(1, 0, 0);
+    const AXIS_Y$1 = new THREE.Vector3(0, 1, 0);
+    const AXIS_Z = new THREE.Vector3(0, 0, 1);
+    class Ball extends THREE.Mesh {
+        options;
+        outline;
+        constructor(tileId, options) {
+            const geometry = new THREE.IcosahedronGeometry(options.geometry.radius, options.geometry.detail);
+            const material = new THREE.MeshPhongMaterial(options.materials.default);
+            super(geometry, material);
+            this.options = options;
+            this.position.y = options.geometry.radius;
+            if (options.outline.enabled) {
+                this.addOutline(options.outline, options.outlineMaterials);
+            }
+            this.updateByTileId(tileId);
+        }
+        addOutline(params, materials) {
+            const outline = new THREE.Mesh(new THREE.IcosahedronGeometry(params.radius, params.detail), new THREE.MeshBasicMaterial(materials.default));
+            this.add(outline);
+            this.outline = outline;
+        }
+        updateByTileId(tileId) {
+            const materialParams = this.options.materials[tileId === 'redball' ? 'red' : 'blue'];
+            if (this.options.useDominantColorFromTexture) {
+                materialParams.color = getDominantColorForTile(tagpro.tiles.image, tagpro.tiles[tileId]);
+            }
+            this.material.setValues(materialParams);
+            if (this.outline) {
+                const outlineMaterial = this.options.outlineMaterials[tileId === 'redball' ? 'red' : 'blue'];
+                if (!outlineMaterial.color) {
+                    outlineMaterial.color = materialParams.color;
+                }
+                this.outline.material.setValues(outlineMaterial);
+            }
+        }
+        updatePosition(player) {
+            this.position.x = player.sprite.x;
+            this.position.z = player.sprite.y;
+            tempQuaternion$1.setFromAxisAngle(AXIS_X, (player.ly || 0) * this.options.velocityCoefficient);
+            this.quaternion.multiplyQuaternions(tempQuaternion$1, this.quaternion);
+            tempQuaternion$1.setFromAxisAngle(AXIS_Z, -(player.lx || 0) * this.options.velocityCoefficient);
+            this.quaternion.multiplyQuaternions(tempQuaternion$1, this.quaternion);
+            tempQuaternion$1.setFromAxisAngle(AXIS_Y$1, -(player.a || 0) * this.options.rotationCoefficient);
+            this.quaternion.multiplyQuaternions(tempQuaternion$1, this.quaternion);
+        }
     }
 
     const AXIS_Y = new THREE.Vector3(0, 1, 0);
@@ -435,7 +480,6 @@
         resizeCanvas: resizeCanvas
     });
 
-    // import { getTilesTexture } from './utils';
     const WALL = 1;
     const BL = 1.1; // ◣ bottom left
     const TL = 1.2; // ◤ top left
@@ -492,15 +536,26 @@
         return { squares, diagonals };
     }
     function createWalls(map, options) {
-        // const cols = tiles.image.width / TILE_SIZE;
-        // const rows = tiles.image.height / TILE_SIZE;
-        // const topWallTexture = getTilesTexture();
-        // setTextureOffset(topWallTexture, cols, rows, options.tiles.top);
-        // const sideWallTexture = getTilesTexture();
-        // setTextureOffset(sideWallTexture, cols, rows, options.tiles.side);
+        const { top: topMaterialParams, side: sideMaterialParams } = options.materials;
+        if (options.useTexture) {
+            // const cols = tiles.image.width / TILE_SIZE;
+            // const rows = tiles.image.height / TILE_SIZE;
+            // const topWallTexture = getTilesTexture();
+            // setTextureOffset(topWallTexture, cols, rows, options.tiles.top);
+            const topWallTexture = getTextureByTileId('1.421');
+            topMaterialParams.map = topWallTexture;
+            // const sideWallTexture = getTilesTexture();
+            // setTextureOffset(sideWallTexture, cols, rows, options.tiles.side);
+            const sideWallTexture = getTextureByTileId('1.421');
+            sideMaterialParams.map = sideWallTexture;
+        }
+        if (options.useDominantColorFromTexture) {
+            topMaterialParams.color = getDominantColorForTile(tagpro.tiles.image, options.tiles.top);
+            sideMaterialParams.color = getDominantColorForTile(tagpro.tiles.image, options.tiles.side);
+        }
         const wallMaterials = [
-            new THREE.MeshPhongMaterial({ ...options.materials.top }),
-            new THREE.MeshPhongMaterial({ ...options.materials.side }),
+            new THREE.MeshPhongMaterial(topMaterialParams),
+            new THREE.MeshPhongMaterial(sideMaterialParams),
         ];
         const { squares, diagonals } = extractWallTiles(map);
         const squareGeometry = new THREE.ExtrudeGeometry(squareShape, options.extrude);
@@ -533,7 +588,7 @@
         wallObject.rotation.set(Math.PI * 1.5, 0, Math.PI * 1.5);
         return wallObject;
     }
-    // function setTextureOffset(texture, cols, rows, tile) {
+    // function setTextureOffset(texture: SpriteTexture, cols: number, rows: number, tile: TileParams) {
     // 	const x = tile.x / cols;
     // 	const y = 1 - tile.y / rows;
     // 	const w = (tile.width || 1) / cols;
@@ -706,4 +761,4 @@
         }
     });
 
-})(tagpro, THREE, log);
+})(tagpro, THREE, RgbQuant, log);

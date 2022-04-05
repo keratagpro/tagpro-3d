@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 
 export interface BallOptions {
+	useDominantColorFromTexture: boolean;
 	velocityCoefficient: number;
 	rotationCoefficient: number;
 	geometry: {
@@ -25,6 +26,7 @@ export interface BallOptions {
 }
 
 export const ballOptions: BallOptions = {
+	useDominantColorFromTexture: true,
 	velocityCoefficient: 0.1,
 	rotationCoefficient: 0.015,
 	geometry: {

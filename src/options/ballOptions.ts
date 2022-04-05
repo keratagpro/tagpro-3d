@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 
 export interface BallOptions {
-	enabled: boolean;
 	velocityCoefficient: number;
 	rotationCoefficient: number;
 	geometry: {
@@ -26,7 +25,6 @@ export interface BallOptions {
 }
 
 export const ballOptions: BallOptions = {
-	enabled: true,
 	velocityCoefficient: 0.1,
 	rotationCoefficient: 0.015,
 	geometry: {

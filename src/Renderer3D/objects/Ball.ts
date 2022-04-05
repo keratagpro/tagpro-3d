@@ -9,7 +9,7 @@ const AXIS_Y = new THREE.Vector3(0, 1, 0);
 const AXIS_Z = new THREE.Vector3(0, 0, 1);
 
 export class Ball extends THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshPhongMaterial> {
-	_outline?: THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshBasicMaterial>;
+	outline?: THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshBasicMaterial>;
 
 	constructor(tileId: number | string, public options: BallOptions) {
 		const geometry = new THREE.IcosahedronGeometry(options.geometry.radius, options.geometry.detail);
@@ -33,22 +33,22 @@ export class Ball extends THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshPhongM
 		);
 
 		this.add(outline);
-		this._outline = outline;
+		this.outline = outline;
 	}
 
 	updateByTileId(tileId: number | string) {
-		const material = this.options.materials[tileId === 'redball' ? 'red' : 'blue'];
+		const materialParams = this.options.materials[tileId === 'redball' ? 'red' : 'blue'];
 
-		this.material.setValues(material);
+		this.material.setValues(materialParams);
 
-		if (this._outline) {
+		if (this.outline) {
 			const outlineMaterial = this.options.outlineMaterials[tileId === 'redball' ? 'red' : 'blue'];
 
 			if (!outlineMaterial.color) {
-				outlineMaterial.color = material.color;
+				outlineMaterial.color = materialParams.color;
 			}
 
-			this._outline.material.setValues(outlineMaterial);
+			this.outline.material.setValues(outlineMaterial);
 		}
 	}
 

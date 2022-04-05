@@ -8,7 +8,7 @@
     "start": "npm run watch",
     "build": "rollup -c --configPlugin typescript",
     "watch": "rollup -c --configPlugin typescript --watch",
-    "bump": "npm version patch",
+    "version": "npm run build && git add docs",
     "lint": "eslint src"
   },
   "repository": {

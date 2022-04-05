@@ -1,27 +1,21 @@
 import * as THREE from 'three';
 
 export interface PuckOptions {
-	enabled: boolean;
+	useOriginalTexture: boolean;
 	rotationCoefficient: number;
-	geometries: {
-		circle: {
-			radius: number;
-			segments: number;
-		};
-		cylinder: {
-			height: number;
-			radiusTop: number;
-			radiusBottom: number;
-			segments: number;
-		};
+	geometry: {
+		height: number;
+		radiusTop: number;
+		radiusBottom: number;
+		segments: number;
 	};
 	materials: {
-		circle: {
+		top: {
 			default: THREE.MeshPhongMaterialParameters;
 			red: THREE.MeshPhongMaterialParameters;
 			blue: THREE.MeshPhongMaterialParameters;
 		};
-		cylinder: {
+		side: {
 			default: THREE.MeshPhongMaterialParameters;
 			red: THREE.MeshPhongMaterialParameters;
 			blue: THREE.MeshPhongMaterialParameters;
@@ -30,40 +24,42 @@ export interface PuckOptions {
 }
 
 export const puckOptions: PuckOptions = {
-	enabled: true,
+	useOriginalTexture: true,
 	rotationCoefficient: 0.01,
-	geometries: {
-		circle: {
-			radius: 19,
-			segments: 32,
-		},
-		cylinder: {
-			height: 10,
-			radiusTop: 19,
-			radiusBottom: 19,
-			segments: 32,
-		},
+	geometry: {
+		height: 10,
+		radiusTop: 17,
+		radiusBottom: 19,
+		segments: 32,
 	},
 	materials: {
-		circle: {
+		top: {
 			default: {
-				transparent: true,
-				alphaTest: 0.1,
-				opacity: 0.9,
-				flatShading: true,
-			},
-			blue: {},
-			red: {},
-		},
-		cylinder: {
-			default: {
-				transparent: true,
-				opacity: 0.9,
-				flatShading: true,
+				color: 0x666666,
 				side: THREE.DoubleSide,
+				// transparent: true,
+				// opacity: 0.9,
 			},
-			blue: {},
-			red: {},
+			blue: {
+				color: 0x00ffff,
+			},
+			red: {
+				color: 0xffff00,
+			},
+		},
+		side: {
+			default: {
+				color: 0x666666,
+				side: THREE.DoubleSide,
+				// transparent: true,
+				// opacity: 0.9,
+			},
+			blue: {
+				color: 0x0000ff,
+			},
+			red: {
+				color: 0xff0000,
+			},
 		},
 	},
 };

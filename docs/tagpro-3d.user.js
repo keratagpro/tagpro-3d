@@ -20,7 +20,6 @@
     'use strict';
 
     const ballOptions = {
-        enabled: true,
         velocityCoefficient: 0.1,
         rotationCoefficient: 0.015,
         geometry: {
@@ -81,40 +80,42 @@
     ];
 
     const puckOptions = {
-        enabled: true,
+        useOriginalTexture: true,
         rotationCoefficient: 0.01,
-        geometries: {
-            circle: {
-                radius: 19,
-                segments: 32,
-            },
-            cylinder: {
-                height: 10,
-                radiusTop: 19,
-                radiusBottom: 19,
-                segments: 32,
-            },
+        geometry: {
+            height: 10,
+            radiusTop: 17,
+            radiusBottom: 19,
+            segments: 32,
         },
         materials: {
-            circle: {
+            top: {
                 default: {
-                    transparent: true,
-                    alphaTest: 0.1,
-                    opacity: 0.9,
-                    flatShading: true,
-                },
-                blue: {},
-                red: {},
-            },
-            cylinder: {
-                default: {
-                    transparent: true,
-                    opacity: 0.9,
-                    flatShading: true,
+                    color: 0x666666,
                     side: THREE.DoubleSide,
+                    // transparent: true,
+                    // opacity: 0.9,
                 },
-                blue: {},
-                red: {},
+                blue: {
+                    color: 0x00ffff,
+                },
+                red: {
+                    color: 0xffff00,
+                },
+            },
+            side: {
+                default: {
+                    color: 0x666666,
+                    side: THREE.DoubleSide,
+                    // transparent: true,
+                    // opacity: 0.9,
+                },
+                blue: {
+                    color: 0x0000ff,
+                },
+                red: {
+                    color: 0xff0000,
+                },
             },
         },
     };
@@ -249,7 +250,7 @@
     const AXIS_Z = new THREE.Vector3(0, 0, 1);
     class Ball extends THREE.Mesh {
         options;
-        _outline;
+        outline;
         constructor(tileId, options) {
             const geometry = new THREE.IcosahedronGeometry(options.geometry.radius, options.geometry.detail);
             const material = new THREE.MeshPhongMaterial(options.materials.default);
@@ -264,17 +265,17 @@
         addOutline(params, materials) {
             const outline = new THREE.Mesh(new THREE.IcosahedronGeometry(params.radius, params.detail), new THREE.MeshBasicMaterial(materials.default));
             this.add(outline);
-            this._outline = outline;
+            this.outline = outline;
         }
         updateByTileId(tileId) {
-            const material = this.options.materials[tileId === 'redball' ? 'red' : 'blue'];
-            this.material.setValues(material);
-            if (this._outline) {
+            const materialParams = this.options.materials[tileId === 'redball' ? 'red' : 'blue'];
+            this.material.setValues(materialParams);
+            if (this.outline) {
                 const outlineMaterial = this.options.outlineMaterials[tileId === 'redball' ? 'red' : 'blue'];
                 if (!outlineMaterial.color) {
-                    outlineMaterial.color = material.color;
+                    outlineMaterial.color = materialParams.color;
                 }
-                this._outline.material.setValues(outlineMaterial);
+                this.outline.material.setValues(outlineMaterial);
             }
         }
         updatePosition(player) {
@@ -292,62 +293,100 @@
         }
     }
 
-    // import { TILE_SIZE, tiles } from 'tagpro';
+    const resizedImageCache = {};
+    function resizeImage(image, width, height) {
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const context = canvas.getContext('2d');
+        context?.drawImage(image, 0, 0, canvas.width, canvas.height);
+        return canvas;
+    }
+    function getOrCreatePowerOfTwoImage(image) {
+        if (!resizedImageCache[image.src]) {
+            const w = closestPowerOfTwo(image.width);
+            const h = closestPowerOfTwo(image.height);
+            const img = resizeImage(image, w, h);
+            resizedImageCache[image.src] = img;
+        }
+        return resizedImageCache[image.src];
+    }
+    function closestPowerOfTwo(num) {
+        return Math.pow(2, Math.ceil(Math.log(num) / Math.log(2)));
+    }
+
+    class SpriteTexture extends THREE.Texture {
+        columns;
+        rows;
+        x = 0;
+        y = 0;
+        constructor(image, columns, rows) {
+            super(image);
+            this.columns = columns;
+            this.rows = rows;
+            this.repeat.set(1 / columns, 1 / rows);
+        }
+        copy(source) {
+            super.copy(source);
+            this.columns = source.columns;
+            this.rows = source.rows;
+            return this;
+        }
+        setXY(x, y) {
+            if (x === this.x && y === this.y)
+                return;
+            this.x = x;
+            this.y = y;
+            this.offset.set(x / this.columns, 1 - (y + 1) / this.rows);
+            this.needsUpdate = true;
+        }
+        setTile({ x, y }) {
+            this.setXY(x, y);
+        }
+    }
+
+    function getTilesTexture() {
+        return new SpriteTexture(getOrCreatePowerOfTwoImage(tagpro.tiles.image), tagpro.tiles.image.width / tagpro.TILE_SIZE, tagpro.tiles.image.height / tagpro.TILE_SIZE);
+    }
+
     const AXIS_Y = new THREE.Vector3(0, 1, 0);
     // const BALL_RADIUS = 38;
     const tempQuaternion = new THREE.Quaternion();
-    function createCircle(geometry, material) {
-        const geom = new THREE.CircleGeometry(geometry.radius, geometry.segments);
-        geom.rotateX(-Math.PI / 2);
-        const mat = new THREE.MeshPhongMaterial(material);
-        const mesh = new THREE.Mesh(geom, mat);
-        return mesh;
-    }
-    function createCylinder(geometry, material) {
-        const geom = new THREE.CylinderGeometry(geometry.radiusTop, geometry.radiusBottom, geometry.height, geometry.segments, 1, true);
-        const mat = new THREE.MeshPhongMaterial(material);
-        return new THREE.Mesh(geom, mat);
-    }
-    class Puck extends THREE.Object3D {
+    class Puck extends THREE.Mesh {
         options;
-        _circle;
-        _cylinder;
-        _tileTexture;
+        tileTexture;
         constructor(tileId, options) {
-            super();
+            const geometry = new THREE.CylinderGeometry(options.geometry.radiusTop, options.geometry.radiusBottom, options.geometry.height, options.geometry.segments, 1);
+            const sideMaterial = new THREE.MeshPhongMaterial(options.materials.side.default);
+            const topMaterial = new THREE.MeshPhongMaterial(options.materials.top.default);
+            super(geometry, [sideMaterial, topMaterial]);
             this.options = options;
-            this.options = options;
-            this.position.y = options.geometries.cylinder.height / 2;
-            this._circle = createCircle(options.geometries.circle, options.materials.circle.default);
-            this._circle.position.y = options.geometries.cylinder.height / 2;
-            this.add(this._circle);
-            this._cylinder = createCylinder(options.geometries.cylinder, options.materials.cylinder.default);
-            this.add(this._cylinder);
+            this.position.y = options.geometry.height / 2;
+            if (options.useOriginalTexture) {
+                if (!this.tileTexture) {
+                    this.tileTexture = getTilesTexture();
+                    topMaterial.map = this.tileTexture;
+                }
+                const texture = this.tileTexture;
+                // HACK: Shrink texture mapping since ball is 38px, not 40px.
+                texture.offset.x += 1 / tagpro.TILE_SIZE / 16;
+                texture.offset.y += 1 / tagpro.TILE_SIZE / 11;
+                texture.repeat.x -= 2 / tagpro.TILE_SIZE / 16;
+                texture.repeat.y -= 2 / tagpro.TILE_SIZE / 11;
+            }
             this.updateByTileId(tileId);
         }
         updateByTileId(tileId) {
-            const materialName = tileId === 'redball' ? 'red' : 'blue';
-            const circle = this._circle;
-            const cylinder = this._cylinder;
-            const materials = this.options.materials;
-            const circleMaterial = materials.circle[materialName];
-            // Use built-in ball texture if not explicitly set
-            // if (!circleMaterial.map) {
-            // 	if (!this._tileTexture) {
-            // 		this._tileTexture = utils.getTilesTexture();
-            // 		circle.material.map = this._tileTexture!;
-            // 	}
-            // 	const texture = circle.material.map;
-            // 	texture.setTile(tiles[tileId]);
-            // 	// HACK: Shrink texture mapping since ball is 38px, not 40px.
-            // 	texture.offset.x += 1 / TILE_SIZE / 16;
-            // 	texture.offset.y += 1 / TILE_SIZE / 11;
-            // 	texture.repeat.x -= 2 / TILE_SIZE / 16;
-            // 	texture.repeat.y -= 2 / TILE_SIZE / 11;
-            // }
-            circle.material.setValues(circleMaterial);
-            const cylinderMaterial = materials.cylinder[materialName];
-            cylinder.material.setValues(cylinderMaterial);
+            const { side, top } = this.options.materials;
+            const sideParams = side[tileId === 'redball' ? 'red' : 'blue'];
+            const topParams = top[tileId === 'redball' ? 'red' : 'blue'];
+            const [sideMaterial, topMaterial] = this.material;
+            sideMaterial.setValues(sideParams);
+            topMaterial.setValues(topParams);
+            if (this.options.useOriginalTexture) {
+                const texture = topMaterial.map;
+                texture.setTile(tagpro.tiles[tileId]);
+            }
         }
         updatePosition(player) {
             this.position.x = player.sprite.x;

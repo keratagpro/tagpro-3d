@@ -7,7 +7,7 @@ interface Options {
 
 export function extractBanner(options: Options): Plugin {
 	return {
-		name: 'userscript-meta-plugin',
+		name: 'extract-banner-plugin',
 		async generateBundle(output) {
 			const banner = await output.banner();
 			await fs.writeFile(options.file, banner, 'utf8');

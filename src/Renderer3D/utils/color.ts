@@ -1,30 +1,19 @@
-import RgbQuant from 'rgbquant';
+import { FastAverageColor } from 'fast-average-color';
 import { TILE_SIZE } from 'tagpro';
 import * as THREE from 'three';
 
 import { cropImageToCanvas } from './image';
 
 export function getDominantColor(canvas: HTMLCanvasElement) {
-	const quantizer = new RgbQuant({ colors: 4 });
+	const fac = new FastAverageColor();
 
-	quantizer.sample(canvas);
+	const c = fac.getColor(canvas);
 
-	const palette = quantizer.palette(true, true);
-
-	if (!palette) {
+	if (c.error) {
 		return new THREE.Color(0x333333);
 	}
 
-	const colors = palette.map(([r, g, b]) => new THREE.Color(r / 256, g / 256, b / 256));
-
-	// Try to find a non-grayscale color.
-	const hsl: THREE.HSL = { h: 0, s: 0, l: 0 };
-	const color = colors.find((col) => {
-		col.getHSL(hsl);
-		return hsl.s > 0.5;
-	});
-
-	return color || colors[0];
+	return new THREE.Color(c.value[0] / 256, c.value[1] / 256, c.value[2] / 256);
 }
 
 const tileColorCache: Record<string, THREE.Color> = {};

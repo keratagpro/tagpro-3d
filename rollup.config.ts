@@ -1,25 +1,27 @@
 import commonjs from '@rollup/plugin-commonjs';
-import json from '@rollup/plugin-json';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import typescript from '@rollup/plugin-typescript';
-import * as fs from 'fs';
-import template from 'lodash/template';
+import * as fs from 'fs/promises';
+import template from 'lodash/template.js';
+import { dirname } from 'path';
 import { defineConfig } from 'rollup';
 import copy from 'rollup-plugin-copy';
+import { fileURLToPath } from 'url';
 
-import { version } from './package.json';
-import { extractBanner } from './scripts/extractBannerPlugin';
+import pkg from './package.json' assert { type: 'json' };
 
-const meta = template(fs.readFileSync(__dirname + '/src/meta.tpl.ts', 'utf8'));
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-const banner = meta({ version });
+const meta = template(await fs.readFile(__dirname + '/src/meta.tpl.ts', 'utf8'));
+const banner = meta({ version: pkg.version });
 
 const globals = {
+	'fast-average-color': 'FastAverageColor',
+	'loglevel': 'log',
+	'pixi.js': 'PIXI',
 	'tagpro': 'tagpro',
 	'three': 'THREE',
-	'loglevel': 'log',
-	'rgbquant': 'RgbQuant',
-	'pixi.js': 'PIXI',
 };
 
 export default defineConfig({
@@ -27,16 +29,18 @@ export default defineConfig({
 	output: {
 		file: 'docs/tagpro-3d.user.js',
 		format: 'iife',
-		banner,
+		async banner() {
+			await fs.writeFile('docs/tagpro-3d.meta.js', banner, 'utf8');
+			return banner;
+		},
 		globals,
+		interop: 'esModule',
 	},
 	external: Object.keys(globals),
 	plugins: [
-		json(),
 		commonjs(),
 		nodeResolve(),
 		typescript(),
-		extractBanner({ file: 'docs/tagpro-3d.meta.js' }),
 		copy({
 			targets: [{ src: 'assets/', dest: 'docs/' }],
 		}),

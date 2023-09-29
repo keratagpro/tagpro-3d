@@ -1,9 +1,9 @@
 import { TILE_SIZE, tiles } from 'tagpro';
 import * as THREE from 'three';
 
-import { TileParams, WallOptions } from '../options/wallOptions';
-import { getDominantColorForTile, getTextureByTileId, getTilesTexture } from './utils';
-import { SpriteTexture } from './utils/SpriteTexture';
+import { /*TileParams,*/ WallOptions } from '../options/wallOptions';
+import { getDominantColorForTile, getTextureByTileId /*, getTilesTexture*/ } from './utils';
+// import { SpriteTexture } from './utils/SpriteTexture';
 
 const WALL = 1;
 const BL = 1.1; // ◣ bottom left

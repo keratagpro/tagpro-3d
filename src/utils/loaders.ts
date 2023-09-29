@@ -5,7 +5,7 @@ textureLoader.setCrossOrigin('');
 
 export const objectLoader = new THREE.ObjectLoader();
 
-export function loadObjectFromJson(json: any) {
+export function loadObjectFromJson(json: unknown) {
 	const mesh = objectLoader.parse(json);
 	return mesh;
 }

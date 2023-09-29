@@ -1,3 +1,4 @@
+// @ts-nocheck
 //
 // Declared as a global variable, i.e. just `tagpro`.
 //

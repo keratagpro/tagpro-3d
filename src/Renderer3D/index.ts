@@ -25,7 +25,6 @@ export class Renderer3D {
 	}
 }
 
-/* eslint-disable @typescript-eslint/indent */
 export interface Renderer3D
 	extends Renderer,
 		CameraFunctions,

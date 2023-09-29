@@ -9,7 +9,7 @@ module.exports = {
 	},
 	parser: '@typescript-eslint/parser',
 	plugins: ['@typescript-eslint', 'simple-import-sort'],
-	extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended'],
+	extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended', 'prettier'],
 	// parserOptions: {
 	// 	ecmaFeatures: {
 	// 		experimentalObjectRestSpread: true,
@@ -18,7 +18,6 @@ module.exports = {
 	// 	sourceType: 'module',
 	// },
 	rules: {
-		'indent': ['error', 'tab'],
 		'linebreak-style': ['error', 'unix'],
 		'prefer-rest-params': 'off',
 		'quotes': ['error', 'single'],
@@ -26,6 +25,7 @@ module.exports = {
 		'simple-import-sort/imports': 'error',
 		'simple-import-sort/exports': 'error',
 		'@typescript-eslint/no-non-null-assertion': ['off'],
-		'@typescript-eslint/ban-types': 'off'
+		'@typescript-eslint/no-unsafe-declaration-merging': 'off',
+		'@typescript-eslint/ban-types': 'off',
 	},
 };

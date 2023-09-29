@@ -1,15 +1,15 @@
-interface AmbientLightOptions {
+export interface AmbientLightOptions {
 	type: 'ambient';
 	color: number;
 }
 
-interface CameraLightOptions {
+export interface CameraLightOptions {
 	type: 'camera';
 	color: number;
 	intensity?: number;
 }
 
-interface DirectionalLightOptions {
+export interface DirectionalLightOptions {
 	type: 'directional';
 	color: number;
 	intensity: number;

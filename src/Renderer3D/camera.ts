@@ -2,7 +2,15 @@ import * as THREE from 'three';
 
 const RAD = 180 / Math.PI;
 
-export function createCamera({ fov = 75, aspect = 1280 / 800, near, far, distance }: any) {
+export interface CameraOptions {
+	fov?: number;
+	aspect?: number;
+	near?: number;
+	far?: number;
+	distance: number;
+}
+
+export function createCamera({ fov = 75, aspect = 1280 / 800, near, far, distance }: CameraOptions) {
 	const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
 	camera.position.y = distance;
 	camera.up.set(0, 0, -1);

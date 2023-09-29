@@ -5,6 +5,7 @@
 		"moduleResolution": "Node",
 		"resolveJsonModule": true,
 		"strict": true,
-		"forceConsistentCasingInFileNames": true
+		"forceConsistentCasingInFileNames": true,
+		"allowSyntheticDefaultImports": true
 	}
 }

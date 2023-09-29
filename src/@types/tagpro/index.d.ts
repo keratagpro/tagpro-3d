@@ -200,18 +200,18 @@ declare namespace TagPro {
 	}
 
 	interface PlayerPacket {
-		id: number;
-		name: string;
-		team: number;
-		flag: number;
-		potatoFlag: boolean;
-		selfDestructSoon: boolean;
-		grip: boolean;
-		fullSpeed: boolean;
-		tagpro: boolean;
-		bomb: boolean;
-		dead: boolean;
-		directSet: boolean;
+		'id': number;
+		'name': string;
+		'team': number;
+		'flag': number;
+		'potatoFlag': boolean;
+		'selfDestructSoon': boolean;
+		'grip': boolean;
+		'fullSpeed': boolean;
+		'tagpro': boolean;
+		'bomb': boolean;
+		'dead': boolean;
+		'directSet': boolean;
 		's-tags': number;
 		's-pops': number;
 		's-grabs': number;
@@ -222,42 +222,42 @@ declare namespace TagPro {
 		's-hold': number;
 		's-prevent': number;
 		's-powerups': number;
-		score: number;
-		points: number;
-		up: number;
-		down: number;
-		left: number;
-		right: number;
-		ms: number;
-		ac: number;
-		auth: boolean;
+		'score': number;
+		'points': number;
+		'up': number;
+		'down': number;
+		'left': number;
+		'right': number;
+		'ms': number;
+		'ac': number;
+		'auth': boolean;
 
-		flair: {
+		'flair': {
 			x: number;
 			y: number;
 			description: string;
 		};
 
-		den: number;
-		mongoId: number;
-		idInGroups: string;
-		degree: number;
-		rx: number;
-		ry: number;
-		lx: number;
-		ly: number;
-		a: number;
-		ra: number;
-		draw: boolean;
+		'den': number;
+		'mongoId': number;
+		'idInGroups': string;
+		'degree': number;
+		'rx': number;
+		'ry': number;
+		'lx': number;
+		'ly': number;
+		'a': number;
+		'ra': number;
+		'draw': boolean;
 
-		lastSync: {
+		'lastSync': {
 			up: number;
 			down: number;
 			left: number;
 			right: number;
 		};
 
-		pressing: Record<string, boolean>;
+		'pressing': Record<string, boolean>;
 	}
 
 	interface Player extends PlayerPacket {
@@ -467,7 +467,7 @@ declare namespace TagPro {
 			tile: string | number,
 			position: Position,
 			width: number,
-			height: number
+			height: number,
 		): void;
 		drawLayers(container: any, x: number, y: number, position: any, container2: number): void;
 		getTexture(tileId: any): void;

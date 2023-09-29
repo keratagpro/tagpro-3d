@@ -8,7 +8,7 @@ export function addAmbientLight(scene: THREE.Scene, { color = 0xffffff } = {}) {
 
 export function addCameraLight(
 	camera: THREE.PerspectiveCamera,
-	{ color = 0xffffff, intensity = 1, distance = 0, decay = 0 } = {}
+	{ color = 0xffffff, intensity = 1, distance = 0, decay = 0 } = {},
 ) {
 	const light = new THREE.PointLight(color, intensity, distance, decay);
 	camera.add(light);
@@ -23,7 +23,7 @@ interface LightOptions {
 
 export function addDirectionalLight(
 	scene: THREE.Scene,
-	{ color = 0xffffff, intensity = 1.0, position = [500, -500, 400] }: LightOptions = {}
+	{ color = 0xffffff, intensity = 1.0, position = [500, -500, 400] }: LightOptions = {},
 ) {
 	const light = new THREE.DirectionalLight(color, intensity);
 	light.position.set(...position);

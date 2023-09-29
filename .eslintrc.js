@@ -18,17 +18,14 @@ module.exports = {
 	// 	sourceType: 'module',
 	// },
 	rules: {
+		'indent': ['error', 'tab'],
+		'linebreak-style': ['error', 'unix'],
+		'prefer-rest-params': 'off',
+		'quotes': ['error', 'single'],
+		'semi': ['error', 'always'],
 		'simple-import-sort/imports': 'error',
 		'simple-import-sort/exports': 'error',
-		'prefer-rest-params': 'warn',
-		'linebreak-style': ['error', 'windows'],
-		quotes: ['error', 'single'],
-		semi: ['error', 'always'],
-		'@typescript-eslint/indent': ['error', 'tab'],
-		'@typescript-eslint/no-non-null-assertion': 0,
-		'@typescript-eslint/no-var-requires': 0,
-	},
-	globals: {
-		overrideableAssets: true,
+		'@typescript-eslint/no-non-null-assertion': ['off'],
+		'@typescript-eslint/ban-types': 'off'
 	},
 };

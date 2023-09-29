@@ -7,7 +7,7 @@ export class SpriteTexture extends THREE.Texture {
 	constructor(
 		image: HTMLImageElement | HTMLCanvasElement | HTMLVideoElement,
 		protected columns: number,
-		protected rows: number
+		protected rows: number,
 	) {
 		super(image);
 

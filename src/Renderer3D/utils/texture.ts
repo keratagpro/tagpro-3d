@@ -7,7 +7,7 @@ export function getTilesTexture() {
 	return new SpriteTexture(
 		getOrCreatePowerOfTwoImage(tiles.image),
 		tiles.image.width / TILE_SIZE,
-		tiles.image.height / TILE_SIZE
+		tiles.image.height / TILE_SIZE,
 	);
 }
 

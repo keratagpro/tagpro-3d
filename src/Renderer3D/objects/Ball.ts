@@ -12,7 +12,10 @@ const AXIS_Z = new THREE.Vector3(0, 0, 1);
 export class Ball extends THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshPhongMaterial> {
 	outline?: THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshBasicMaterial>;
 
-	constructor(tileId: number | string, public options: BallOptions) {
+	constructor(
+		tileId: number | string,
+		public options: BallOptions,
+	) {
 		const geometry = new THREE.IcosahedronGeometry(options.geometry.radius, options.geometry.detail);
 		const material = new THREE.MeshPhongMaterial(options.materials.default);
 
@@ -30,7 +33,7 @@ export class Ball extends THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshPhongM
 	addOutline(params: BallOptions['outline'], materials: BallOptions['outlineMaterials']) {
 		const outline = new THREE.Mesh(
 			new THREE.IcosahedronGeometry(params.radius, params.detail),
-			new THREE.MeshBasicMaterial(materials.default)
+			new THREE.MeshBasicMaterial(materials.default),
 		);
 
 		this.add(outline);

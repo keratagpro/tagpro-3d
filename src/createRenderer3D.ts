@@ -1,3 +1,4 @@
+import * as PIXI from 'pixi.js';
 import * as tagpro from 'tagpro';
 
 import { defaultOptions } from './options';

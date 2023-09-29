@@ -33,7 +33,7 @@ export function getDominantColorForTile(
 	img: HTMLImageElement,
 	{ x, y }: TagPro.Tile,
 	width = TILE_SIZE,
-	height = TILE_SIZE
+	height = TILE_SIZE,
 ) {
 	const left = x * TILE_SIZE;
 	const top = y * TILE_SIZE;

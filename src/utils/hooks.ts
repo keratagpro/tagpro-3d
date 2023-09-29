@@ -1,18 +1,28 @@
-// TODO: How to narrow T[K] to a callable function?
+type Callable<T> = T extends Function ? T : never;
 
-export function before<T, K extends keyof T>(obj: T, methodName: K, callback: T[K]) {
-	const orig = obj[methodName] as any;
-	(obj as any)[methodName] = function () {
-		(callback as any).apply(this, arguments);
-		return orig.apply(this, arguments);
-	};
+export function before<T extends object, K extends keyof T, C extends Callable<T[K]>>(
+	obj: T,
+	methodName: K,
+	callback: C,
+) {
+	const original = obj[methodName] as C;
+
+	Object.assign(obj, {
+		[methodName]() {
+			callback.apply(this, arguments);
+			return original.apply(this, arguments);
+		},
+	});
 }
 
-export function after<T, K extends keyof T>(obj: T, methodName: K, callback: T[K]) {
-	const orig = obj[methodName] as any;
-	(obj as any)[methodName] = function () {
-		const result = orig.apply(this, arguments);
-		(callback as any).apply(this, arguments);
-		return result;
-	};
+export function after<T, K extends keyof T, C extends Callable<T[K]>>(obj: T, methodName: K, callback: C) {
+	const original = obj[methodName] as C;
+
+	Object.assign(original, {
+		[methodName]() {
+			const result = original.apply(this, arguments);
+			callback.apply(this, arguments);
+			return result;
+		},
+	});
 }

@@ -12,13 +12,16 @@ const tempQuaternion = new THREE.Quaternion();
 export class Puck extends THREE.Mesh<THREE.CylinderGeometry, THREE.MeshPhongMaterial[]> {
 	tileTexture?: THREE.Texture;
 
-	constructor(tileId: string, public options: PuckOptions) {
+	constructor(
+		tileId: string,
+		public options: PuckOptions,
+	) {
 		const geometry = new THREE.CylinderGeometry(
 			options.geometry.radiusTop,
 			options.geometry.radiusBottom,
 			options.geometry.height,
 			options.geometry.segments,
-			1
+			1,
 		);
 
 		const sideMaterial = new THREE.MeshPhongMaterial(options.materials.side.default);

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          TagPro 3D
 // @description   TagPro in 3D!
-// @version       0.3.0
+// @version       0.3.1-dev
 // @author        Kera
 // @namespace     https://github.com/keratagpro/tagpro-3d/
 // @icon          https://keratagpro.github.io/tagpro-3d/assets/icon.png
@@ -12,7 +12,7 @@
 // @include       http://tangent.jukejuice.com*
 // @include       https://tangent.jukejuice.com*
 // @include       https://bash-tp.github.io/tagpro-vcr/game*.html
+// @require       https://unpkg.com/fast-average-color@9.4.0/dist/index.browser.js
 // @require       https://unpkg.com/loglevel@1.8.0/lib/loglevel.js
-// @require       https://unpkg.com/three@0.139.2/build/three.min.js
-// @require       https://unpkg.com/rgbquant@1.1.2/src/rgbquant.js
+// @require       https://unpkg.com/three@0.157.0/build/three.min.js
 // ==/UserScript==

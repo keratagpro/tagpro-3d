@@ -8,5 +8,5 @@
 		"forceConsistentCasingInFileNames": true,
 		"allowSyntheticDefaultImports": true
 	},
-	"include": ["src", "rollup.config.ts"]
+	"include": ["src", "scripts", "rollup.config.ts"]
 }

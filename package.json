@@ -1,9 +1,12 @@
 {
   "name": "tagpro-3d",
-  "version": "0.3.0",
+  "version": "0.3.1-dev",
   "description": "TagPro in 3D!",
   "main": "src/main.js",
   "private": true,
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "start": "npm run watch",
     "build": "rollup -c --configPlugin typescript",
@@ -24,7 +27,6 @@
   "homepage": "https://github.com/keratagpro/tagpro-3d#readme",
   "devDependencies": {
     "@rollup/plugin-commonjs": "^25.0.4",
-    "@rollup/plugin-json": "^6.0.0",
     "@rollup/plugin-node-resolve": "^15.2.1",
     "@rollup/plugin-typescript": "^11.1.4",
     "@types/lodash": "^4.14.199",

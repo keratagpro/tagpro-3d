@@ -2,27 +2,44 @@ import commonjs from '@rollup/plugin-commonjs';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import typescript from '@rollup/plugin-typescript';
 import * as fs from 'fs/promises';
-import template from 'lodash/template.js';
-import { dirname } from 'path';
 import { defineConfig } from 'rollup';
 import copy from 'rollup-plugin-copy';
-import { fileURLToPath } from 'url';
 
 import pkg from './package.json' assert { type: 'json' };
+import { createMeta, GlobalDep } from './scripts/createMeta';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const GLOBALS: GlobalDep[] = [
+	{
+		importName: 'fast-average-color',
+		globalName: 'FastAverageColor',
+		cdnPath: 'https://unpkg.com/fast-average-color@9.4.0/dist/index.browser.js',
+	},
+	{
+		importName: 'loglevel',
+		globalName: 'log',
+		cdnPath: 'https://unpkg.com/loglevel@1.8.0/lib/loglevel.js',
+	},
+	{
+		importName: 'pixi.js',
+		globalName: 'PIXI',
+	},
+	{
+		importName: 'tagpro',
+		globalName: 'tagpro',
+	},
+	{
+		importName: 'three',
+		globalName: 'THREE',
+		cdnPath: 'https://unpkg.com/three@0.157.0/build/three.min.js',
+	},
+];
 
-const meta = template(await fs.readFile(__dirname + '/src/meta.tpl.ts', 'utf8'));
-const banner = meta({ version: pkg.version });
+const banner = createMeta('./src/meta.ts.ejs', pkg.version, GLOBALS);
 
-const globals = {
-	'fast-average-color': 'FastAverageColor',
-	'loglevel': 'log',
-	'pixi.js': 'PIXI',
-	'tagpro': 'tagpro',
-	'three': 'THREE',
-};
+const globals: Record<string, string> = {};
+for (const dep of GLOBALS) {
+	globals[dep.importName] = dep.globalName;
+}
 
 export default defineConfig({
 	input: 'src/index.ts',
@@ -36,7 +53,7 @@ export default defineConfig({
 		globals,
 		interop: 'esModule',
 	},
-	external: Object.keys(globals),
+	external: GLOBALS.map((d) => d.importName),
 	plugins: [
 		commonjs(),
 		nodeResolve(),

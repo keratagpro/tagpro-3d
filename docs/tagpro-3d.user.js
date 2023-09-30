@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          TagPro 3D
 // @description   TagPro in 3D!
-// @version       0.3.0
+// @version       0.3.1-dev
 // @author        Kera
 // @namespace     https://github.com/keratagpro/tagpro-3d/
 // @icon          https://keratagpro.github.io/tagpro-3d/assets/icon.png
@@ -12,12 +12,12 @@
 // @include       http://tangent.jukejuice.com*
 // @include       https://tangent.jukejuice.com*
 // @include       https://bash-tp.github.io/tagpro-vcr/game*.html
+// @require       https://unpkg.com/fast-average-color@9.4.0/dist/index.browser.js
 // @require       https://unpkg.com/loglevel@1.8.0/lib/loglevel.js
-// @require       https://unpkg.com/three@0.139.2/build/three.min.js
-// @require       https://unpkg.com/rgbquant@1.1.2/src/rgbquant.js
+// @require       https://unpkg.com/three@0.157.0/build/three.min.js
 // ==/UserScript==
 
-(function (tagpro, PIXI, THREE, RgbQuant, log) {
+(function (tagpro, PIXI, THREE, fastAverageColor, log) {
 	'use strict';
 
 	const ballOptions = {
@@ -225,7 +225,7 @@
 		return light;
 	}
 	function addLights(lights, scene, camera) {
-		lights.forEach((light) => {
+		for (const light of lights) {
 			if (!light.enabled) return;
 			if (light.type === 'camera') {
 				addCameraLight(camera, light);
@@ -234,7 +234,7 @@
 			} else if (light.type === 'directional') {
 				addDirectionalLight(scene, light);
 			}
-		});
+		}
 	}
 
 	var lights = /*#__PURE__*/ Object.freeze({
@@ -276,20 +276,12 @@
 	}
 
 	function getDominantColor(canvas) {
-		const quantizer = new RgbQuant({ colors: 4 });
-		quantizer.sample(canvas);
-		const palette = quantizer.palette(true, true);
-		if (!palette) {
+		const fac = new fastAverageColor.FastAverageColor();
+		const c = fac.getColor(canvas);
+		if (c.error) {
 			return new THREE.Color(0x333333);
 		}
-		const colors = palette.map(([r, g, b]) => new THREE.Color(r / 256, g / 256, b / 256));
-		// Try to find a non-grayscale color.
-		const hsl = { h: 0, s: 0, l: 0 };
-		const color = colors.find((col) => {
-			col.getHSL(hsl);
-			return hsl.s > 0.5;
-		});
-		return color || colors[0];
+		return new THREE.Color(c.value[0] / 256, c.value[1] / 256, c.value[2] / 256);
 	}
 	const tileColorCache = {};
 	function getDominantColorForTile(img, { x, y }, width = tagpro.TILE_SIZE, height = tagpro.TILE_SIZE) {
@@ -488,6 +480,7 @@
 		resizeCanvas: resizeCanvas,
 	});
 
+	// import { SpriteTexture } from './utils/SpriteTexture';
 	const WALL = 1;
 	const BL = 1.1; // ◣ bottom left
 	const TL = 1.2; // ◤ top left
@@ -626,28 +619,29 @@
 	}
 	Object.assign(Renderer3D.prototype, camera, lights, objects, scene, walls);
 
-	// TODO: How to narrow T[K] to a callable function?
 	function after(obj, methodName, callback) {
-		const orig = obj[methodName];
-		obj[methodName] = function () {
-			const result = orig.apply(this, arguments);
-			callback.apply(this, arguments);
-			return result;
-		};
+		const original = obj[methodName];
+		Object.assign(original, {
+			[methodName]() {
+				const result = original.apply(this, arguments);
+				callback.apply(this, arguments);
+				return result;
+			},
+		});
 	}
 
 	const textureLoader = new THREE.TextureLoader();
 	textureLoader.setCrossOrigin('');
 	new THREE.ObjectLoader();
 
-	const originalFactory = log.methodFactory;
-	log.methodFactory = function (methodName, logLevel, loggerName) {
+	const originalFactory = log.default.methodFactory;
+	log.default.methodFactory = function (methodName, logLevel, loggerName) {
 		const rawMethod = originalFactory(methodName, logLevel, loggerName);
 		return function (message) {
 			rawMethod('[TagPro3D] ' + message);
 		};
 	};
-	log.setLevel(log.getLevel());
+	log.default.setLevel(log.default.getLevel());
 
 	function isInGame() {
 		return tagpro.state > 0;
@@ -710,7 +704,7 @@
 					object3D: ball3D,
 				};
 				t3d.scene.add(ball3D);
-				log.info('Created 3D ball for ' + player.id);
+				log.default.info('Created 3D ball for ' + player.id);
 			});
 			after(tr, 'updatePlayerColor', (player) => {
 				const player3D = t3d.players[player.id];
@@ -742,7 +736,7 @@
 			after(tr, 'createBackgroundTexture', () => {
 				const walls3D = t3d.createWalls(tagpro.map, t3d.options.objects.wall);
 				t3d.scene.add(walls3D);
-				log.info('Created 3D walls.');
+				log.default.info('Created 3D walls.');
 			});
 		}
 		return t3d;
@@ -760,11 +754,11 @@
 		}
 	};
 	tagpro.ready(function () {
-		log.setLevel('info');
+		log.default.setLevel('info');
 		if (isInGame()) {
-			log.info('Initializing.');
+			log.default.info('Initializing.');
 			createRenderer3D();
-			log.info('Initialized.');
+			log.default.info('Initialized.');
 		}
 	});
-})(tagpro, PIXI, THREE, RgbQuant, log);
+})(tagpro, PIXI, THREE, FastAverageColor, log);

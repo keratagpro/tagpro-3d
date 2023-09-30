@@ -30,8 +30,8 @@ export const ballOptions: BallOptions = {
 	velocityCoefficient: 0.1,
 	rotationCoefficient: 0.015,
 	geometry: {
-		detail: 1,
-		radius: 17,
+		detail: 2,
+		radius: 19,
 	},
 	materials: {
 		default: {
@@ -45,7 +45,7 @@ export const ballOptions: BallOptions = {
 		},
 	},
 	outline: {
-		enabled: true,
+		enabled: false,
 		detail: 2,
 		radius: 19,
 	},

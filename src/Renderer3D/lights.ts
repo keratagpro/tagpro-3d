@@ -29,7 +29,9 @@ export function addDirectionalLight(
 
 export function addLights(lights: LightOptions[], scene: THREE.Scene, camera: THREE.PerspectiveCamera) {
 	for (const light of lights) {
-		if (!light.enabled) return;
+		if (!light.enabled) {
+			continue;
+		}
 
 		if (light.type === 'camera') {
 			addCameraLight(camera, light);

@@ -73,6 +73,8 @@ declare class TagPro {
 
 	TILE_SIZE: number;
 
+	replayPaused?: boolean;
+
 	ready: {
 		(callback): void;
 		after(callback): void;

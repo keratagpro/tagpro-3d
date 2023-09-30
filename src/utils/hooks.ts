@@ -15,10 +15,14 @@ export function before<T extends object, K extends keyof T, C extends Callable<T
 	});
 }
 
-export function after<T, K extends keyof T, C extends Callable<T[K]>>(obj: T, methodName: K, callback: C) {
+export function after<T extends object, K extends keyof T, C extends Callable<T[K]>>(
+	obj: T,
+	methodName: K,
+	callback: C,
+) {
 	const original = obj[methodName] as C;
 
-	Object.assign(original, {
+	Object.assign(obj, {
 		[methodName]() {
 			const result = original.apply(this, arguments);
 			callback.apply(this, arguments);

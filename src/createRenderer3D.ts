@@ -38,6 +38,10 @@ export function createRenderer3D() {
 	});
 
 	after(tr, 'updateGraphics', function () {
+		if (tagpro.replayPaused || tagpro.state === TagPro.State.Ended) {
+			return;
+		}
+
 		t3d.renderer?.render(t3d.scene, t3d.camera);
 		threeTexture.update();
 	});
@@ -77,7 +81,7 @@ export function createRenderer3D() {
 				object3D: ball3D,
 			};
 			t3d.scene.add(ball3D);
-			log.info('Created 3D ball for ' + player.id);
+			log.info('Created 3D ball for player ' + player.id);
 		});
 
 		after(tr, 'updatePlayerColor', (player: TagPro.Player) => {
@@ -119,6 +123,8 @@ export function createRenderer3D() {
 			log.info('Created 3D walls.');
 		});
 	}
+
+	Object.assign(tagpro, { renderer3D: t3d });
 
 	return t3d;
 }

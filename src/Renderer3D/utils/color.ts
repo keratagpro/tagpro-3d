@@ -1,15 +1,18 @@
-import { FastAverageColor } from 'fast-average-color';
+import * as FastAverageColor from 'fast-average-color';
 import { TILE_SIZE } from 'tagpro';
 import * as THREE from 'three';
 
+import { log } from '../../utils/logger';
 import { cropImageToCanvas } from './image';
 
 export function getDominantColor(canvas: HTMLCanvasElement) {
-	const fac = new FastAverageColor();
+	// NOTE: Type coercion is needed because it's exported this way at window.FastAverageColor.
+	const fac = new (FastAverageColor as unknown as typeof FastAverageColor.FastAverageColor)();
 
 	const c = fac.getColor(canvas);
 
 	if (c.error) {
+		log.warn('Could not extract dominant color.');
 		return new THREE.Color(0x333333);
 	}
 

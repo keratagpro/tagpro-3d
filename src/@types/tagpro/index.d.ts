@@ -447,7 +447,7 @@ declare namespace TagPro {
 		teleportOther;
 	}
 
-	enum State {
+	const enum State {
 		Active = 1,
 		Ended = 2,
 		NotStarted = 3,

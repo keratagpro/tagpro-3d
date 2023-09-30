@@ -1,12 +1,13 @@
 {
 	"compilerOptions": {
+		"allowSyntheticDefaultImports": true,
+		"forceConsistentCasingInFileNames": true,
+		"jsx": "react",
 		"module": "ESNext",
-		"target": "ESNext",
 		"moduleResolution": "Node",
 		"resolveJsonModule": true,
 		"strict": true,
-		"forceConsistentCasingInFileNames": true,
-		"allowSyntheticDefaultImports": true
+		"target": "ESNext"
 	},
 	"include": ["src", "scripts", "rollup.config.ts"]
 }

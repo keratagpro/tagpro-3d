@@ -9,7 +9,7 @@ export function getDominantColor(canvas: HTMLCanvasElement) {
 	// NOTE: Type coercion is needed because it's exported this way at window.FastAverageColor.
 	const fac = new (FastAverageColor as unknown as typeof FastAverageColor.FastAverageColor)();
 
-	const c = fac.getColor(canvas);
+	const c = fac.getColor(canvas, { algorithm: 'dominant' });
 
 	if (c.error) {
 		log.warn('Could not extract dominant color.');

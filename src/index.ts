@@ -1,6 +1,7 @@
 import * as tagpro from 'tagpro';
 
 import { createRenderer3D } from './createRenderer3D';
+import { renderUI } from './ui';
 import { isInGame, log } from './utils';
 
 /**
@@ -21,6 +22,7 @@ tagpro.ready(function () {
 	if (isInGame()) {
 		log.info('Initializing.');
 		createRenderer3D();
+		renderUI();
 		log.info('Initialized.');
 	}
 });

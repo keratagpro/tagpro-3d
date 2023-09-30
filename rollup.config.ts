@@ -1,6 +1,8 @@
 import commonjs from '@rollup/plugin-commonjs';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
+import replace from '@rollup/plugin-replace';
 import typescript from '@rollup/plugin-typescript';
+import { vanillaExtractPlugin } from '@vanilla-extract/rollup-plugin';
 import * as fs from 'fs/promises';
 import { defineConfig } from 'rollup';
 import copy from 'rollup-plugin-copy';
@@ -30,7 +32,18 @@ const GLOBALS: GlobalDep[] = [
 	{
 		importName: 'three',
 		globalName: 'THREE',
+		// NOTE: THREE.js is moving to ES modules after r160.
 		cdnPath: 'https://unpkg.com/three@0.157.0/build/three.min.js',
+	},
+	{
+		importName: 'react',
+		globalName: 'React',
+		cdnPath: 'https://unpkg.com/react@18.2.0/umd/react.production.min.js',
+	},
+	{
+		importName: 'react-dom',
+		globalName: 'ReactDOM',
+		cdnPath: 'https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js',
 	},
 ];
 
@@ -55,6 +68,11 @@ export default defineConfig({
 	},
 	external: GLOBALS.map((d) => d.importName),
 	plugins: [
+		vanillaExtractPlugin(),
+		replace({
+			'preventAssignment': true,
+			'process.env.NODE_ENV': JSON.stringify('production'),
+		}),
 		commonjs(),
 		nodeResolve(),
 		typescript(),

@@ -81,7 +81,7 @@ export function createRenderer3D() {
 				object3D: ball3D,
 			};
 			t3d.scene.add(ball3D);
-			log.info('Created 3D ball for player ' + player.id);
+			log.info(`Created 3D ball for player ${player.id}`);
 		});
 
 		after(tr, 'updatePlayerColor', (player: TagPro.Player) => {

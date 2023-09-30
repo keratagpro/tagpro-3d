@@ -1,33 +1,36 @@
+import './Dialog.css';
+
 import * as React from 'react';
-import { useEffect, useRef } from 'react';
 
 export interface DialogProps {
 	children?: React.ReactNode;
-	visible: boolean;
+	open?: boolean;
+	title?: React.ReactNode;
+	onClose?: (ev: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
-export function Dialog({ children, visible = false }: DialogProps) {
-	const dialogRef = useRef<HTMLDialogElement>(null);
-
-	useEffect(() => {
-		if (!dialogRef.current) {
-			return;
-		}
-
-		if (visible) {
-			dialogRef.current.showModal();
-		} else {
-			dialogRef.current.close();
-		}
-	}, [visible]);
+export function Dialog({ children, title, open, onClose }: DialogProps) {
+	function handleClose(ev: React.MouseEvent<HTMLButtonElement>) {
+		onClose?.(ev);
+	}
 
 	return (
-		<dialog ref={dialogRef}>
+		<dialog className="modal-content" open={open}>
 			<form method="dialog">
-				{children}
+				<div className="modal-header">
+					<button type="button" className="btn btn-default close" aria-label="Close" onClick={handleClose}>
+						<span aria-hidden="true">×</span>
+					</button>
+					{title && <h4 className="modal-title">{title}</h4>}
+				</div>
+				<div className="modal-body">{children}</div>
 				<div className="modal-footer">
-					<button type="reset">Cancel</button>
-					<button type="submit">Confirm</button>
+					<button type="button" className="btn btn-default" onClick={handleClose}>
+						Close
+					</button>
+					<button type="submit" className="btn btn-primary">
+						Save Changes
+					</button>
 				</div>
 			</form>
 		</dialog>

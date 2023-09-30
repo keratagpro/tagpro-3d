@@ -1,0 +1,4 @@
+.options-toggle.active {
+	outline: 2px solid green;
+	border-radius: 3px;
+}

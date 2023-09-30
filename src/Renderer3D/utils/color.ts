@@ -9,12 +9,20 @@ export function getDominantColor(canvas: HTMLCanvasElement) {
 	// NOTE: Type coercion is needed because it's exported this way at window.FastAverageColor.
 	const fac = new (FastAverageColor as unknown as typeof FastAverageColor.FastAverageColor)();
 
-	const c = fac.getColor(canvas, { algorithm: 'dominant' });
+	const c = fac.getColor(canvas, {
+		algorithm: 'dominant',
+		ignoredColor: [
+			[255, 255, 255, 255],
+			[0, 0, 0, 255],
+		],
+	});
 
 	if (c.error) {
 		log.warn('Could not extract dominant color.');
 		return new THREE.Color(0x333333);
 	}
+
+	log.info(`Found dominant color: ${c.value}`);
 
 	return new THREE.Color(c.value[0] / 256, c.value[1] / 256, c.value[2] / 256);
 }

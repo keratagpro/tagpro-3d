@@ -1,0 +1,8 @@
+dialog {
+	color: #fff;
+	width: 600px;
+}
+
+.modal-header .close {
+	float: right;
+}

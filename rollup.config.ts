@@ -2,10 +2,11 @@ import commonjs from '@rollup/plugin-commonjs';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import replace from '@rollup/plugin-replace';
 import typescript from '@rollup/plugin-typescript';
-import { vanillaExtractPlugin } from '@vanilla-extract/rollup-plugin';
 import * as fs from 'fs/promises';
+import prefixer from 'postcss-prefix-selector';
 import { defineConfig } from 'rollup';
 import copy from 'rollup-plugin-copy';
+import postcss from 'rollup-plugin-postcss';
 
 import pkg from './package.json' assert { type: 'json' };
 import { createMeta, GlobalDep } from './scripts/createMeta';
@@ -68,7 +69,10 @@ export default defineConfig({
 	},
 	external: GLOBALS.map((d) => d.importName),
 	plugins: [
-		vanillaExtractPlugin(),
+		postcss({
+			plugins: [prefixer({ prefix: '.tagpro-3d', exclude: ['.tagpro-3d'] })],
+			// extract: true,
+		}),
 		replace({
 			'preventAssignment': true,
 			'process.env.NODE_ENV': JSON.stringify('production'),

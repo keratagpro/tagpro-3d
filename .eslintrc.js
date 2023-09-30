@@ -20,6 +20,7 @@ module.exports = {
 	rules: {
 		'linebreak-style': ['error', 'unix'],
 		'prefer-rest-params': 'off',
+		'prefer-template': 'error',
 		'quotes': ['error', 'single'],
 		'semi': ['error', 'always'],
 		'simple-import-sort/imports': 'error',

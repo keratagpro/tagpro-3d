@@ -15,4 +15,6 @@
 // @require       https://unpkg.com/fast-average-color@9.4.0/dist/index.browser.js
 // @require       https://unpkg.com/loglevel@1.8.0/lib/loglevel.js
 // @require       https://unpkg.com/three@0.157.0/build/three.min.js
+// @require       https://unpkg.com/react@18.2.0/umd/react.production.min.js
+// @require       https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js
 // ==/UserScript==

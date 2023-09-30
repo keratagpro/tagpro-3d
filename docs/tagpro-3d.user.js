@@ -15,9 +15,11 @@
 // @require       https://unpkg.com/fast-average-color@9.4.0/dist/index.browser.js
 // @require       https://unpkg.com/loglevel@1.8.0/lib/loglevel.js
 // @require       https://unpkg.com/three@0.157.0/build/three.min.js
+// @require       https://unpkg.com/react@18.2.0/umd/react.production.min.js
+// @require       https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js
 // ==/UserScript==
 
-(function (tagpro, PIXI, THREE, FastAverageColor, log) {
+(function (tagpro, PIXI, THREE, FastAverageColor, log, React, ReactDOM) {
     'use strict';
 
     const ballOptions = {
@@ -291,11 +293,18 @@
     function getDominantColor(canvas) {
         // NOTE: Type coercion is needed because it's exported this way at window.FastAverageColor.
         const fac = new FastAverageColor();
-        const c = fac.getColor(canvas);
+        const c = fac.getColor(canvas, {
+            algorithm: 'dominant',
+            ignoredColor: [
+                [255, 255, 255, 255],
+                [0, 0, 0, 255],
+            ],
+        });
         if (c.error) {
             log.default.warn('Could not extract dominant color.');
             return new THREE.Color(0x333333);
         }
+        log.default.info(`Found dominant color: ${c.value}`);
         return new THREE.Color(c.value[0] / 256, c.value[1] / 256, c.value[2] / 256);
     }
     const tileColorCache = {};
@@ -667,7 +676,7 @@
             t3d.addLights(t3d.options.lights, t3d.scene, t3d.camera);
         });
         after(tr, 'updateGraphics', function () {
-            if (tagpro.replayPaused) {
+            if (tagpro.replayPaused || tagpro.state === 2 /* TagPro.State.Ended */) {
                 return;
             }
             t3d.renderer?.render(t3d.scene, t3d.camera);
@@ -741,6 +750,154 @@
         return t3d;
     }
 
+    function styleInject(css, ref) {
+      if ( ref === void 0 ) ref = {};
+      var insertAt = ref.insertAt;
+
+      if (!css || typeof document === 'undefined') { return; }
+
+      var head = document.head || document.getElementsByTagName('head')[0];
+      var style = document.createElement('style');
+      style.type = 'text/css';
+
+      if (insertAt === 'top') {
+        if (head.firstChild) {
+          head.insertBefore(style, head.firstChild);
+        } else {
+          head.appendChild(style);
+        }
+      } else {
+        head.appendChild(style);
+      }
+
+      if (style.styleSheet) {
+        style.styleSheet.cssText = css;
+      } else {
+        style.appendChild(document.createTextNode(css));
+      }
+    }
+
+    var css_248z$2 = ".tagpro-3d {\n\tposition: absolute;\n\tbottom: 10px;\n\tright: 10px;\n\tz-index: 1;\n\tdisplay: flex;\n\tflex-direction: column;\n\talign-items: flex-end;\n}\n";
+    styleInject(css_248z$2);
+
+    var css_248z$1 = ".tagpro-3d dialog {\n\tcolor: #fff;\n\twidth: 600px;\n}\n\n.tagpro-3d .modal-header .close {\n\tfloat: right;\n}\n";
+    styleInject(css_248z$1);
+
+    function Dialog({ children, title, open, onClose }) {
+        function handleClose(ev) {
+            onClose?.(ev);
+        }
+        return (React.createElement("dialog", { className: "modal-content", open: open },
+            React.createElement("form", { method: "dialog" },
+                React.createElement("div", { className: "modal-header" },
+                    React.createElement("button", { type: "button", className: "btn btn-default close", "aria-label": "Close", onClick: handleClose },
+                        React.createElement("span", { "aria-hidden": "true" }, "\u00D7")),
+                    title && React.createElement("h4", { className: "modal-title" }, title)),
+                React.createElement("div", { className: "modal-body" }, children),
+                React.createElement("div", { className: "modal-footer" },
+                    React.createElement("button", { type: "button", className: "btn btn-default", onClick: handleClose }, "Close"),
+                    React.createElement("button", { type: "submit", className: "btn btn-primary" }, "Save Changes")))));
+    }
+
+    function OptionsDialog({ open, onClose }) {
+        return React.createElement(Dialog, { open: open, title: "TagPro 3D - Options", onClose: onClose });
+    }
+
+    var css_248z = ".tagpro-3d .options-toggle.active {\n\toutline: 2px solid green;\n\tborder-radius: 3px;\n}\n";
+    styleInject(css_248z);
+
+    function getDefaultExportFromCjs (x) {
+    	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
+    }
+
+    var classnames = {exports: {}};
+
+    /*!
+    	Copyright (c) 2018 Jed Watson.
+    	Licensed under the MIT License (MIT), see
+    	http://jedwatson.github.io/classnames
+    */
+
+    (function (module) {
+    	/* global define */
+
+    	(function () {
+
+    		var hasOwn = {}.hasOwnProperty;
+
+    		function classNames() {
+    			var classes = [];
+
+    			for (var i = 0; i < arguments.length; i++) {
+    				var arg = arguments[i];
+    				if (!arg) continue;
+
+    				var argType = typeof arg;
+
+    				if (argType === 'string' || argType === 'number') {
+    					classes.push(arg);
+    				} else if (Array.isArray(arg)) {
+    					if (arg.length) {
+    						var inner = classNames.apply(null, arg);
+    						if (inner) {
+    							classes.push(inner);
+    						}
+    					}
+    				} else if (argType === 'object') {
+    					if (arg.toString !== Object.prototype.toString && !arg.toString.toString().includes('[native code]')) {
+    						classes.push(arg.toString());
+    						continue;
+    					}
+
+    					for (var key in arg) {
+    						if (hasOwn.call(arg, key) && arg[key]) {
+    							classes.push(key);
+    						}
+    					}
+    				}
+    			}
+
+    			return classes.join(' ');
+    		}
+
+    		if (module.exports) {
+    			classNames.default = classNames;
+    			module.exports = classNames;
+    		} else {
+    			window.classNames = classNames;
+    		}
+    	}()); 
+    } (classnames));
+
+    var classnamesExports = classnames.exports;
+    var cn = /*@__PURE__*/getDefaultExportFromCjs(classnamesExports);
+
+    function OptionsToggle({ active, onClick }) {
+        return (React.createElement("a", { href: "#", onClick: onClick, className: cn('options-toggle', { active }) },
+            React.createElement("img", { width: "24", height: "24", src: "https://keratagpro.github.io/tagpro-3d/assets/icon.png" })));
+    }
+
+    function App() {
+        const [showOptions, setShowOptions] = React.useState(false);
+        function handleOptionsClick() {
+            setShowOptions((show) => !show);
+        }
+        function handleOptionsClose() {
+            setShowOptions(false);
+        }
+        return (React.createElement("div", { className: "tagpro-3d" },
+            React.createElement(OptionsDialog, { open: showOptions, onClose: handleOptionsClose }),
+            React.createElement(OptionsToggle, { active: showOptions, onClick: handleOptionsClick })));
+    }
+
+    function renderUI() {
+        const container = document.createElement('div');
+        document.body.appendChild(container);
+        const root = ReactDOM.createRoot(container);
+        root.render(React.createElement(App, null));
+        return root;
+    }
+
     /**
      * Delays callbacks when resourcesLoaded == true, so it's possible to run stuff
      * between tagpro.ready and tagpro.ready.after.
@@ -758,8 +915,9 @@
         if (isInGame()) {
             log.default.info('Initializing.');
             createRenderer3D();
+            renderUI();
             log.default.info('Initialized.');
         }
     });
 
-})(tagpro, PIXI, THREE, FastAverageColor, log);
+})(tagpro, PIXI, THREE, FastAverageColor, log, React, ReactDOM);

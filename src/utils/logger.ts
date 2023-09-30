@@ -6,7 +6,7 @@ log.methodFactory = function (methodName, logLevel, loggerName) {
 	const rawMethod = originalFactory(methodName, logLevel, loggerName);
 
 	return function (message) {
-		rawMethod('[TagPro3D] ' + message);
+		rawMethod(`[TagPro3D] ${message}`);
 	};
 };
 

@@ -19,11 +19,12 @@
 // @require       https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js
 // ==/UserScript==
 
-(function (tagpro, PIXI, THREE, FastAverageColor, log, React, ReactDOM) {
+(function (tagpro, PIXI, THREE, log, FastAverageColor, React, ReactDOM) {
     'use strict';
 
     const ballOptions = {
-        useDominantColorFromTexture: true,
+        useDominantColorFromTexturePack: true,
+        useTexture: false,
         velocityCoefficient: 0.1,
         rotationCoefficient: 0.015,
         geometry: {
@@ -78,7 +79,7 @@
     };
 
     const lightOptions = [
-        { enabled: false, type: 'camera', color: 0xffffff, intensity: 0.8 },
+        { enabled: true, type: 'camera', color: 0xffffff, intensity: 0.5 },
         { enabled: true, type: 'ambient', color: 0x666666 },
         { enabled: true, type: 'directional', color: 0xffffff, intensity: 1.0, position: [-500, 500, -500] },
     ];
@@ -125,7 +126,7 @@
     };
 
     const wallOptions = {
-        useDominantColorFromTexture: true,
+        useDominantColorFromTexturePack: true,
         useTexture: false,
         materials: {
             top: {
@@ -180,6 +181,15 @@
         wallsAre3D: true,
     };
 
+    const originalFactory = log.default.methodFactory;
+    log.default.methodFactory = function (methodName, logLevel, loggerName) {
+        const rawMethod = originalFactory(methodName, logLevel, loggerName);
+        return function (...args) {
+            rawMethod('%c[TagPro3D]', 'color: green', ...args);
+        };
+    };
+    log.default.setLevel(log.default.getLevel());
+
     const RAD = 180 / Math.PI;
     function createCamera({ fov = 75, aspect = 1280 / 800, near, far, distance }) {
         const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
@@ -194,8 +204,8 @@
         camera.updateProjectionMatrix();
     }
     function updateCameraPosition(camera, x, y) {
-        camera.position.x = x - 19;
-        camera.position.z = y - 19;
+        camera.position.x = x - 20;
+        camera.position.z = y - 20;
     }
     function updateCameraZoom(camera, zoom) {
         camera.zoom = 1 / zoom;
@@ -251,15 +261,6 @@
         addLights: addLights
     });
 
-    const originalFactory = log.default.methodFactory;
-    log.default.methodFactory = function (methodName, logLevel, loggerName) {
-        const rawMethod = originalFactory(methodName, logLevel, loggerName);
-        return function (message) {
-            rawMethod('[TagPro3D] ' + message);
-        };
-    };
-    log.default.setLevel(log.default.getLevel());
-
     const resizedImageCache = {};
     function resizeImage(image, width, height) {
         const canvas = document.createElement('canvas');
@@ -295,16 +296,13 @@
         const fac = new FastAverageColor();
         const c = fac.getColor(canvas, {
             algorithm: 'dominant',
-            ignoredColor: [
-                [255, 255, 255, 255],
-                [0, 0, 0, 255],
-            ],
+            ignoredColor: [[0, 0, 0, 0]], // NOTE: Haven't checked why this color appears...
         });
         if (c.error) {
             log.default.warn('Could not extract dominant color.');
             return new THREE.Color(0x333333);
         }
-        log.default.info(`Found dominant color: ${c.value}`);
+        log.default.info(`Found dominant color: ${c.value} %c ⬤`, `color: ${c.hex}`);
         return new THREE.Color(c.value[0] / 256, c.value[1] / 256, c.value[2] / 256);
     }
     const tileColorCache = {};
@@ -383,7 +381,7 @@
         }
         updateByTileId(tileId) {
             const materialParams = this.options.materials[tileId === 'redball' ? 'red' : 'blue'];
-            if (this.options.useDominantColorFromTexture) {
+            if (this.options.useDominantColorFromTexturePack) {
                 materialParams.color = getDominantColorForTile(tagpro.tiles.image, tagpro.tiles[tileId]);
             }
             this.material.setValues(materialParams);
@@ -563,7 +561,7 @@
             const sideWallTexture = getTextureByTileId('1.421');
             sideMaterialParams.map = sideWallTexture;
         }
-        if (options.useDominantColorFromTexture) {
+        if (options.useDominantColorFromTexturePack) {
             topMaterialParams.color = getDominantColorForTile(tagpro.tiles.image, options.tiles.top);
             sideMaterialParams.color = getDominantColorForTile(tagpro.tiles.image, options.tiles.side);
         }
@@ -623,11 +621,13 @@
         scene;
         renderer;
         players = {};
+        log;
         constructor(options) {
             this.options = options;
             this.camera = createCamera(this.options.camera);
             this.scene = createScene();
             this.scene.add(this.camera);
+            this.log = log.default;
         }
     }
     Object.assign(Renderer3D.prototype, camera, lights, objects, scene, walls);
@@ -711,7 +711,7 @@
                     object3D: ball3D,
                 };
                 t3d.scene.add(ball3D);
-                log.default.info('Created 3D ball for player ' + player.id);
+                log.default.info(`Created 3D ball for player ${player.id}`);
             });
             after(tr, 'updatePlayerColor', (player) => {
                 const player3D = t3d.players[player.id];
@@ -780,7 +780,7 @@
     var css_248z$2 = ".tagpro-3d {\n\tposition: absolute;\n\tbottom: 10px;\n\tright: 10px;\n\tz-index: 1;\n\tdisplay: flex;\n\tflex-direction: column;\n\talign-items: flex-end;\n}\n";
     styleInject(css_248z$2);
 
-    var css_248z$1 = ".tagpro-3d dialog {\n\tcolor: #fff;\n\twidth: 600px;\n}\n\n.tagpro-3d .modal-header .close {\n\tfloat: right;\n}\n";
+    var css_248z$1 = ".tagpro-3d dialog {\n\tcolor: #fff;\n\twidth: 600px;\n\tposition: static; /* only needed in VCR */\n}\n\n.tagpro-3d .modal-header .close {\n\tfloat: right;\n}\n";
     styleInject(css_248z$1);
 
     function Dialog({ children, title, open, onClose }) {
@@ -800,7 +800,8 @@
     }
 
     function OptionsDialog({ open, onClose }) {
-        return React.createElement(Dialog, { open: open, title: "TagPro 3D - Options", onClose: onClose });
+        return (React.createElement(Dialog, { open: open, title: "TagPro 3D - Options", onClose: onClose },
+            React.createElement("div", { className: "row" })));
     }
 
     var css_248z = ".tagpro-3d .options-toggle.active {\n\toutline: 2px solid green;\n\tborder-radius: 3px;\n}\n";
@@ -920,4 +921,4 @@
         }
     });
 
-})(tagpro, PIXI, THREE, FastAverageColor, log, React, ReactDOM);
+})(tagpro, PIXI, THREE, log, FastAverageColor, React, ReactDOM);

@@ -25,8 +25,8 @@ export function updateCameraFOV(camera: THREE.PerspectiveCamera, gameCanvas: HTM
 }
 
 export function updateCameraPosition(camera: THREE.PerspectiveCamera, x: number, y: number) {
-	camera.position.x = x - 19;
-	camera.position.z = y - 19;
+	camera.position.x = x - 20;
+	camera.position.z = y - 20;
 }
 
 export function updateCameraZoom(camera: THREE.PerspectiveCamera, zoom: number) {

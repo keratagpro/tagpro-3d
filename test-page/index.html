@@ -1,0 +1,89 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>TagPro 3D test page</title>
+
+		<link rel="stylesheet" href="stylesheets/style.css" />
+		<link rel="stylesheet" href="stylesheets/replay.css" />
+
+		<style>
+			.hidden {
+				display: none !important;
+			}
+		</style>
+	</head>
+
+	<body class="game">
+		<div id="root"></div>
+
+		<div id="textures" class="hidden">""</div>
+
+		<canvas id="viewport" width="1280" height="800"></canvas>
+
+		<a id="exit" href="#" class="hidden"></a>
+
+		<div id="chatHistory"></div>
+
+		<div id="assets" style="visibility: hidden">
+			<img id="tiles" src="./textures/musclescupgradients/tiles.png" class="asset" />
+			<img id="splats" src="./textures/musclescupgradients/splats.png" class="asset" />
+			<img id="flair" src="./images/flair.png" class="asset" />
+			<img id="speedpad" src="./textures/musclescupgradients/speedpad.png" class="asset" />
+			<img id="speedpadred" src="./textures/musclescupgradients/speedpadred.png" class="asset" />
+			<img id="speedpadblue" src="./textures/musclescupgradients/speedpadblue.png" class="asset" />
+			<img id="portal" src="./textures/musclescupgradients/portal.png" class="asset" />
+			<img id="portalred" src="./textures/musclescupgradients/portalred.png" class="asset" />
+			<img id="portalblue" src="./textures/musclescupgradients/portalblue.png" class="asset" />
+			<img id="particle" src="./textures/classic/particle.png" class="asset" />
+			<img id="particleFire" src="./textures/classic/particle-fire.png" class="asset" />
+			<img id="gravityWell" src="./textures/classic/gravitywell.png" class="asset" />
+		</div>
+
+		<script src="./vendor/global-game.js"></script>
+		<script>
+			tagproConfig.serverHost = location.hostname;
+			tagproConfig.isHomeServer = true;
+		</script>
+		<script>
+			tagpro.ready(function () {
+				tagpro.spectator = true;
+			});
+		</script>
+		<script>
+			const events = new window.EventEmitter3();
+
+			const fakeSocket = {
+				on(type, listener) {
+					events.on(type, listener);
+				},
+				emit() {
+					events.emit('id', 1);
+				},
+				removeListener() {},
+				connected: true,
+				get io() {
+					return {
+						engine: {
+							transport: {
+								polling: false,
+							},
+						},
+					};
+				},
+			};
+
+			window.io = {
+				connect() {
+					return fakeSocket;
+				},
+			};
+
+			tagpro.ready(function () {
+				fakeSocket.emit('id', 1);
+			});
+
+			console.image = () => {};
+		</script>
+	</body>
+</html>

@@ -1,4 +1,7 @@
+import { Logger } from 'loglevel';
+
 import { Options } from '../options';
+import { log } from '../utils/logger';
 import * as camera from './camera';
 import * as lights from './lights';
 import * as objects from './objects';
@@ -17,11 +20,13 @@ export class Renderer3D {
 	scene: THREE.Scene;
 	renderer?: THREE.WebGLRenderer;
 	players: Record<number, PlayerData> = {};
+	log: Logger;
 
 	constructor(public options: Options) {
 		this.camera = camera.createCamera(this.options.camera);
 		this.scene = scene.createScene();
 		this.scene.add(this.camera);
+		this.log = log;
 	}
 }
 

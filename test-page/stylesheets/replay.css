@@ -1,0 +1,310 @@
+/*
+ *
+ * COMMON
+ *
+ */
+
+.game .replayBar .replayBarTack.unpinned {
+	transform: rotate(45deg);
+	opacity: 25%;
+}
+
+.game .replayBar .replayBarTack.unpinned:hover {
+	opacity: 100%;
+}
+
+.game .replayBar.unpinned {
+	-moz-transition: all 0.3s ease-in-out;
+	-webkit-transition: all 0.3s ease-in-out;
+	-o-transition: all 0.3s ease-in-out;
+	transition: all 0.3s ease-in-out;
+}
+
+.game .replayBar {
+	position: absolute;
+	z-index: 100;
+	-webkit-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+
+.game .replayBar .handleText {
+	position: absolute;
+	line-height: 1;
+	color: black;
+}
+
+.game .replayBar .content i {
+	cursor: pointer;
+	opacity: 75%;
+}
+
+.game .replayBar .content i:not(.disabled):hover {
+	opacity: 100%;
+}
+
+.game .replayBar .content *:disabled,
+.game .replayBar .content .disabled {
+	cursor: not-allowed !important;
+}
+
+/*
+ *
+ * TOP BAR
+ *
+ */
+
+.game .replayBarTop.unpinned {
+	top: -75px;
+}
+
+.game .replayBarTop.unpinned:hover {
+	top: 0;
+}
+
+.game .replayBarTop {
+	top: 0;
+	width: 100%;
+	max-width: 1180px;
+	left: 50%;
+	transform: translate(-50%, 0);
+}
+
+.game .replayBarTop .handle {
+	position: absolute;
+	border-top: 1rem solid rgba(64, 64, 64, 0.95);
+	border-left: 0.5rem solid transparent;
+	border-right: 0.5rem solid transparent;
+	height: 0;
+	width: 5rem;
+	left: 50%;
+	transform: translate(-50%, 0);
+	top: 75px;
+}
+
+.game .replayBarTop .handleText {
+	top: -1rem;
+	left: 50%;
+	transform: translate(-50%, 0);
+}
+
+.game .replayBarTop .content {
+	background-color: rgba(64, 64, 64, 0.95);
+	border-bottom-left-radius: 10px;
+	border-bottom-right-radius: 10px;
+	width: 100%;
+	height: 75px;
+	margin-bottom: 1rem;
+	padding-left: 20px;
+	padding-right: 20px;
+	display: flex;
+	flex-direction: row;
+	flex-wrap: nowrap;
+	gap: 10px;
+}
+
+.game .replayBarTop .content .sliderContainer {
+	position: relative;
+	height: calc(40px + 1rem);
+	top: 50%;
+	transform: translate(0, -50%);
+	flex-grow: 1;
+}
+
+.game .replayBarTop .content .sliderContainer #replaySeekBar {
+	margin-left: 0;
+	margin-right: 0;
+	margin-top: 10px;
+	-webkit-appearance: none;
+	width: 100%;
+	height: 15px;
+	border-radius: 5px;
+	background: #d3d3d3;
+	outline: none;
+	opacity: 75%;
+	-webkit-transition: 0.2s;
+	transition: opacity 0.2s;
+	z-index: 1;
+}
+
+.game .replayBarTop .content .sliderContainer #replaySeekBar:not([disabled]):hover {
+	opacity: 100%;
+}
+
+.game .replayBarTop .content .sliderContainer #replaySeekBar::-webkit-slider-thumb {
+	-webkit-appearance: none;
+	appearance: none;
+	width: 25px;
+	height: 25px;
+	border-radius: 50%;
+	background: #8bc34a;
+	cursor: pointer;
+}
+
+.game .replayBarTop .content .sliderContainer #replaySeekBar::-moz-range-thumb {
+	width: 25px;
+	height: 25px;
+	border-radius: 50%;
+	background: #8bc34a;
+	cursor: pointer;
+}
+
+.game .replayBarTop .content .sliderContainer #replayTimeline .step {
+	position: absolute;
+	top: 0px;
+	left: calc(((100% - 25px) * var(--pos)) + 12.5px);
+	background: #8bc34a;
+	height: 35px;
+	width: 5px;
+	margin-left: -2.5px;
+	cursor: pointer;
+}
+
+.game .replayBarTop .content .sliderContainer #replayTimeline .step.team1Color {
+	background-color: #d32f2f;
+}
+
+.game .replayBarTop .content .sliderContainer #replayTimeline .step.team2Color {
+	background-color: #1976d2;
+}
+
+.game .replayBarTop .content .sliderContainer #replayTimeline .step.modEventColor {
+	background-color: #000000;
+}
+
+.game .replayBarTop .content .sliderContainer #replayClock {
+	position: absolute;
+	left: 50%;
+	bottom: 0;
+	transform: translate(-50%, 0);
+}
+
+.game .replayBarTop .content .replayControls {
+	position: relative;
+	top: 50%;
+	height: calc(40px + 1rem);
+	line-height: 35px;
+	flex-shrink: 0;
+	transform: translate(0, -50%);
+}
+
+.game .replayBarTop .content .replayControls #replayPlayPause {
+	width: 1rem;
+	text-align: center;
+}
+
+.game .replayBarTop .content a {
+	color: white;
+}
+
+.game .replayBarTop .content a:hover {
+	opacity: 100%;
+}
+
+/*
+ *
+ * LEFT BAR
+ *
+ */
+
+.game .replayBarLeft.unpinned {
+	left: -10rem;
+}
+
+.game .replayBarLeft.unpinned:hover {
+	left: 0;
+}
+
+.game .replayBarLeft {
+	left: 0;
+	height: 100%;
+	max-height: 700px;
+	top: 50%;
+	transform: translate(0, -50%);
+}
+
+.game .replayBarLeft .handle {
+	position: absolute;
+	border-left: 1rem solid rgba(64, 64, 64, 0.95);
+	border-top: 0.5rem solid transparent;
+	border-bottom: 0.5rem solid transparent;
+	width: 0;
+	height: 5rem;
+	top: 50%;
+	transform: translate(0, -50%);
+	left: 10rem;
+}
+
+.game .replayBarLeft .handleText {
+	left: -1rem;
+	top: 50%;
+	transform: translate(0, -50%);
+}
+
+.game .replayBarLeft .content {
+	background-color: rgba(64, 64, 64, 0.95);
+	border-top-right-radius: 10px;
+	border-bottom-right-radius: 10px;
+	height: 100%;
+	width: 10rem;
+	margin-right: 1rem;
+	padding: 10px;
+	overflow: hidden;
+}
+
+.game .replayBarLeft .content #replayBarLeftTack {
+	float: right;
+}
+
+.game .replayBarLeft .content .section {
+	margin-top: 1rem;
+}
+
+.game .replayBarLeft .content .playerList i {
+	font-style: normal;
+	display: block;
+	opacity: 100%;
+}
+
+.game .replayBarLeft .content .playerList .noPlayer {
+	cursor: default;
+	color: white;
+}
+
+.game .replayBarLeft .content .playerList .activePlayer {
+	font-weight: bold;
+	color: #8bc34a;
+}
+
+.game .replayBarLeft .content #team1Players {
+	color: #ff2f2f;
+}
+
+.game .replayBarLeft .content #team2Players {
+	color: #1976ff;
+}
+
+.game .replayBarLeft .content .playerList a {
+	position: absolute;
+	right: 1.5em;
+	color: white;
+	opacity: 75%;
+}
+
+.game .replayBarLeft .content .playerList a:hover {
+	opacity: 100%;
+}
+
+.game .replayBarLeft label {
+	display: block;
+	font-weight: normal;
+	margin: 0;
+}
+
+.game .replayBarLeft .noEntries {
+	opacity: 25%;
+}
+
+.game .replayBarLeft input[type='checkbox'] {
+	margin-right: 10px;
+}

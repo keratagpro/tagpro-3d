@@ -8,7 +8,7 @@ export type TileParams = {
 };
 
 export interface WallOptions {
-	useDominantColorFromTexture: boolean;
+	useDominantColorFromTexturePack: boolean;
 	useTexture: boolean;
 	materials: {
 		top: THREE.MeshPhongMaterialParameters;
@@ -22,7 +22,7 @@ export interface WallOptions {
 }
 
 export const wallOptions: WallOptions = {
-	useDominantColorFromTexture: true,
+	useDominantColorFromTexturePack: true,
 	useTexture: false,
 	materials: {
 		top: {

@@ -92,7 +92,7 @@ export function createWalls(map: TagPro.Map, options: WallOptions) {
 		sideMaterialParams.map = sideWallTexture;
 	}
 
-	if (options.useDominantColorFromTexture) {
+	if (options.useDominantColorFromTexturePack) {
 		topMaterialParams.color = getDominantColorForTile(tiles.image, options.tiles.top);
 		sideMaterialParams.color = getDominantColorForTile(tiles.image, options.tiles.side);
 	}

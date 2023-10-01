@@ -7,9 +7,18 @@ import prefixer from 'postcss-prefix-selector';
 import { defineConfig } from 'rollup';
 import copy from 'rollup-plugin-copy';
 import postcss from 'rollup-plugin-postcss';
+import serve from 'rollup-plugin-serve';
 
 import pkg from './package.json' assert { type: 'json' };
-import { createMeta, GlobalDep } from './scripts/createMeta';
+import { createUserscriptMeta } from './scripts/createUserscriptMeta';
+
+const watchMode = process.env.ROLLUP_WATCH === 'true';
+
+interface GlobalDep {
+	importName: string;
+	globalName: string;
+	cdnPath?: string;
+}
 
 const GLOBALS: GlobalDep[] = [
 	{
@@ -48,7 +57,24 @@ const GLOBALS: GlobalDep[] = [
 	},
 ];
 
-const banner = createMeta('./src/meta.ts.ejs', pkg.version, GLOBALS);
+const metaIncludes = [
+	'http://tagpro*.koalabeast.com/game*',
+	'https://tagpro*.koalabeast.com/game*',
+	'http://tangent.jukejuice.com*',
+	'https://tangent.jukejuice.com*',
+	'https://bash-tp.github.io/tagpro-vcr/game*.html',
+];
+
+if (watchMode) {
+	metaIncludes.push('http://localhost:10001*');
+}
+
+const header = createUserscriptMeta({
+	templateFile: './src/meta.ts.ejs',
+	version: pkg.version,
+	includes: metaIncludes,
+	requires: GLOBALS.reduce((urls: string[], dep) => (dep.cdnPath ? urls.concat(dep.cdnPath) : urls), []),
+});
 
 const globals: Record<string, string> = {};
 for (const dep of GLOBALS) {
@@ -61,8 +87,8 @@ export default defineConfig({
 		file: 'docs/tagpro-3d.user.js',
 		format: 'iife',
 		async banner() {
-			await fs.writeFile('docs/tagpro-3d.meta.js', banner, 'utf8');
-			return banner;
+			await fs.writeFile('docs/tagpro-3d.meta.js', header, 'utf8');
+			return header;
 		},
 		globals,
 		interop: 'esModule',
@@ -75,7 +101,7 @@ export default defineConfig({
 		}),
 		replace({
 			'preventAssignment': true,
-			'process.env.NODE_ENV': JSON.stringify('production'),
+			'process.env.NODE_ENV': JSON.stringify('production'), // NOTE: Needed for ReactDOM
 		}),
 		commonjs(),
 		nodeResolve(),
@@ -83,5 +109,10 @@ export default defineConfig({
 		copy({
 			targets: [{ src: 'assets/', dest: 'docs/' }],
 		}),
+		watchMode &&
+			serve({
+				contentBase: ['docs', 'test-page'],
+				port: 10001,
+			}),
 	],
 });

@@ -11,10 +11,7 @@ export function getDominantColor(canvas: HTMLCanvasElement) {
 
 	const c = fac.getColor(canvas, {
 		algorithm: 'dominant',
-		ignoredColor: [
-			[255, 255, 255, 255],
-			[0, 0, 0, 255],
-		],
+		ignoredColor: [[0, 0, 0, 0]], // NOTE: Haven't checked why this color appears...
 	});
 
 	if (c.error) {
@@ -22,7 +19,7 @@ export function getDominantColor(canvas: HTMLCanvasElement) {
 		return new THREE.Color(0x333333);
 	}
 
-	log.info(`Found dominant color: ${c.value}`);
+	log.info(`Found dominant color: ${c.value} %c ⬤`, `color: ${c.hex}`);
 
 	return new THREE.Color(c.value[0] / 256, c.value[1] / 256, c.value[2] / 256);
 }

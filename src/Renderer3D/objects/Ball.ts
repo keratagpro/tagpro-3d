@@ -43,7 +43,7 @@ export class Ball extends THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshPhongM
 	updateByTileId(tileId: number | string) {
 		const materialParams = this.options.materials[tileId === 'redball' ? 'red' : 'blue'];
 
-		if (this.options.useDominantColorFromTexture) {
+		if (this.options.useDominantColorFromTexturePack) {
 			materialParams.color = getDominantColorForTile(tiles.image, tiles[tileId]);
 		}
 

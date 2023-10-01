@@ -8,5 +8,9 @@ export interface OptionsDialogProps {
 }
 
 export function OptionsDialog({ open, onClose }: OptionsDialogProps) {
-	return <Dialog open={open} title="TagPro 3D - Options" onClose={onClose}></Dialog>;
+	return (
+		<Dialog open={open} title="TagPro 3D - Options" onClose={onClose}>
+			<div className="row"></div>
+		</Dialog>
+	);
 }

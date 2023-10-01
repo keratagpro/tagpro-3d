@@ -1,6 +1,7 @@
 dialog {
 	color: #fff;
 	width: 600px;
+	position: static; /* only needed in VCR */
 }
 
 .modal-header .close {
